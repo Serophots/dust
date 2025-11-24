@@ -297,10 +297,10 @@ mod tests {
             Primary::Number(28.0)
         );
 
-        // assert_eq!(
-        //     Parser::new("(-3 + 5) * 5 / 7").factor().unwrap().kind,
-        //     Primary::Number(-75.0 / 7.0)
-        // );
+        assert_eq!(
+            Parser::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
+            Primary::Number(10.0 / 7.0)
+        );
 
         assert_eq!(
             Parser::new("1 - 2 * 3 < 4").comparison().unwrap().kind,

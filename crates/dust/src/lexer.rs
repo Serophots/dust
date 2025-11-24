@@ -22,7 +22,12 @@ enum Started {
     None,
     StringLiteral(usize),
     NumberLiteral(usize),
-    SnippetComment(usize),
+    SnippetComment {
+        /// Where the `/* ..` slashes start
+        lower: usize,
+        /// Where the actual comment string starts
+        lower_literal: usize,
+    },
     LineComment {
         /// Where the `// ..` slashes start
         lower: usize,
@@ -136,7 +141,10 @@ impl<'a> Lexer<'a> {
                         }
                         Some('*') => {
                             self.next_char();
-                            Started::SnippetComment(self.byte)
+                            Started::SnippetComment {
+                                lower: byte,
+                                lower_literal: self.byte,
+                            }
                         }
                         _ => return Some(Ok(Token::new(TokenKind::Slash, byte..self.byte))),
                     },
@@ -226,7 +234,10 @@ impl<'a> Lexer<'a> {
                     _ => {}
                 }
             }
-            Started::SnippetComment(lower) => {
+            Started::SnippetComment {
+                lower,
+                lower_literal,
+            } => {
                 // Consume the character
                 let _ = self.next_char();
 
@@ -236,8 +247,9 @@ impl<'a> Lexer<'a> {
                         let _ = self.next_char();
 
                         self.started = Started::None;
-                        let range = lower..byte;
-                        let literal = self.source.get(range.clone()).unwrap().trim();
+                        let range = lower..self.byte;
+                        let literal_range = lower_literal..byte;
+                        let literal = self.source.get(literal_range).unwrap().trim();
 
                         return Some(Ok(Token::new(TokenKind::Comment(literal), range)));
                     }
@@ -340,7 +352,7 @@ impl<'a> Iterator for Lexer<'a> {
                     Started::NumberLiteral(lower) => {
                         return Some(self.finish_number_literal(lower, self.byte));
                     }
-                    Started::SnippetComment(lower) => {
+                    Started::SnippetComment { lower, .. } => {
                         self.started = Started::None;
 
                         return Some(Err(miette::miette!(
@@ -450,11 +462,11 @@ mod tests {
                 },
                 Token {
                     kind: TokenKind::Comment("Bog standard comment"),
-                    src: SourceSpan::new(SourceOffset::from(76), 20)
+                    src: SourceSpan::new(SourceOffset::from(74), 22)
                 },
                 Token {
                     kind: TokenKind::Comment("whoo"),
-                    src: SourceSpan::new(SourceOffset::from(103), 5)
+                    src: SourceSpan::new(SourceOffset::from(101), 7)
                 },
                 Token {
                     kind: TokenKind::RightBrace,
@@ -546,7 +558,7 @@ mod tests {
                 },
                 Token {
                     kind: TokenKind::DocComment("A doc comment on `jeepers`"),
-                    src: SourceSpan::new(SourceOffset::from(210), 27)
+                    src: SourceSpan::new(SourceOffset::from(207), 30)
                 },
                 Token {
                     kind: TokenKind::Function,
@@ -616,7 +628,7 @@ mod tests {
             tokens,
             vec![Token {
                 kind: TokenKind::Comment("trailing comment"),
-                src: SourceSpan::new(SourceOffset::from(2), 17)
+                src: SourceSpan::new(SourceOffset::from(0), 19)
             },]
         );
 
