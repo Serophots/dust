@@ -1,0 +1,14 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/dust"
+]
+
+[workspace.dependencies]
+clap = { version = "4.5", features = ["derive"] }
+miette = { version = "7.6", features = ["fancy"] }
+
+tracing = { version = "0.1", features = [
+    "release_max_level_info"
+ ] }
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
