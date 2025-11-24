@@ -490,7 +490,7 @@ mod tests {
                 },
                 Token {
                     kind: TokenKind::Comment("a snippet comment"),
-                    src: SourceSpan::new(SourceOffset::from(128), 19)
+                    src: SourceSpan::new(SourceOffset::from(126), 23)
                 },
                 Token {
                     kind: TokenKind::NumberLiteral(7.0),
