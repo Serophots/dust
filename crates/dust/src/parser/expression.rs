@@ -1,53 +1,24 @@
-use std::{
-    iter::{Filter, Peekable},
-    ops::Not,
-};
+use std::ops::Not as _;
 
 use miette::{LabeledSpan, Result};
 
 use crate::{
-    lexer::Lexer,
+    parser::Parser,
     token::{Token, TokenKind},
 };
 
-/// Evaluates a string of equality/comparison/addition/multiplication
-///
-/// ```
-/// expression     → equality ;
-/// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-/// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-/// term           → factor ( ( "-" | "+" ) factor )* ;
-/// factor         → unary ( ( "/" | "*" ) unary )* ;
-/// unary          → ( "!" | "-" ) unary
-///                | primary ;
-/// primary        → NUMBER | STRING | "true" | "false" | "nil"
-///                | "(" expression ")" ;
-/// ```
-pub struct Calculator<'a> {
-    pub source: &'a str,
-    // Warning: Type gymnastics incoming
-    lexer: Peekable<Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>>,
+#[derive(Debug)]
+pub enum Primary<'a> {
+    Number(f64),
+    String(&'a str),
+    Bool(bool),
+    Nil,
 }
 
-impl<'a> Calculator<'a> {
-    pub fn new(source: &'a str) -> Calculator<'a> {
-        fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind<'b>>>) -> bool {
-            !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment(_)))
-        }
-
-        let predicate: fn(&Result<Token<TokenKind<'_>>>) -> bool = predicate;
-        let lexer = Lexer::new(source).filter(predicate).peekable();
-
-        Calculator { source, lexer }
-    }
-
-    pub fn parse(&mut self) -> Result<Token<Primary<'a>>> {
-        self.equality()
-    }
-
+impl<'a> Parser<'a> {
     /// Read a string of equalities == / !=
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn equality(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.comparison()?;
 
         loop {
@@ -80,7 +51,7 @@ impl<'a> Calculator<'a> {
 
     /// Read a string of comparisons GT/GE/LT/LE
     ///  comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn comparison(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn comparison(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.term()?;
 
         loop {
@@ -120,7 +91,7 @@ impl<'a> Calculator<'a> {
 
     /// Read a string of additions/subtractions
     ///  term           → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn term(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.factor()?;
 
         loop {
@@ -152,7 +123,7 @@ impl<'a> Calculator<'a> {
 
     /// Read a string of multiplications/divisions
     ///  factor         → unary ( ( "/" | "*" ) unary )* ;
-    fn factor(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn factor(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.unary()?;
 
         loop {
@@ -184,7 +155,7 @@ impl<'a> Calculator<'a> {
 
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
-    fn unary(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn unary(&mut self) -> Result<Token<Primary<'a>>> {
         let operator = match self.lexer.peek() {
             Some(Ok(token)) => token,
             Some(Err(_)) => {
@@ -210,7 +181,7 @@ impl<'a> Calculator<'a> {
     /// Read a terminal token or a grouped expression
     ///  primary        → NUMBER | STRING | "true" | "false" | "nil"
     ///                | "(" expression ")" ;
-    fn primary(&mut self) -> Result<Token<Primary<'a>>> {
+    pub(super) fn primary(&mut self) -> Result<Token<Primary<'a>>> {
         let token = match self.lexer.next() {
             Some(token) => token?,
             None => {
@@ -261,125 +232,5 @@ impl<'a> Calculator<'a> {
             )
             .with_source_code(self.source.to_owned())),
         }
-    }
-}
-
-#[derive(Debug)]
-pub enum Primary<'a> {
-    Number(f64),
-    String(&'a str),
-    Bool(bool),
-    Nil,
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::calculator::{Calculator, Primary};
-
-    #[test]
-    fn test_parser() {
-        assert_eq!(
-            Calculator::new("5").primary().unwrap().kind,
-            Primary::Number(5.0)
-        );
-
-        assert_eq!(
-            Calculator::new("-5").unary().unwrap().kind,
-            Primary::Number(-5.0)
-        );
-
-        assert_eq!(
-            Calculator::new("3 * 5 / 7").factor().unwrap().kind,
-            Primary::Number(15.0 / 7.0)
-        );
-
-        assert_eq!(
-            Calculator::new("-7 * 5 / 7").factor().unwrap().kind,
-            Primary::Number(-5.0)
-        );
-
-        assert_eq!(
-            Calculator::new("-7 + 5 * 7").term().unwrap().kind,
-            Primary::Number(28.0)
-        );
-
-        assert_eq!(
-            Calculator::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
-            Primary::Number(10.0 / 7.0)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 < 4").comparison().unwrap().kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 > 4").comparison().unwrap().kind,
-            Primary::Bool(false)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 <= -5")
-                .comparison()
-                .unwrap()
-                .kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 >= -5")
-                .comparison()
-                .unwrap()
-                .kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 >= -5 == true")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 >= -5 == false")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(false)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 >= -5 != true")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(false)
-        );
-
-        assert_eq!(
-            Calculator::new("1 - 2 * 3 >= -5 != false")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("(1 / 2) == (1 / 2)")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(true)
-        );
-
-        assert_eq!(
-            Calculator::new("(0 / 0) == (0 / 0)")
-                .equality()
-                .unwrap()
-                .kind,
-            Primary::Bool(false)
-        );
     }
 }

@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul, Not, Sub};
 
 use miette::SourceSpan;
 
-use crate::calculator::Primary;
+use crate::parser::Primary;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
