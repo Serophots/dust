@@ -11,7 +11,6 @@ impl<'a> Not for Primary<'a> {
             Primary::Bool(b) => Primary::Bool(!b),
             Primary::String(_) => todo!(),
             Primary::Nil => todo!(),
-            Primary::Group(_) => todo!(),
         }
     }
 }
@@ -90,7 +89,6 @@ impl<'a> PartialEq for Primary<'a> {
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::String(l0), Self::String(r0)) => l0 == r0,
             (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
-            (Self::Group(_), Self::Group(_)) => false,
             _ => false,
         }
     }

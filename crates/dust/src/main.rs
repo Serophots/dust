@@ -46,7 +46,7 @@ fn main() -> miette::Result<()> {
             let contents = arena.last().unwrap();
 
             let mut parser = Parser::new(contents);
-            println!("{:?}", parser.equality());
+            println!("{:?}", parser.parse());
         }
         Some(cli::Command::Interactive) => {
             todo!()

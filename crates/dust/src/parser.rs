@@ -1,4 +1,7 @@
-use std::{iter::Peekable, ops::Not};
+use std::{
+    iter::{Filter, Peekable},
+    ops::Not,
+};
 
 use miette::{LabeledSpan, Result};
 
@@ -20,19 +23,29 @@ use crate::{
 /// ```
 pub struct Parser<'a> {
     pub source: &'a str,
-    lexer: Peekable<Lexer<'a>>,
+    // Warning: Type gymnastics incoming
+    lexer: Peekable<Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str) -> Self {
-        Parser {
-            source,
-            lexer: Lexer::new(source).peekable(),
+    pub fn new(source: &'a str) -> Parser<'a> {
+        fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind<'b>>>) -> bool {
+            !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment(_)))
         }
+
+        let predicate: fn(&Result<Token<TokenKind<'_>>>) -> bool = predicate;
+        let lexer = Lexer::new(source).filter(predicate).peekable();
+
+        Parser { source, lexer }
     }
 
-    /// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    pub fn equality(&mut self) -> Result<Token<Primary<'a>>> {
+    pub fn parse(&mut self) -> Result<Token<Primary<'a>>> {
+        self.equality()
+    }
+
+    /// Read a string of equalities == / !=
+    ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+    fn equality(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.comparison()?;
 
         loop {
@@ -63,7 +76,8 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    /// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+    /// Read a string of comparisons GT/GE/LT/LE
+    ///  comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     fn comparison(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.term()?;
 
@@ -102,7 +116,8 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    /// term           → factor ( ( "-" | "+" ) factor )* ;
+    /// Read a string of additions/subtractions
+    ///  term           → factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.factor()?;
 
@@ -133,7 +148,8 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    /// factor         → unary ( ( "/" | "*" ) unary )* ;
+    /// Read a string of multiplications/divisions
+    ///  factor         → unary ( ( "/" | "*" ) unary )* ;
     fn factor(&mut self) -> Result<Token<Primary<'a>>> {
         let mut lhs = self.unary()?;
 
@@ -164,7 +180,8 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    /// unary          → ( "!" | "-" ) unary | primary
+    /// Read a negated unary or a primary
+    ///  unary          → ( "!" | "-" ) unary | primary
     fn unary(&mut self) -> Result<Token<Primary<'a>>> {
         let operator = match self.lexer.peek() {
             Some(Ok(token)) => token,
@@ -188,7 +205,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// primary        → NUMBER | STRING | "true" | "false" | "nil"
+    /// Read a terminal token or a grouped expression
+    ///  primary        → NUMBER | STRING | "true" | "false" | "nil"
     ///                | "(" expression ")" ;
     fn primary(&mut self) -> Result<Token<Primary<'a>>> {
         let token = match self.lexer.next() {
@@ -205,7 +223,6 @@ impl<'a> Parser<'a> {
         };
 
         match token.kind {
-            // TokenKind::Comment(_) => {}
             TokenKind::True => Ok(Token::new(Primary::Bool(true), token.src)),
             TokenKind::False => Ok(Token::new(Primary::Bool(false), token.src)),
             TokenKind::Nil => Ok(Token::new(Primary::Nil, token.src)),
@@ -232,6 +249,7 @@ impl<'a> Parser<'a> {
                     .with_source_code(self.source.to_owned()))
                 }
             }
+
             t => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(
                     token.src,
@@ -245,25 +263,11 @@ impl<'a> Parser<'a> {
 }
 
 #[derive(Debug)]
-pub struct Factor<'a> {
-    lhs: Unary<'a>,
-    rhs: Unary<'a>,
-    rhs_inv: bool,
-}
-
-#[derive(Debug)]
-pub enum Unary<'a> {
-    Primary(Primary<'a>),
-    Unary(Box<Unary<'a>>),
-}
-
-#[derive(Debug)]
 pub enum Primary<'a> {
     Number(f64),
     String(&'a str),
     Bool(bool),
     Nil,
-    Group(Box<()>),
 }
 
 #[cfg(test)]
