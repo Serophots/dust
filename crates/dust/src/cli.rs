@@ -23,4 +23,10 @@ pub enum Command {
     },
     /// Start an interactive dust terminal
     Interactive,
+    /// Evaluate a static expression,
+    /// e.g.
+    /// `1 + 1 == 2` -> TRUE
+    /// `1 + 1 < 2` -> FALSE
+    /// `1 + 1 == 2 == false` -> FALSE
+    Calculate { input: String },
 }

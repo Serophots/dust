@@ -1,6 +1,6 @@
 use std::ops::{Add, Div, Mul, Not, Sub};
 
-use crate::parser::Primary;
+use crate::calculator::Primary;
 
 impl<'a> Not for Primary<'a> {
     type Output = Primary<'a>;

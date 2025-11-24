@@ -10,6 +10,8 @@ use crate::{
     token::{Token, TokenKind},
 };
 
+/// Evaluates a string of equality/comparison/addition/multiplication
+///
 /// ```
 /// expression     → equality ;
 /// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -21,14 +23,14 @@ use crate::{
 /// primary        → NUMBER | STRING | "true" | "false" | "nil"
 ///                | "(" expression ")" ;
 /// ```
-pub struct Parser<'a> {
+pub struct Calculator<'a> {
     pub source: &'a str,
     // Warning: Type gymnastics incoming
     lexer: Peekable<Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(source: &'a str) -> Parser<'a> {
+impl<'a> Calculator<'a> {
+    pub fn new(source: &'a str) -> Calculator<'a> {
         fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind<'b>>>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment(_)))
         }
@@ -36,7 +38,7 @@ impl<'a> Parser<'a> {
         let predicate: fn(&Result<Token<TokenKind<'_>>>) -> bool = predicate;
         let lexer = Lexer::new(source).filter(predicate).peekable();
 
-        Parser { source, lexer }
+        Calculator { source, lexer }
     }
 
     pub fn parse(&mut self) -> Result<Token<Primary<'a>>> {
@@ -272,62 +274,68 @@ pub enum Primary<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{Parser, Primary};
+    use crate::calculator::{Calculator, Primary};
 
     #[test]
     fn test_parser() {
         assert_eq!(
-            Parser::new("5").primary().unwrap().kind,
+            Calculator::new("5").primary().unwrap().kind,
             Primary::Number(5.0)
         );
 
         assert_eq!(
-            Parser::new("-5").unary().unwrap().kind,
+            Calculator::new("-5").unary().unwrap().kind,
             Primary::Number(-5.0)
         );
 
         assert_eq!(
-            Parser::new("3 * 5 / 7").factor().unwrap().kind,
+            Calculator::new("3 * 5 / 7").factor().unwrap().kind,
             Primary::Number(15.0 / 7.0)
         );
 
         assert_eq!(
-            Parser::new("-7 * 5 / 7").factor().unwrap().kind,
+            Calculator::new("-7 * 5 / 7").factor().unwrap().kind,
             Primary::Number(-5.0)
         );
 
         assert_eq!(
-            Parser::new("-7 + 5 * 7").term().unwrap().kind,
+            Calculator::new("-7 + 5 * 7").term().unwrap().kind,
             Primary::Number(28.0)
         );
 
         assert_eq!(
-            Parser::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
+            Calculator::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
             Primary::Number(10.0 / 7.0)
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 < 4").comparison().unwrap().kind,
+            Calculator::new("1 - 2 * 3 < 4").comparison().unwrap().kind,
             Primary::Bool(true)
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 > 4").comparison().unwrap().kind,
+            Calculator::new("1 - 2 * 3 > 4").comparison().unwrap().kind,
             Primary::Bool(false)
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 <= -5").comparison().unwrap().kind,
+            Calculator::new("1 - 2 * 3 <= -5")
+                .comparison()
+                .unwrap()
+                .kind,
             Primary::Bool(true)
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5").comparison().unwrap().kind,
+            Calculator::new("1 - 2 * 3 >= -5")
+                .comparison()
+                .unwrap()
+                .kind,
             Primary::Bool(true)
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 == true")
+            Calculator::new("1 - 2 * 3 >= -5 == true")
                 .equality()
                 .unwrap()
                 .kind,
@@ -335,7 +343,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 == false")
+            Calculator::new("1 - 2 * 3 >= -5 == false")
                 .equality()
                 .unwrap()
                 .kind,
@@ -343,7 +351,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 != true")
+            Calculator::new("1 - 2 * 3 >= -5 != true")
                 .equality()
                 .unwrap()
                 .kind,
@@ -351,7 +359,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 != false")
+            Calculator::new("1 - 2 * 3 >= -5 != false")
                 .equality()
                 .unwrap()
                 .kind,

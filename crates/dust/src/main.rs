@@ -2,12 +2,12 @@ use std::fs;
 
 use miette::{IntoDiagnostic, LabeledSpan, WrapErr};
 
-use crate::{cli::Args, lexer::Lexer, parser::Parser};
+use crate::{calculator::Calculator, cli::Args, lexer::Lexer};
 
+mod calculator;
 mod cli;
 mod lexer;
 mod ops;
-mod parser;
 mod token;
 
 fn main() -> miette::Result<()> {
@@ -37,6 +37,10 @@ fn main() -> miette::Result<()> {
             )
             .with_source_code(contents.clone()));
         }
+        Some(cli::Command::Calculate { input }) => {
+            let mut calculator = Calculator::new(&input);
+            println!("{:?}", calculator.parse());
+        }
         Some(cli::Command::Interpret { file }) => {
             arena.push(
                 fs::read_to_string(&file)
@@ -45,7 +49,7 @@ fn main() -> miette::Result<()> {
             );
             let contents = arena.last().unwrap();
 
-            let mut parser = Parser::new(contents);
+            let mut parser = Calculator::new(contents);
             println!("{:?}", parser.parse());
         }
         Some(cli::Command::Interactive) => {
