@@ -303,6 +303,7 @@ impl<'a> Lexer<'a> {
                 return Ok(Token::new(TokenKind::Return, range.clone()));
             }
             "let" => return Ok(Token::new(TokenKind::Let, range.clone())),
+            "print" => return Ok(Token::new(TokenKind::Print, range.clone())),
             _ => {
                 return Ok(Token::new(TokenKind::Identifier(identifier), range.clone()));
             }
@@ -442,7 +443,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(48), 1)
                 },
                 Token {
-                    kind: TokenKind::Identifier("print"),
+                    kind: TokenKind::Print,
                     src: SourceSpan::new(SourceOffset::from(54), 5)
                 },
                 Token {
@@ -502,7 +503,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(151), 1)
                 },
                 Token {
-                    kind: TokenKind::Identifier("print"),
+                    kind: TokenKind::Print,
                     src: SourceSpan::new(SourceOffset::from(157), 5)
                 },
                 Token {
@@ -582,7 +583,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(251), 1)
                 },
                 Token {
-                    kind: TokenKind::Identifier("print"),
+                    kind: TokenKind::Print,
                     src: SourceSpan::new(SourceOffset::from(257), 5)
                 },
                 Token {

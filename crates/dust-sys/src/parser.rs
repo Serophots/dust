@@ -57,12 +57,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Consume the next token in the lexer
-    pub fn next(&mut self) -> Result<Option<Token<TokenKind<'a>>>> {
+    pub fn next_token(&mut self) -> Result<Option<Token<TokenKind<'a>>>> {
         self.lexer.next().transpose()
     }
 
     /// Peek the next token in the lexer
-    pub fn peek<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
+    pub fn peek_token<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
         let is_err = transpose(self.lexer.peek()).is_err();
 
         if is_err {

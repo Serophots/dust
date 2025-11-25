@@ -72,7 +72,7 @@ fn main() -> miette::Result<()> {
             );
             let contents = arena.last().unwrap();
 
-            let mut parser = Parser::new(contents);
+            let parser = Parser::new(contents);
 
             for statement in parser {
                 println!("{:?}", statement?);

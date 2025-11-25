@@ -37,7 +37,7 @@ impl<'a> Parser<'a> {
         let mut lhs = self.comparison()?;
 
         loop {
-            let Some(operator) = self.peek()? else {
+            let Some(operator) = self.peek_token()? else {
                 break;
             };
 
@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
         let mut lhs = self.term()?;
 
         loop {
-            let Some(operator) = self.peek()? else {
+            let Some(operator) = self.peek_token()? else {
                 break;
             };
 
@@ -98,7 +98,7 @@ impl<'a> Parser<'a> {
         let mut lhs = self.factor()?;
 
         loop {
-            let Some(operator) = self.peek()? else {
+            let Some(operator) = self.peek_token()? else {
                 break;
             };
 
@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
         let mut lhs = self.unary()?;
 
         loop {
-            let Some(operator) = self.peek()? else {
+            let Some(operator) = self.peek_token()? else {
                 break;
             };
 
@@ -147,7 +147,7 @@ impl<'a> Parser<'a> {
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
     fn unary(&mut self) -> Result<Token<Expression<'a>>> {
-        let Some(operator) = self.peek()? else {
+        let Some(operator) = self.peek_token()? else {
             //TODO: Error in the input; something is wrong
             todo!()
         };
@@ -165,7 +165,7 @@ impl<'a> Parser<'a> {
     ///  primary        → NUMBER | STRING | "true" | "false" | "nil"
     ///                | "(" expression ")" ;
     fn primary(&mut self) -> Result<Token<Expression<'a>>> {
-        let Some(token) = self.next()? else {
+        let Some(token) = self.next_token()? else {
             let eof = self.source.chars().count();
 
             return Err(miette::miette!(
@@ -184,7 +184,7 @@ impl<'a> Parser<'a> {
             TokenKind::LeftParen => {
                 let group_token = self.equality()?;
 
-                let right_brace = self.next()?;
+                let right_brace = self.next_token()?;
 
                 if let Some(right_brace) = right_brace
                     && matches!(right_brace.kind, TokenKind::RightParen)

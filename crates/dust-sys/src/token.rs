@@ -52,6 +52,7 @@ pub enum TokenKind<'a> {
     Nil,
     Return,
     Let,
+    Print,
     Comment(&'a str),
     DocComment(&'a str),
     StringLiteral(&'a str),
