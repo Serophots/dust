@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul, Not, Sub};
 
 use miette::SourceSpan;
 
-use crate::parser::Primary;
+use crate::parser::Expression;
 
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
@@ -140,30 +140,30 @@ impl<T> Token<T>
 where
     T: PartialOrd,
 {
-    pub fn greater<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn greater<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind > rhs.kind),
+            Expression::Bool(self.kind > rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }
 
-    pub fn greater_equal<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn greater_equal<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind >= rhs.kind),
+            Expression::Bool(self.kind >= rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }
 
-    pub fn lesser<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn lesser<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind < rhs.kind),
+            Expression::Bool(self.kind < rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }
 
-    pub fn lesser_equal<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn lesser_equal<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind <= rhs.kind),
+            Expression::Bool(self.kind <= rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }
@@ -173,16 +173,16 @@ impl<T> Token<T>
 where
     T: PartialEq,
 {
-    pub fn equals<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn equals<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind == rhs.kind),
+            Expression::Bool(self.kind == rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }
 
-    pub fn not_equals<'a>(self, rhs: Self) -> Token<Primary<'a>> {
+    pub fn not_equals<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Primary::Bool(self.kind != rhs.kind),
+            Expression::Bool(self.kind != rhs.kind),
             combine_src(self.src, rhs.src),
         )
     }

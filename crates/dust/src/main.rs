@@ -1,24 +1,46 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
-use miette::{IntoDiagnostic, LabeledSpan, WrapErr};
+use clap::Subcommand;
+use dust_sys::lexer::Lexer;
+use dust_sys::parser::Parser;
+use miette::{Context as _, IntoDiagnostic as _, LabeledSpan};
 
-use crate::{cli::Args, lexer::Lexer, parser::Parser};
+#[derive(clap::Parser)]
+#[command(author, version, about)]
+pub struct Args {
+    #[command(subcommand)]
+    pub cmd: Option<Command>,
+}
 
-// mod calculator;
-mod cli;
-mod lexer;
-mod ops;
-mod parser;
-mod token;
+#[derive(Subcommand)]
+pub enum Command {
+    /// Tokenize a .dst file
+    Tokenize {
+        /// Path of the .dst file to tokenize
+        file: PathBuf,
+    },
+    /// Interpret a .dst file
+    Interpret {
+        /// Path of the .dst file to interpret
+        file: PathBuf,
+    },
+    /// Start an interactive dust terminal
+    Interactive,
+    /// Evaluate a static expression,
+    /// e.g.
+    /// `1 + 1 == 2` -> TRUE
+    /// `1 + 1 < 2` -> FALSE
+    /// `1 + 1 == 2 == false` -> FALSE
+    Calculate { input: String },
+}
 
 fn main() -> miette::Result<()> {
-    // init_logging();
     let args = <Args as clap::Parser>::parse();
 
     let mut arena = Vec::new();
 
     match args.cmd {
-        Some(cli::Command::Tokenize { file }) => {
+        Some(Command::Tokenize { file }) => {
             arena.push(
                 fs::read_to_string(&file)
                     .into_diagnostic()
@@ -38,11 +60,11 @@ fn main() -> miette::Result<()> {
             )
             .with_source_code(contents.clone()));
         }
-        Some(cli::Command::Calculate { .. }) => {
+        Some(Command::Calculate { .. }) => {
             // let mut calculator = Calculator::new(&input);
             // println!("{:?}", calculator.parse());
         }
-        Some(cli::Command::Interpret { file }) => {
+        Some(Command::Interpret { file }) => {
             arena.push(
                 fs::read_to_string(&file)
                     .into_diagnostic()
@@ -51,9 +73,12 @@ fn main() -> miette::Result<()> {
             let contents = arena.last().unwrap();
 
             let mut parser = Parser::new(contents);
-            println!("{:?}", parser.parse());
+
+            for statement in parser {
+                println!("{:?}", statement?);
+            }
         }
-        Some(cli::Command::Interactive) => {
+        Some(Command::Interactive) => {
             todo!()
         }
         None => todo!(),

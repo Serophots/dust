@@ -1,6 +1,7 @@
 use std::str::Chars;
 
-use miette::{LabeledSpan, Result};
+use miette::LabeledSpan;
+use miette::Result;
 
 use crate::token::{Token, TokenKind};
 
@@ -176,7 +177,7 @@ impl<'a> Lexer<'a> {
 
                     _ => {
                         return Some(Err(miette::miette!(
-                            labels = vec![LabeledSpan::at(byte..self.byte, "this token")],
+                            labels = (vec![LabeledSpan::at(byte..self.byte, "this token")]),
                             "unexpected token '{char}'"
                         )
                         .with_source_code(self.source.to_owned())));
