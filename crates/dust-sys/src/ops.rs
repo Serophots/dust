@@ -11,6 +11,7 @@ impl<'a> Not for Expression<'a> {
             Expression::Bool(b) => Expression::Bool(!b),
             Expression::String(_) => todo!(),
             Expression::Nil => todo!(),
+            Expression::Identifier(_) => todo!(),
         }
     }
 }

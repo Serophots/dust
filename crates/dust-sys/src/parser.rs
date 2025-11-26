@@ -57,12 +57,18 @@ impl<'a> Parser<'a> {
     }
 
     /// Consume the next token in the lexer
-    pub fn next_token(&mut self) -> Result<Option<Token<TokenKind<'a>>>> {
-        self.lexer.next().transpose()
+    pub fn next_token<F, R>(&mut self, f: F) -> Result<Option<R>>
+    where
+        F: Fn(Token<TokenKind<'a>>) -> R,
+    {
+        Ok(self.lexer.next().transpose()?.map(f))
     }
 
-    /// Peek the next token in the lexer
-    pub fn peek_token<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
+    /// Peek the next token in the lexer.
+    /// If the lexer yeilds an error for the next token,
+    /// this error token is consumed (not peeked) and
+    /// returned as an Err()
+    pub fn peek_token_or_err<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
         let is_err = transpose(self.lexer.peek()).is_err();
 
         if is_err {
@@ -77,6 +83,19 @@ impl<'a> Parser<'a> {
             } else {
                 unreachable!("expected Ok")
             }
+        }
+    }
+
+    /// Peek the next token in the lexer, ignoring any
+    /// errors parsed up by the lexer as None
+    pub fn peek_token<F, R>(&mut self, f: F) -> Option<R>
+    where
+        F: Fn(&Token<TokenKind<'a>>) -> R,
+    {
+        if let Ok(Some(token)) = transpose(self.lexer.peek()) {
+            Some(f(token))
+        } else {
+            None
         }
     }
 }
