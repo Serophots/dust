@@ -405,6 +405,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::assert_matches;
+
     use crate::parser::{Expression, Parser, Primitive};
 
     #[test]
@@ -500,6 +502,8 @@ mod tests {
             Parser::new("(1 / 2) == (1 / 2)").equality().unwrap().kind,
             Expression::Primitive(Primitive::Bool(true))
         );
+
+        assert_matches!(Parser::new("(0 / 0)").equality().unwrap().kind, Expression::Primitive(Primitive::Number(f)) if f.is_nan());
 
         assert_eq!(
             Parser::new("(0 / 0) == (0 / 0)").equality().unwrap().kind,
