@@ -1,4 +1,5 @@
 use miette::{LabeledSpan, Result};
+use utils::{Token, TokenKind};
 
 ///! program        → statement* EOF ;
 ///!
@@ -10,10 +11,7 @@ use miette::{LabeledSpan, Result};
 ///!
 ///! exprStmt       → expression ";" ;
 ///! printStmt      → "print" expression ";" ;
-use crate::{
-    parser::{Expression, Parser, Primitive},
-    token::{Token, TokenKind},
-};
+use crate::{Expression, Primitive, parser::Parser};
 
 #[derive(Debug)]
 pub enum Statement<'a> {

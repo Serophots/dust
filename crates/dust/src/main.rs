@@ -1,37 +1,20 @@
-use std::{fs, path::PathBuf};
+use dust_ast::Parser;
+use dust_lexer::Lexer;
+use miette::LabeledSpan;
 
-use clap::Subcommand;
-use dust_sys::lexer::Lexer;
-use dust_sys::parser::Parser;
-use miette::{Context as _, IntoDiagnostic as _, LabeledSpan};
+use crate::args::{Args, Command};
 
-#[derive(clap::Parser)]
-#[command(author, version, about)]
-pub struct Args {
-    #[command(subcommand)]
-    pub cmd: Option<Command>,
+mod args;
+
+trait ArenaVec<T> {
+    fn push_arena(&mut self, v: T) -> &T;
 }
 
-#[derive(Subcommand)]
-pub enum Command {
-    /// Tokenize a .dst file
-    Tokenize {
-        /// Path of the .dst file to tokenize
-        file: PathBuf,
-    },
-    /// Interpret a .dst file
-    Interpret {
-        /// Path of the .dst file to interpret
-        file: PathBuf,
-    },
-    /// Start an interactive dust terminal
-    Interactive,
-    /// Evaluate a static expression,
-    /// e.g.
-    /// `1 + 1 == 2` -> TRUE
-    /// `1 + 1 < 2` -> FALSE
-    /// `1 + 1 == 2 == false` -> FALSE
-    Calculate { input: String },
+impl<T> ArenaVec<T> for Vec<T> {
+    fn push_arena(&mut self, v: T) -> &T {
+        self.push(v);
+        self.last().unwrap()
+    }
 }
 
 fn main() -> miette::Result<()> {
@@ -40,13 +23,8 @@ fn main() -> miette::Result<()> {
     let mut arena = Vec::new();
 
     match args.cmd {
-        Some(Command::Tokenize { file }) => {
-            arena.push(
-                fs::read_to_string(&file)
-                    .into_diagnostic()
-                    .wrap_err_with(|| format!("failed to read '{}'", file.display()))?,
-            );
-            let contents = arena.last().unwrap();
+        Some(Command::Tokenize { input }) => {
+            let contents = arena.push_arena(input.read()?);
             let lexer = Lexer::new(contents);
 
             return Err(miette::miette!(
@@ -61,17 +39,13 @@ fn main() -> miette::Result<()> {
             .with_source_code(contents.clone()));
         }
         Some(Command::Calculate { input }) => {
-            let mut parser = Parser::new(&input);
+            let contents = arena.push_arena(input.read()?);
+
+            let mut parser = Parser::new(&contents);
             println!("{:?}", parser.equality());
         }
-        Some(Command::Interpret { file }) => {
-            arena.push(
-                fs::read_to_string(&file)
-                    .into_diagnostic()
-                    .wrap_err_with(|| format!("failed to read '{}'", file.display()))?,
-            );
-            let contents = arena.last().unwrap();
-
+        Some(Command::Interpret { input }) => {
+            let contents = arena.push_arena(input.read()?);
             let parser = Parser::new(contents);
 
             for statement in parser {

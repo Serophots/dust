@@ -1,0 +1,11 @@
+[package]
+name = "dust-utils"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/utils.rs"
+
+[dependencies]
+# Leaf crate - depend on no other crates in /crates
+miette.workspace = true

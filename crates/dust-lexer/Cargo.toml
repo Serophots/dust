@@ -1,0 +1,12 @@
+[package]
+name = "dust-lexer"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lexer.rs"
+
+[dependencies]
+utils.workspace = true
+
+miette.workspace = true

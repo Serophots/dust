@@ -2,10 +2,11 @@ use std::str::Chars;
 
 use miette::LabeledSpan;
 use miette::Result;
-
-use crate::token::{Token, TokenKind};
+use utils::Token;
+use utils::TokenKind;
 
 /// Transforms utf8 text input into an iterator of tokens
+/// `impl Iterator<Item = Result<Token<TokenKind<'a>>>>`
 pub struct Lexer<'a> {
     /// The source code fed into this lexer
     pub source: &'a str,
@@ -387,15 +388,13 @@ impl<'a> Iterator for Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use miette::{SourceOffset, SourceSpan};
+    use utils::{Token, TokenKind};
 
-    use crate::{
-        lexer::Lexer,
-        token::{Token, TokenKind},
-    };
+    use crate::Lexer;
 
     #[test]
     fn test_lexer() {
-        let lexer_test_script = include_str!("../test/lexer.rs");
+        let lexer_test_script = include_str!("../../../assets/tests/lexer.dst");
         let lexer = Lexer::new(lexer_test_script);
         let tokens = lexer.map(|t| t.unwrap()).collect::<Vec<_>>();
 

@@ -1,17 +1,12 @@
 use std::iter::{Filter, Peekable};
 
+use dust_lexer::Lexer;
 use miette::Result;
-
-use crate::{
-    lexer::Lexer,
-    token::{Token, TokenKind},
-    transpose,
-};
+use utils::{Token, TokenKind, TransposeRef};
 
 mod expression;
 mod statement;
 
-pub use expression::*;
 pub use statement::*;
 
 /// Evaluates a string of equality/comparison/addition/multiplication
@@ -69,7 +64,7 @@ impl<'a> Parser<'a> {
     /// this error token is consumed (not peeked) and
     /// returned as an Err()
     pub fn peek_token_or_err<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
-        let is_err = transpose(self.lexer.peek()).is_err();
+        let is_err = self.lexer.peek().transpose_ref().is_err();
 
         if is_err {
             if let Err(err) = self.lexer.next().transpose() {
@@ -78,7 +73,7 @@ impl<'a> Parser<'a> {
                 unreachable!("expected Err")
             }
         } else {
-            if let Ok(token) = transpose(self.lexer.peek()) {
+            if let Ok(token) = self.lexer.peek().transpose_ref() {
                 Ok(token)
             } else {
                 unreachable!("expected Ok")
@@ -92,7 +87,7 @@ impl<'a> Parser<'a> {
     where
         F: Fn(&Token<TokenKind<'a>>) -> R,
     {
-        if let Ok(Some(token)) = transpose(self.lexer.peek()) {
+        if let Ok(Some(token)) = self.lexer.peek().transpose_ref() {
             Some(f(token))
         } else {
             None

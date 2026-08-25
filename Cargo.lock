@@ -98,6 +98,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
+name = "camino"
+version = "1.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb1307f12aa967b5a58416e87b3653360e0fd614a016b6e970db08fecbb1b80d"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -153,8 +159,28 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 name = "dust"
 version = "0.1.0"
 dependencies = [
+ "camino",
  "clap",
+ "dust-ast",
+ "dust-lexer",
  "dust-sys",
+ "miette",
+]
+
+[[package]]
+name = "dust-ast"
+version = "0.1.0"
+dependencies = [
+ "dust-lexer",
+ "dust-utils",
+ "miette",
+]
+
+[[package]]
+name = "dust-lexer"
+version = "0.1.0"
+dependencies = [
+ "dust-utils",
  "miette",
 ]
 
@@ -162,8 +188,17 @@ dependencies = [
 name = "dust-sys"
 version = "0.1.0"
 dependencies = [
+ "dust-ast",
+ "dust-lexer",
  "miette",
  "thiserror",
+]
+
+[[package]]
+name = "dust-utils"
+version = "0.1.0"
+dependencies = [
+ "miette",
 ]
 
 [[package]]

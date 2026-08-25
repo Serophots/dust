@@ -1,9 +1,15 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/dust",
-    "crates/dust-sys",
+    "crates/dust", "crates/dust-ast",
+    "crates/dust-lexer",
+    "crates/dust-sys", "crates/dust-utils",
 ]
 
 [workspace.dependencies]
 dust-sys = { path = "crates/dust-sys" }
+dust-lexer = { path = "crates/dust-lexer" }
+dust-ast = { path = "crates/dust-ast" }
+utils = { package = "dust-utils", path = "crates/dust-utils" }
+
+miette = { version = "7.6" }

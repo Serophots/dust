@@ -1,8 +1,26 @@
-use std::ops::{Add, Div, Mul, Not, Sub};
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub enum Primitive<'a> {
+    Number(f64),
+    String(&'a str),
+    Bool(bool),
+    Nil,
+}
 
-use crate::parser::Primitive;
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum BinaryOperation {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Equal,
+    NotEqual,
+    Greater,
+    GreaterEqual,
+    Lesser,
+    LesserEqual,
+}
 
-impl<'a> Not for Primitive<'a> {
+impl<'a> std::ops::Not for Primitive<'a> {
     type Output = Primitive<'a>;
 
     fn not(self) -> Self::Output {
@@ -15,7 +33,7 @@ impl<'a> Not for Primitive<'a> {
     }
 }
 
-impl<'a> Mul for Primitive<'a> {
+impl<'a> std::ops::Mul for Primitive<'a> {
     type Output = Primitive<'a>;
 
     fn mul(self, rhs: Self) -> Self::Output {
@@ -28,7 +46,7 @@ impl<'a> Mul for Primitive<'a> {
     }
 }
 
-impl<'a> Div for Primitive<'a> {
+impl<'a> std::ops::Div for Primitive<'a> {
     type Output = Primitive<'a>;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -39,7 +57,7 @@ impl<'a> Div for Primitive<'a> {
     }
 }
 
-impl<'a> Add for Primitive<'a> {
+impl<'a> std::ops::Add for Primitive<'a> {
     type Output = Primitive<'a>;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -50,7 +68,7 @@ impl<'a> Add for Primitive<'a> {
     }
 }
 
-impl<'a> Sub for Primitive<'a> {
+impl<'a> std::ops::Sub for Primitive<'a> {
     type Output = Primitive<'a>;
 
     fn sub(self, rhs: Self) -> Self::Output {
