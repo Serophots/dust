@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 dust-lexer.workspace = true
 dust-ast.workspace = true
-dust-sys.workspace = true
 
 
 miette = { version = "7.6", features = ["fancy"] }
