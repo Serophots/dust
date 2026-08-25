@@ -11,7 +11,7 @@ function       → "fn" ident "()" block_expr ;
 block_expr     → "{"  
                     (
                         statement*
-                      | statement* expression_wo_block
+                      | statement* expression_w/o_block
                     )
                   "}" | ";" ;
 
@@ -51,7 +51,7 @@ factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary
                | primary ;
 primary        → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" logic_or ")" ;
-               
+              | "(" arithmetic ")"
+              | IDENTIFIER ;
 
 ```

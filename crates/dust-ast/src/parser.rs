@@ -5,9 +5,7 @@ use miette::Result;
 use utils::{Token, TokenKind, TransposeRef};
 
 mod arithmetic;
-mod statement;
-
-pub use statement::*;
+mod expression;
 
 pub struct Parser<'a> {
     pub source: &'a str,
@@ -59,14 +57,17 @@ impl<'a> Parser<'a> {
 
     /// Peek the next token in the lexer, ignoring any
     /// errors parsed up by the lexer as None
-    pub fn peek_token<F, R>(&mut self, f: F) -> Option<R>
-    where
-        F: Fn(&Token<TokenKind<'a>>) -> R,
-    {
+    pub fn peek_token<'s>(&'s mut self) -> Option<&'s Token<TokenKind>> {
         if let Ok(Some(token)) = self.lexer.peek().transpose_ref() {
-            Some(f(token))
+            Some(token)
         } else {
             None
         }
+    }
+
+    /// Peek the next token in the lexer, ignoring any
+    /// errors parsed up by the lexer as None
+    pub fn peek_token_kind<'s>(&'s mut self) -> Option<&'s TokenKind> {
+        self.peek_token().map(|token| &token.kind)
     }
 }
