@@ -2,10 +2,12 @@ use std::ops::{Add, Div, Mul, Not, Sub};
 
 use miette::SourceSpan;
 
-use crate::parser::Expression;
+use crate::{
+    combine_src,
+    parser::{Expression, Primitive},
+};
 
-#[derive(Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Debug, PartialEq)]
 pub struct Token<T> {
     pub kind: T,
     pub src: SourceSpan,
@@ -143,28 +145,28 @@ where
 {
     pub fn greater<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind > rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind > rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
 
     pub fn greater_equal<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind >= rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind >= rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
 
     pub fn lesser<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind < rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind < rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
 
     pub fn lesser_equal<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind <= rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind <= rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
@@ -176,21 +178,15 @@ where
 {
     pub fn equals<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind == rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind == rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
 
     pub fn not_equals<'a>(self, rhs: Self) -> Token<Expression<'a>> {
         Token::new(
-            Expression::Bool(self.kind != rhs.kind),
+            Expression::Primitive(Primitive::Bool(self.kind != rhs.kind)),
             combine_src(self.src, rhs.src),
         )
     }
-}
-
-fn combine_src(src1: SourceSpan, src2: SourceSpan) -> SourceSpan {
-    let lower = std::cmp::min(src1.offset(), src2.offset());
-    let upper = std::cmp::max(src1.offset() + src1.len(), src2.offset() + src2.len());
-    SourceSpan::from((lower, upper - lower))
 }

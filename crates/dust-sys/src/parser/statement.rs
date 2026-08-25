@@ -11,7 +11,7 @@ use miette::{LabeledSpan, Result};
 ///! exprStmt       → expression ";" ;
 ///! printStmt      → "print" expression ";" ;
 use crate::{
-    parser::{Expression, Parser},
+    parser::{Expression, Parser, Primitive},
     token::{Token, TokenKind},
 };
 
@@ -19,7 +19,10 @@ use crate::{
 pub enum Statement<'a> {
     Expresion(Token<Expression<'a>>),
     Print(Token<Expression<'a>>),
-    Declaration,
+    Declaration {
+        identifier: Token<&'a str>,
+        value: Token<Expression<'a>>,
+    },
 }
 
 impl<'a> Parser<'a> {
@@ -74,19 +77,55 @@ impl<'a> Parser<'a> {
             .with_source_code(self.source.to_owned()));
         };
 
-        let semicolon = self
-            .next_token(|token| matches!(token.kind, TokenKind::Semicolon))?
-            .unwrap_or(false);
-
-        if !semicolon {
-            return Err(miette::miette!(
-                labels = vec![LabeledSpan::at(identifier.src, "this variable declaration")],
-                "expected ';' after a variable declaration"
-            )
-            .with_source_code(self.source.to_owned()));
+        enum NextToken {
+            Equals,
+            Semicolon,
+            Other,
         }
 
-        Ok(Statement::Declaration)
+        let token = self.next_token(|token| Token {
+            kind: match token.kind {
+                TokenKind::Semicolon => NextToken::Semicolon,
+                TokenKind::Equal => NextToken::Equals,
+                _ => NextToken::Other,
+            },
+            src: token.src,
+        })?;
+
+        match token {
+            Some(token) => match token.kind {
+                NextToken::Semicolon => {
+                    return Ok(Statement::Declaration {
+                        identifier,
+                        value: Token {
+                            kind: Expression::Primitive(Primitive::Nil),
+                            src: token.src,
+                        },
+                    });
+                }
+                NextToken::Equals => {
+                    let expression = self.expression()?;
+                    let semicolon = self
+                        .next_token(|token| matches!(token.kind, TokenKind::Semicolon))?
+                        .unwrap_or(false);
+
+                    if semicolon {
+                        return Ok(Statement::Declaration {
+                            identifier,
+                            value: expression,
+                        });
+                    }
+                }
+                _ => {}
+            },
+            None => {}
+        }
+
+        Err(miette::miette!(
+            labels = vec![LabeledSpan::at(identifier.src, "this variable declaration")],
+            "expected '=' or ';' after a variable declaration"
+        )
+        .with_source_code(self.source.to_owned()))
     }
 
     /// Read an expression statement (a statement which evaluates to an expression)
