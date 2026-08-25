@@ -209,7 +209,7 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.comparison()?;
+            let rhs = self.term()?;
             let src = combine_src(lhs.src, rhs.src);
 
             lhs = Token {
@@ -255,7 +255,7 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.comparison()?;
+            let rhs = self.factor()?;
             let src = combine_src(lhs.src, rhs.src);
 
             lhs = Token {
@@ -299,7 +299,7 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.comparison()?;
+            let rhs = self.unary()?;
             let src = combine_src(lhs.src, rhs.src);
 
             lhs = Token {
@@ -322,10 +322,11 @@ impl<'a> Parser<'a> {
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
     fn unary(&mut self) -> Result<Token<Expression<'a>>> {
-        let unary =
-            self.peek_token(|token| matches!(token.kind, TokenKind::Bang | TokenKind::Minus));
+        let unary = self
+            .peek_token(|token| matches!(token.kind, TokenKind::Bang | TokenKind::Minus))
+            .unwrap_or(false);
 
-        if unary.unwrap_or(false) {
+        if unary {
             let op = self.next_token(|f| f.src).unwrap().unwrap();
             let unary = self.unary()?;
             let src = combine_src(op, unary.src);
@@ -436,6 +437,11 @@ mod tests {
         assert_eq!(
             Parser::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
             Expression::Primitive(Primitive::Number(10.0 / 7.0))
+        );
+
+        assert_eq!(
+            Parser::new("1 - 2 * 3").term().unwrap().kind,
+            Expression::Primitive(Primitive::Number(-5.0))
         );
 
         assert_eq!(
