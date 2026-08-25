@@ -4,6 +4,12 @@ I'm hopeful to dig into adding a type system of sorts.
 
 I'd like to do so without bringing in too many dependencies.
 
-Sources:
+## Progress:
+- A basic arithmetic calculator / logic machine, handling equality, inequality, add/sub, mul/div, not, numbers, strings, bools, nil, obeying order of operations, parenthesis. Try `cargo run -- calculate "1 - 2 * 3 >= -5 == true"`.
+
+## Sources:
 - https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 - https://sdiehl.github.io/typechecker-zoo
+
+Implemented
+-

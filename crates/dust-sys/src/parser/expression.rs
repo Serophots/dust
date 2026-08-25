@@ -133,13 +133,13 @@ impl<'a> Expression<'a> {
 impl<'a> Parser<'a> {
     /// Read an expression
     ///  expression     → equality ;
-    pub(super) fn expression(&mut self) -> Result<Token<Expression<'a>>> {
+    pub fn expression(&mut self) -> Result<Token<Expression<'a>>> {
         self.equality()
     }
 
     /// Read a string of equalities == / !=
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Token<Expression<'a>>> {
+    pub fn equality(&mut self) -> Result<Token<Expression<'a>>> {
         let mut lhs = self.comparison()?;
 
         loop {

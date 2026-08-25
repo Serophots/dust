@@ -60,9 +60,9 @@ fn main() -> miette::Result<()> {
             )
             .with_source_code(contents.clone()));
         }
-        Some(Command::Calculate { .. }) => {
-            // let mut calculator = Calculator::new(&input);
-            // println!("{:?}", calculator.parse());
+        Some(Command::Calculate { input }) => {
+            let mut parser = Parser::new(&input);
+            println!("{:?}", parser.equality());
         }
         Some(Command::Interpret { file }) => {
             arena.push(
@@ -78,10 +78,9 @@ fn main() -> miette::Result<()> {
                 println!("{:?}", statement?);
             }
         }
-        Some(Command::Interactive) => {
+        Some(Command::Interactive) | None => {
             todo!()
         }
-        None => todo!(),
     }
 
     Ok(())
