@@ -10,14 +10,19 @@ pub struct Args {
 
 #[derive(clap::Subcommand)]
 pub enum Command {
-    /// Tokenize
+    /// Tokenize a source file
     Tokenize { input: TextSource },
-    /// Interpret
-    Interpret { input: TextSource },
-    /// Start an interactive dust terminal
+    /// Compile a source file into bytecode
+    Compile { input: TextSource },
+    /// Interpret pre-compiled bytecode
+    Interpret { input: ByteSource },
+    /// Compile & interpret a source file
+    Run { input: TextSource },
+    /// Start an interactive dust terminal interpretter
     Interactive,
-    /// Evaluate a static expression,
-    /// e.g.
+    /// Use dusts' parser as a comp-time calculator
+    /// to evaluate static expressions from a text
+    /// source e.g.
     /// `1 + 1 == 2` -> TRUE
     /// `1 + 1 < 2` -> FALSE
     /// `1 + 1 == 2 == false` -> FALSE
@@ -61,5 +66,24 @@ impl TextSource {
         }
         .into_diagnostic()
         .wrap_err_with(|| format!("failed to read '{}'", self))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ByteSource {
+    File(Utf8PathBuf),
+}
+
+impl std::str::FromStr for ByteSource {
+    type Err = std::io::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let path = Utf8PathBuf::from(s);
+
+        if path.is_file() {
+            Ok(Self::File(path))
+        } else {
+            Err(todo!())
+        }
     }
 }

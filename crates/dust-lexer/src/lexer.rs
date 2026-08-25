@@ -5,7 +5,7 @@ use miette::Result;
 use utils::Token;
 use utils::TokenKind;
 
-/// Transforms utf8 text input into an iterator of tokens
+/// Transforms utf8 text input into an iterator of `TokenKind`
 /// `impl Iterator<Item = Result<Token<TokenKind<'a>>>>`
 pub struct Lexer<'a> {
     /// The source code fed into this lexer

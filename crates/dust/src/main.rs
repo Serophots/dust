@@ -31,7 +31,7 @@ fn main() -> miette::Result<()> {
                 labels = lexer
                     .map(|token| {
                         let token = token.unwrap();
-                        LabeledSpan::at(token.src, format!("{:?}", token))
+                        LabeledSpan::at(token.src, format!("{:?}", token.kind))
                     })
                     .collect::<Vec<_>>(),
                 "debug"
@@ -44,7 +44,7 @@ fn main() -> miette::Result<()> {
             let mut parser = Parser::new(&contents);
             println!("{:?}", parser.equality());
         }
-        Some(Command::Interpret { input }) => {
+        Some(Command::Run { input }) => {
             let contents = arena.push_arena(input.read()?);
             let parser = Parser::new(contents);
 
@@ -53,8 +53,10 @@ fn main() -> miette::Result<()> {
             }
         }
         Some(Command::Interactive) | None => {
+            println!("Dust Interactive");
             todo!()
         }
+        _ => todo!(),
     }
 
     Ok(())

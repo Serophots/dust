@@ -1,7 +1,8 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/dust", "crates/dust-ast",
+    "crates/dust",
+    "crates/dust-ast",
     "crates/dust-lexer",
     "crates/dust-utils",
 ]
