@@ -42,15 +42,15 @@ fn main() -> miette::Result<()> {
             let contents = arena.push_arena(input.read()?);
 
             let mut parser = Parser::new(&contents);
-            println!("{:?}", parser.equality());
+            println!("{:?}", parser.arithmetic());
         }
         Some(Command::Run { input }) => {
             let contents = arena.push_arena(input.read()?);
             let parser = Parser::new(contents);
 
-            for statement in parser {
-                println!("{:?}", statement?);
-            }
+            // for statement in parser {
+            //     println!("{:?}", statement?);
+            // }
         }
         Some(Command::Interactive) | None => {
             println!("Dust Interactive");

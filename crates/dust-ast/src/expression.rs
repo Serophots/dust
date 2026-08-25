@@ -85,6 +85,16 @@ impl<'a> Expression<'a> {
                             lhs, rhs,
                         )));
                     }
+                    BinaryOperation::And => {
+                        return Expression::Primitive(Primitive::Bool(Primitive::logical_and(
+                            lhs, rhs,
+                        )));
+                    }
+                    BinaryOperation::Or => {
+                        return Expression::Primitive(Primitive::Bool(Primitive::logical_or(
+                            lhs, rhs,
+                        )));
+                    }
                 },
                 _ => {}
             },

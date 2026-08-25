@@ -2,7 +2,7 @@ use miette::SourceSpan;
 
 use crate::combine_src;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Token<T> {
     pub kind: T,
     pub src: SourceSpan,
@@ -28,7 +28,9 @@ pub enum TokenKind<'a> {
     Lesser,
     Greater,
     Slash,
+    /// &&
     And,
+    /// ||
     Or,
     If,
     Else,
@@ -54,6 +56,15 @@ impl<T> Token<T> {
             kind,
             src: src.into(),
         }
+    }
+}
+
+impl<T> core::fmt::Debug for Token<T>
+where
+    T: core::fmt::Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.kind)
     }
 }
 

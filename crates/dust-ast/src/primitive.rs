@@ -18,6 +18,8 @@ pub enum BinaryOperation {
     GreaterEqual,
     Lesser,
     LesserEqual,
+    And,
+    Or,
 }
 
 impl<'a> std::ops::Not for Primitive<'a> {
@@ -29,6 +31,22 @@ impl<'a> std::ops::Not for Primitive<'a> {
             Primitive::Bool(b) => Primitive::Bool(!b),
             Primitive::String(_) => todo!(),
             Primitive::Nil => todo!(),
+        }
+    }
+}
+
+impl<'a> Primitive<'a> {
+    pub fn logical_and(&self, rhs: &Self) -> bool {
+        match (self, rhs) {
+            (Primitive::Bool(b1), Primitive::Bool(b2)) => *b1 && *b2,
+            _ => todo!(),
+        }
+    }
+
+    pub fn logical_or(&self, rhs: &Self) -> bool {
+        match (self, rhs) {
+            (Primitive::Bool(b1), Primitive::Bool(b2)) => *b1 || *b2,
+            _ => todo!(),
         }
     }
 }

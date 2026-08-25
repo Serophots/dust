@@ -22,7 +22,8 @@ statement      → ";"
 
 let_stmt       → "let" ident ("=" expression )? ";"
 
-expression     →  logic_or
+expression     →  arithmetic
+                | ident "=" expression
                 | todo..
             (the block ones)
                 | block_expr
@@ -35,7 +36,10 @@ if_expr        → "if" expression block_expr
                 
 loop_expr      → "loop" block_expr ;
 
-logic_or       → logic_and ( "||" equality )* ;
+
+arithmetic     → logic_or
+
+logic_or       → logic_and ( "||" logic_and )* ;
 logic_and      → equality ( "&&" equality )* ;
 
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -47,7 +51,7 @@ factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary
                | primary ;
 primary        → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" expression ")" ;
+               | "(" logic_or ")" ;
                
 
 ```

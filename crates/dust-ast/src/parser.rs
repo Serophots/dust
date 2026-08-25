@@ -4,35 +4,11 @@ use dust_lexer::Lexer;
 use miette::Result;
 use utils::{Token, TokenKind, TransposeRef};
 
-mod expression;
+mod arithmetic;
 mod statement;
 
 pub use statement::*;
 
-/// Evaluates a string of equality/comparison/addition/multiplication
-///
-///
-///  ## Statement
-/// ```ignore
-/// statement      → exprStmt
-///                | printStmt ;
-///
-/// exprStmt       → expression ";" ;
-/// printStmt      → "print" expression ";" ;
-/// ```
-///
-/// ## Expression
-/// ```ignore
-/// expression     → equality ;
-/// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-/// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-/// term           → factor ( ( "-" | "+" ) factor )* ;
-/// factor         → unary ( ( "/" | "*" ) unary )* ;
-/// unary          → ( "!" | "-" ) unary
-///                | primary ;
-/// primary        → NUMBER | STRING | "true" | "false" | "nil"
-///                | "(" expression ")" ;
-/// ```
 pub struct Parser<'a> {
     pub source: &'a str,
     // Warning: Type gymnastics incoming

@@ -1,28 +1,114 @@
-///! expression     → equality ;
-///! equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-///! comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-///! term           → factor ( ( "-" | "+" ) factor )* ;
-///! factor         → unary ( ( "/" | "*" ) unary )* ;
-///! unary          → ( "!" | "-" ) unary
-///!                | primary ;
-///! primary        → NUMBER | STRING | "true" | "false" | "nil"
-///!                | "(" expression ")"
-///!                | IDENTIFIER ;
+//! arithmetic     → logic_or
+//!
+//! logic_or       → logic_and ( "||" logic_and )* ;
+//! logic_and      → equality ( "&&" equality )* ;
+//!
+//! equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+//! comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+//!
+//! term           → factor ( ( "-" | "+" ) factor )* ;
+//! factor         → unary ( ( "/" | "*" ) unary )* ;
+//!
+//! unary          → ( "!" | "-" ) unary
+//!                | primary ;
+//! primary        → NUMBER | STRING | "true" | "false" | "nil"
+//!                | "(" logic_or ")" ;
+//!
 use miette::{LabeledSpan, Result};
 use utils::{Token, TokenKind, combine_src};
 
 use crate::{BinaryOperation, Expression, Primitive, parser::Parser};
 
 impl<'a> Parser<'a> {
-    /// Read an expression
-    ///  expression     → equality ;
-    pub fn expression(&mut self) -> Result<Token<Expression<'a>>> {
-        self.equality()
+    pub fn arithmetic(&mut self) -> Result<Token<Expression<'a>>> {
+        self.logic_or()
+    }
+
+    /// Read a string of or's ||
+    ///  logic_or       → logic_and ( "||" logic_and )* ;
+    fn logic_or(&mut self) -> Result<Token<Expression<'a>>> {
+        let mut lhs = self.logic_and()?;
+
+        loop {
+            enum EqualityOperator {
+                Or,
+            }
+
+            // If the operator token should be an error then don't greedily gobble it up into the equality
+            let Some(operator) = self
+                .peek_token(|token| match token.kind {
+                    TokenKind::Or => Some(EqualityOperator::Or),
+                    _ => None,
+                })
+                .flatten()
+            else {
+                break;
+            };
+
+            self.lexer.next();
+            let rhs = self.logic_and()?;
+            let src = combine_src(lhs.src, rhs.src);
+
+            lhs = Token {
+                kind: Expression::Binary {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op: match operator {
+                        EqualityOperator::Or => BinaryOperation::Or,
+                    },
+                }
+                .simplify(),
+                src,
+            };
+        }
+
+        Ok(lhs)
+    }
+
+    /// Read a string of and's &&
+    ///  logic_and      → equality ( "&&" equality )* ;
+    fn logic_and(&mut self) -> Result<Token<Expression<'a>>> {
+        let mut lhs = self.equality()?;
+
+        loop {
+            enum EqualityOperator {
+                And,
+            }
+
+            // If the operator token should be an error then don't greedily gobble it up into the equality
+            let Some(operator) = self
+                .peek_token(|token| match token.kind {
+                    TokenKind::And => Some(EqualityOperator::And),
+                    _ => None,
+                })
+                .flatten()
+            else {
+                break;
+            };
+
+            self.lexer.next();
+            let rhs = self.equality()?;
+            let src = combine_src(lhs.src, rhs.src);
+
+            lhs = Token {
+                kind: Expression::Binary {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op: match operator {
+                        EqualityOperator::And => BinaryOperation::And,
+                    },
+                }
+                .simplify(),
+                src,
+            };
+        }
+
+        Ok(lhs)
     }
 
     /// Read a string of equalities == / !=
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    pub fn equality(&mut self) -> Result<Token<Expression<'a>>> {
+    fn equality(&mut self) -> Result<Token<Expression<'a>>> {
         let mut lhs = self.comparison()?;
 
         loop {
@@ -257,7 +343,7 @@ impl<'a> Parser<'a> {
                 token.src,
             )),
             TokenKind::LeftParen => {
-                let equality = self.equality();
+                let equality = self.logic_or();
                 let right_paren = self
                     .next_token(|token| matches!(token.kind, TokenKind::RightParen))?
                     .unwrap_or(false);
@@ -294,102 +380,126 @@ mod tests {
 
     #[test]
     fn test_expression() {
-        assert_eq!(
-            Parser::new("5").primary().unwrap().kind,
-            Expression::Primitive(Primitive::Number(5.0))
-        );
+        let parse = |s| Parser::new(s).arithmetic().unwrap().kind;
+
+        assert_eq!(parse("5"), Expression::Primitive(Primitive::Number(5.0)));
+
+        assert_eq!(parse("-5"), Expression::Primitive(Primitive::Number(-5.0)));
 
         assert_eq!(
-            Parser::new("-5").unary().unwrap().kind,
-            Expression::Primitive(Primitive::Number(-5.0))
-        );
-
-        assert_eq!(
-            Parser::new("3 * 5 / 7").factor().unwrap().kind,
+            parse("3 * 5 / 7"),
             Expression::Primitive(Primitive::Number(15.0 / 7.0))
         );
 
         assert_eq!(
-            Parser::new("-7 * 5 / 7").factor().unwrap().kind,
+            parse("-7 * 5 / 7"),
             Expression::Primitive(Primitive::Number(-5.0))
         );
 
         assert_eq!(
-            Parser::new("-7 + 5 * 7").term().unwrap().kind,
+            parse("-7 + 5 * 7"),
             Expression::Primitive(Primitive::Number(28.0))
         );
 
         assert_eq!(
-            Parser::new("(-3 + 5) * 5 / 7").term().unwrap().kind,
+            parse("(-3 + 5) * 5 / 7"),
             Expression::Primitive(Primitive::Number(10.0 / 7.0))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3").term().unwrap().kind,
+            parse("1 - 2 * 3"),
             Expression::Primitive(Primitive::Number(-5.0))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 < 4").comparison().unwrap().kind,
+            parse("1 - 2 * 3 < 4"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 > 4").comparison().unwrap().kind,
+            parse("1 - 2 * 3 > 4"),
             Expression::Primitive(Primitive::Bool(false))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 <= -5").comparison().unwrap().kind,
+            parse("1 - 2 * 3 <= -5"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5").comparison().unwrap().kind,
+            parse("1 - 2 * 3 >= -5"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 == true")
-                .equality()
-                .unwrap()
-                .kind,
+            parse("1 - 2 * 3 >= -5 == true"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 == false")
-                .equality()
-                .unwrap()
-                .kind,
+            parse("1 - 2 * 3 >= -5 == false"),
             Expression::Primitive(Primitive::Bool(false))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 != true")
-                .equality()
-                .unwrap()
-                .kind,
+            parse("1 - 2 * 3 >= -5 != true"),
             Expression::Primitive(Primitive::Bool(false))
         );
 
         assert_eq!(
-            Parser::new("1 - 2 * 3 >= -5 != false")
-                .equality()
-                .unwrap()
-                .kind,
+            parse("1 - 2 * 3 >= -5 != false"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
         assert_eq!(
-            Parser::new("(1 / 2) == (1 / 2)").equality().unwrap().kind,
+            parse("(1 / 2) == (1 / 2)"),
             Expression::Primitive(Primitive::Bool(true))
         );
 
-        assert_matches!(Parser::new("(0 / 0)").equality().unwrap().kind, Expression::Primitive(Primitive::Number(f)) if f.is_nan());
+        assert_matches!(parse("(0 / 0)"), Expression::Primitive(Primitive::Number(f)) if f.is_nan());
 
         assert_eq!(
-            Parser::new("(0 / 0) == (0 / 0)").equality().unwrap().kind,
+            parse("(0 / 0) == (0 / 0)"),
+            Expression::Primitive(Primitive::Bool(false))
+        );
+
+        assert_eq!(
+            parse("true && true"),
+            Expression::Primitive(Primitive::Bool(true))
+        );
+
+        assert_eq!(
+            parse("true && false"),
+            Expression::Primitive(Primitive::Bool(false))
+        );
+
+        assert_eq!(
+            parse("false && false"),
+            Expression::Primitive(Primitive::Bool(false))
+        );
+
+        assert_eq!(
+            parse("false || false"),
+            Expression::Primitive(Primitive::Bool(false))
+        );
+
+        assert_eq!(
+            parse("true || false"),
+            Expression::Primitive(Primitive::Bool(true))
+        );
+
+        assert_eq!(
+            parse("true || true"),
+            Expression::Primitive(Primitive::Bool(true))
+        );
+
+        assert_eq!(
+            parse("(4/2==2) && true"),
+            Expression::Primitive(Primitive::Bool(true))
+        );
+
+        assert_eq!(
+            parse("(4/2==2) && (5<3)"),
             Expression::Primitive(Primitive::Bool(false))
         );
     }
