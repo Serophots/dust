@@ -276,7 +276,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Read a string of multiplications/divisions
-    ///  factor         → unary ( ( "/" | "*" ) unary )* ;
+    ///  factor         → unary ( ( "/" | "\*" ) unary )\* ;
     fn factor(&mut self) -> Result<Token<Expression<'a>>> {
         let mut lhs = self.unary()?;
 
