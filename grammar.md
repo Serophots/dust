@@ -1,6 +1,6 @@
 ## Grammar
 
-module         → item* EOF | mod ident block_expr;
+module         → item* EOF | mod ident "{" item* "}";
 item           → visibility? (
                   module | function
                 ) ;

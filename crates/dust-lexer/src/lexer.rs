@@ -297,6 +297,8 @@ impl<'a> Lexer<'a> {
             "loop" => return Ok(Token::new(TokenKind::Loop, range.clone())),
             "for" => return Ok(Token::new(TokenKind::For, range.clone())),
             "while" => return Ok(Token::new(TokenKind::While, range.clone())),
+            "pub" => return Ok(Token::new(TokenKind::Pub, range.clone())),
+            "mod" => return Ok(Token::new(TokenKind::Mod, range.clone())),
             "fn" => return Ok(Token::new(TokenKind::Function, range.clone())),
             "nil" => return Ok(Token::new(TokenKind::Nil, range.clone())),
             "return" => {

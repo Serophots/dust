@@ -6,9 +6,11 @@ use utils::{Ident, Token, TokenKind};
 
 mod arithmetic;
 mod expression;
+mod item;
 mod statement;
 
 pub use expression::*;
+pub use item::*;
 pub use statement::*;
 
 #[derive(Clone)]

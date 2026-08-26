@@ -15,13 +15,13 @@
 use miette::Result;
 use utils::{Token, TokenKind};
 
-use crate::{Arithmetic, Parser};
+use crate::{Arithmetic, Block, Parser};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression<'a> {
     Arithmetic(Arithmetic<'a>),
     Assign,
-    BlockExpr,
+    Block(Box<Block<'a>>),
     IfExpr,
     LoopExpr,
 }
@@ -31,10 +31,8 @@ impl<'a> Parser<'a> {
         match self.first_token_kind() {
             Some(TokenKind::If) => self.if_expr(),
             Some(TokenKind::Loop) => self.loop_expr(),
-            Some(TokenKind::LeftBrace) => {
-                // Block?
-                todo!()
-            }
+            Some(TokenKind::LeftBrace) => Ok(self.block()?.map(Box::new).map(Expression::Block)),
+
             Some(TokenKind::Ident(_))
                 if matches!(self.second_token_kind(), Some(TokenKind::Equal)) =>
             {

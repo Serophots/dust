@@ -38,7 +38,7 @@ pub struct LetStatement<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn block(&mut self) -> Result<Token<Block<'a>>> {
+    pub(crate) fn block(&mut self) -> Result<Token<Block<'a>>> {
         let left_brace = self.expect_token(TokenKind::LeftBrace)?;
 
         let mut statements = Vec::new();
@@ -63,7 +63,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn statement(&mut self) -> Result<Option<Token<Statement<'a>>>> {
+    fn statement(&mut self) -> Result<Option<Token<Statement<'a>>>> {
         loop {
             match self.first_token_kind() {
                 Some(TokenKind::Semicolon) => {
@@ -77,10 +77,14 @@ impl<'a> Parser<'a> {
 
                     let old_parser = self.clone();
 
-                    let expr = self.expression()?.map(Statement::Expression);
+                    let expr = self.expression()?;
+                    let semi = self.expect_token(TokenKind::Semicolon);
 
-                    if self.expect_token(TokenKind::Semicolon).is_ok() {
-                        return Ok(Some(expr));
+                    if let Ok(semi) = semi {
+                        return Ok(Some(Token {
+                            kind: Statement::Expression(expr.kind),
+                            src: combine_src(expr.src, semi.src),
+                        }));
                     } else {
                         // No semicolon;
                         *self = old_parser;
@@ -92,7 +96,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn let_stmt(&mut self) -> Result<Token<Statement<'a>>> {
+    fn let_stmt(&mut self) -> Result<Token<Statement<'a>>> {
         let r#let = self.expect_token(TokenKind::Let)?;
         let ident = self.expect_token_ident()?;
 
