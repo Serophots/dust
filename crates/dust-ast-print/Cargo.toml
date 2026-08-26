@@ -1,0 +1,11 @@
+[package]
+name = "dust-ast-print"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dust-print.workspace = true
+dust-ast.workspace = true
+utils.workspace = true
+
+miette.workspace = true

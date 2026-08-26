@@ -15,26 +15,26 @@
 use miette::{LabeledSpan, Result};
 use utils::{Ident, Token, TokenKind, combine_src};
 
-use crate::{Parser, parser::Expression};
+use crate::{Item, Parser, parser::Expression};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Block<'a> {
-    stmts: Box<[Token<Statement<'a>>]>,
-    expr: Option<Token<Expression<'a>>>,
+    pub stmts: Box<[Token<Statement<'a>>]>,
+    pub expr: Option<Token<Expression<'a>>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement<'a> {
     Semicolon,
-    Item,
+    Item(Item<'a>),
     LetStatement(LetStatement<'a>),
     Expression(Expression<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LetStatement<'a> {
-    ident: Token<Ident<'a>>,
-    expr: Option<Token<Expression<'a>>>,
+    pub ident: Token<Ident<'a>>,
+    pub expr: Option<Token<Expression<'a>>>,
 }
 
 impl<'a> Parser<'a> {
@@ -65,6 +65,14 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) -> Result<Option<Token<Statement<'a>>>> {
         loop {
+            // First, try to pass an item
+            if let Some(item) = self.try_to_parse(|parser| {
+                //
+                parser.item().ok()
+            }) {
+                return Ok(Some(item.map(Statement::Item)));
+            }
+
             match self.first_token_kind() {
                 Some(TokenKind::Semicolon) => {
                     self.expect_token(TokenKind::Semicolon)?;
@@ -75,21 +83,18 @@ impl<'a> Parser<'a> {
                 Some(_) => {
                     // Expression
 
-                    let old_parser = self.clone();
-
-                    let expr = self.expression()?;
-                    let semi = self.expect_token(TokenKind::Semicolon);
-
-                    if let Ok(semi) = semi {
+                    if let Some((expr, semi)) = self.try_to_parse(|parser| {
+                        let expr = parser.expression().ok()?;
+                        let semi = parser.expect_token(TokenKind::Semicolon).ok()?;
+                        Some((expr, semi))
+                    }) {
                         return Ok(Some(Token {
                             kind: Statement::Expression(expr.kind),
                             src: combine_src(expr.src, semi.src),
                         }));
                     } else {
-                        // No semicolon;
-                        *self = old_parser;
                         return Ok(None);
-                    }
+                    };
                 }
                 None => return Ok(None),
             }

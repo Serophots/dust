@@ -162,6 +162,7 @@ dependencies = [
  "camino",
  "clap",
  "dust-ast",
+ "dust-ast-print",
  "dust-lexer",
  "miette",
 ]
@@ -176,12 +177,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "dust-ast-print"
+version = "0.1.0"
+dependencies = [
+ "dust-ast",
+ "dust-print",
+ "dust-utils",
+ "miette",
+]
+
+[[package]]
 name = "dust-lexer"
 version = "0.1.0"
 dependencies = [
  "dust-utils",
  "miette",
 ]
+
+[[package]]
+name = "dust-print"
+version = "0.1.0"
 
 [[package]]
 name = "dust-utils"

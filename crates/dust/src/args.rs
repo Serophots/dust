@@ -11,7 +11,9 @@ pub struct Args {
 #[derive(clap::Subcommand)]
 pub enum Command {
     /// Tokenize a source file
-    Tokenize { input: TextSource },
+    Lex { input: TextSource },
+    /// Parse a source file into Abstract Syntax Tree
+    Parse { input: TextSource },
     /// Compile a source file into bytecode
     Compile { input: TextSource },
     /// Interpret pre-compiled bytecode

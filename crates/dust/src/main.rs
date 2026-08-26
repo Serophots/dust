@@ -23,7 +23,7 @@ fn main() -> miette::Result<()> {
     let mut arena = Vec::new();
 
     match args.cmd {
-        Some(Command::Tokenize { input }) => {
+        Some(Command::Lex { input }) => {
             let contents = arena.push_arena(input.read()?);
             let lexer = Lexer::new(contents);
 
@@ -37,6 +37,19 @@ fn main() -> miette::Result<()> {
                 "debug"
             )
             .with_source_code(contents.clone()));
+        }
+        Some(Command::Parse { input }) => {
+            use dust_ast_print::LabelPrinter;
+
+            let contents = arena.push_arena(input.read()?);
+            let ast = Parser::new(contents).mod_file()?;
+
+            let mut labels = Vec::new();
+            ast.label(&mut labels);
+
+            return Err(
+                miette::miette!(labels = labels, "debug").with_source_code(contents.clone())
+            );
         }
         Some(Command::Calculate { input }) => {
             let contents = arena.push_arena(input.read()?);

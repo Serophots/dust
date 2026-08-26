@@ -3,13 +3,17 @@ resolver = "3"
 members = [
     "crates/dust",
     "crates/dust-ast",
+    "crates/dust-ast-print",
     "crates/dust-lexer",
+    "crates/dust-print",
     "crates/dust-utils",
 ]
 
 [workspace.dependencies]
 dust-lexer = { path = "crates/dust-lexer" }
 dust-ast = { path = "crates/dust-ast" }
+dust-ast-print = { path = "crates/dust-ast-print" }
+dust-print = { path = "crates/dust-print" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 
 miette = { version = "7.6", features = ["fancy"] }

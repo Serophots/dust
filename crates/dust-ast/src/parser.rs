@@ -102,21 +102,39 @@ impl<'a> Parser<'a> {
         lexer.next().map(Result::ok).flatten()
     }
 
+    /// Peek the first token in the lexer
     pub fn first_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
         self.first_token().map(|t| t.kind)
     }
 
     /// Peek the second token in the lexer
-    // We don't want this to take &mut self
-    // it'd mutually exclude the first_token
-    // &mut borrow.
     pub fn second_token<'s>(&'s self) -> Option<Token<TokenKind<'a>>> {
         let mut lexer = self.lexer.clone();
         let _ = lexer.next();
         lexer.next().map(Result::ok).flatten()
     }
 
+    /// Peek the second token in the lexer
     pub fn second_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
         self.second_token().map(|t| t.kind)
+    }
+
+    /// Run the closure in a "sandboxed" closure, which
+    /// upon returning None, rolls back its' state.
+    /// upon returning Some, retains its' state.
+    pub fn try_to_parse<F, T>(&mut self, f: F) -> Option<T>
+    where
+        F: Fn(&mut Parser<'a>) -> Option<T>,
+    {
+        let mut new = self.clone();
+        let ret = f(&mut new);
+
+        if ret.is_some() {
+            *self = new;
+        } else {
+            // Discard state
+        }
+
+        ret
     }
 }
