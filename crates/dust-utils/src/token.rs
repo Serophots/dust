@@ -77,7 +77,16 @@ where
     T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.kind)
+        match true {
+            true => {
+                write!(f, "{:?}", self.kind)
+            }
+            false => f
+                .debug_struct("Token")
+                .field("kind", &self.kind)
+                .field("src", &self.src)
+                .finish(),
+        }
     }
 }
 

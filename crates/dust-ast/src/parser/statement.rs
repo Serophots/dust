@@ -1,3 +1,10 @@
+//!block_expr     → "{"
+//!                    (
+//!                        statement*
+//!                      | statement* expression_w/o_block
+//!                    )
+//!                  "}" ;
+//!
 //! statement      → ";"
 //!                | item
 //!                | let_stmt
@@ -5,10 +12,16 @@
 //!
 //! let_stmt       → "let" ident ("=" expression )? ";"
 
-use miette::Result;
+use miette::{LabeledSpan, Result};
 use utils::{Ident, Token, TokenKind, combine_src};
 
 use crate::{Parser, parser::Expression};
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Block<'a> {
+    stmts: Box<[Token<Statement<'a>>]>,
+    expr: Option<Token<Expression<'a>>>,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Statement<'a> {
@@ -25,22 +38,56 @@ pub struct LetStatement<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn statement(&mut self) -> Result<Token<Statement<'a>>> {
+    pub fn block(&mut self) -> Result<Token<Block<'a>>> {
+        let left_brace = self.expect_token(TokenKind::LeftBrace)?;
+
+        let mut statements = Vec::new();
+        while let Some(statement) = self.statement()? {
+            statements.push(statement);
+        }
+
+        let expression = if !matches!(self.first_token_kind(), Some(TokenKind::RightBrace)) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        let right_brace = self.expect_token(TokenKind::RightBrace)?;
+
+        Ok(Token {
+            kind: Block {
+                stmts: statements.into_boxed_slice(),
+                expr: expression,
+            },
+            src: combine_src(left_brace.src, right_brace.src),
+        })
+    }
+
+    pub fn statement(&mut self) -> Result<Option<Token<Statement<'a>>>> {
         loop {
             match self.first_token_kind() {
                 Some(TokenKind::Semicolon) => {
                     self.expect_token(TokenKind::Semicolon)?;
                 }
                 Some(TokenKind::Let) => {
-                    return self.let_stmt();
+                    return Ok(Some(self.let_stmt()?));
                 }
                 Some(_) => {
                     // Expression
+
+                    let old_parser = self.clone();
+
                     let expr = self.expression()?.map(Statement::Expression);
-                    self.expect_token(TokenKind::Semicolon)?;
-                    return Ok(expr);
+
+                    if self.expect_token(TokenKind::Semicolon).is_ok() {
+                        return Ok(Some(expr));
+                    } else {
+                        // No semicolon;
+                        *self = old_parser;
+                        return Ok(None);
+                    }
                 }
-                None => todo!(),
+                None => return Ok(None),
             }
         }
     }
@@ -70,28 +117,65 @@ impl<'a> Parser<'a> {
                     src: combine_src(r#let.src, semi.src),
                 })
             }
-            _ => Err(todo!()),
+            _ => Err(miette::miette!(
+                labels = vec![LabeledSpan::at(ident.src, "expected '=' or ';' following")],
+                "expected '=' or ';'",
+            )
+            .with_source_code(self.source.to_owned())),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Arithmetic, Parser, Primitive, Statement, parser::expression::Expression};
+    use miette::{SourceOffset, SourceSpan};
+    use utils::{Ident, Token};
+
+    use crate::{
+        Arithmetic, Block, LetStatement, Parser, Primitive, Statement,
+        parser::expression::Expression,
+    };
 
     #[test]
-    fn test_lexer() {
+    fn test_statement() {
         let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
         let mut parser = Parser::new(test_script);
         let mut statements = Vec::new();
 
-        while let token = parser.statement().unwrap() {
+        while let Some(token) = parser.statement().unwrap() {
             statements.push(token.kind);
         }
 
         assert_eq!(
             statements,
             vec![
+                Statement::LetStatement(LetStatement {
+                    ident: Token {
+                        kind: Ident("foo"),
+                        src: SourceSpan::new(SourceOffset::from(49), 3)
+                    },
+                    expr: None
+                }),
+                Statement::LetStatement(LetStatement {
+                    ident: Token {
+                        kind: Ident("bar"),
+                        src: SourceSpan::new(SourceOffset::from(58), 3)
+                    },
+                    expr: Some(Token {
+                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
+                        src: SourceSpan::new(SourceOffset::from(64), 1)
+                    })
+                }),
+                Statement::LetStatement(LetStatement {
+                    ident: Token {
+                        kind: Ident("far"),
+                        src: SourceSpan::new(SourceOffset::from(71), 3)
+                    },
+                    expr: Some(Token {
+                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
+                        src: SourceSpan::new(SourceOffset::from(77), 18)
+                    })
+                }),
                 Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
                     Primitive::Number(4.0)
                 ))),
@@ -101,6 +185,65 @@ mod tests {
                 Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
                     Primitive::Bool(false)
                 ))),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_block() {
+        let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
+        let mut parser = Parser::new(test_script);
+        let mut blocks = Vec::new();
+
+        while let Ok(token) = parser.block() {
+            blocks.push(token.kind);
+        }
+
+        assert_eq!(
+            blocks,
+            vec![
+                Block {
+                    stmts: vec![
+                        Token {
+                            kind: Statement::LetStatement(LetStatement {
+                                ident: Token {
+                                    kind: Ident("foo"),
+                                    src: SourceSpan::new(SourceOffset::from(10), 3)
+                                },
+                                expr: None
+                            }),
+                            src: SourceSpan::new(SourceOffset::from(6), 8)
+                        },
+                        Token {
+                            kind: Statement::Expression(Expression::Arithmetic(
+                                Arithmetic::Primitive(Primitive::Number(15.0))
+                            )),
+                            src: SourceSpan::new(SourceOffset::from(19), 5)
+                        }
+                    ]
+                    .into_boxed_slice(),
+                    expr: Some(Token {
+                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
+                        src: SourceSpan::new(SourceOffset::from(30), 4)
+                    })
+                },
+                Block {
+                    stmts: vec![Token {
+                        kind: Statement::LetStatement(LetStatement {
+                            ident: Token {
+                                kind: Ident("foo"),
+                                src: SourceSpan::new(SourceOffset::from(48), 3)
+                            },
+                            expr: None
+                        }),
+                        src: SourceSpan::new(SourceOffset::from(44), 8)
+                    }]
+                    .into_boxed_slice(),
+                    expr: Some(Token {
+                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
+                        src: SourceSpan::new(SourceOffset::from(82), 3)
+                    })
+                }
             ]
         );
     }

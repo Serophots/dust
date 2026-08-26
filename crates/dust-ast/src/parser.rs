@@ -11,6 +11,7 @@ mod statement;
 pub use expression::*;
 pub use statement::*;
 
+#[derive(Clone)]
 pub struct Parser<'a> {
     pub source: &'a str,
     lexer: Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>,

@@ -13,7 +13,7 @@ block_expr     → "{"
                         statement*
                       | statement* expression_w/o_block
                     )
-                  "}" | ";" ;
+                  "}" ;
 
 statement      → ";"
                | item
