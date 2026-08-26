@@ -279,7 +279,7 @@ impl<'a> Parser<'a> {
         );
 
         if unary {
-            let op = self.next_token(|f| f.src).unwrap().unwrap();
+            let op = self.next_token(|f| f.src)?.unwrap();
             let unary = self.unary()?;
             let src = combine_src(op, unary.src);
 
@@ -341,7 +341,7 @@ impl<'a> Parser<'a> {
                     .with_source_code(self.source.to_owned()))
                 }
             }
-            TokenKind::Ident(str) => Ok(Token::new(Arithmetic::Identifier(str), token.src)),
+            TokenKind::Ident(str) => Ok(Token::new(Arithmetic::Ident(str), token.src)),
 
             t => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(

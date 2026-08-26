@@ -1,8 +1,8 @@
 use std::iter::Filter;
 
 use dust_lexer::Lexer;
-use miette::Result;
-use utils::{Token, TokenKind};
+use miette::{LabeledSpan, Result, SourceSpan};
+use utils::{Ident, Token, TokenKind};
 
 mod arithmetic;
 mod expression;
@@ -34,6 +34,63 @@ impl<'a> Parser<'a> {
         F: Fn(Token<TokenKind<'a>>) -> R,
     {
         Ok(self.lexer.next().transpose()?.map(f))
+    }
+
+    /// Consume the next token, erroring otherwise
+    pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token<TokenKind<'a>>> {
+        let token = self.next_token(|t| t)?;
+
+        match token {
+            Some(Token { kind, .. }) if kind == exp_kind => Ok(token.unwrap()),
+            Some(Token { src, .. }) => Err(miette::miette!(
+                labels = vec![LabeledSpan::at(
+                    src,
+                    format!("expected token '{:?}' following", exp_kind)
+                )],
+                "expected token '{:?}'",
+                exp_kind
+            )
+            .with_source_code(self.source.to_owned())),
+            None => Err(miette::miette!("expected token '{:?}'", exp_kind)
+                .with_source_code(self.source.to_owned())),
+        }
+    }
+
+    /// Consume the next token, erroring otherwise
+    pub fn expect_token_matches<F>(
+        &mut self,
+        f: F,
+    ) -> Result<std::result::Result<Token<TokenKind<'a>>, Option<SourceSpan>>>
+    where
+        F: Fn(TokenKind) -> bool,
+    {
+        let token = self.next_token(|t| t)?;
+
+        Ok(match token {
+            Some(Token { kind, .. }) if f(kind) => Ok(token.unwrap()),
+            Some(Token { src, .. }) => Err(Some(src)),
+            None => Err(None),
+        })
+    }
+
+    pub fn expect_token_ident(&mut self) -> Result<Token<Ident<'a>>> {
+        let token = self.next_token(|t| t)?;
+
+        match token {
+            Some(Token {
+                kind: TokenKind::Ident(ident),
+                src,
+            }) => Ok(Token { kind: ident, src }),
+            Some(Token { src, .. }) => Err(miette::miette!(
+                labels = vec![LabeledSpan::at(src, "expected identifier following")],
+                "expected identifier",
+            )
+            .with_source_code(self.source.to_owned())),
+            None => {
+                Err(miette::miette!("expected identifier",)
+                    .with_source_code(self.source.to_owned()))
+            }
+        }
     }
 
     /// Peek the first token in the lexer

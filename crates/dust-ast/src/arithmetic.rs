@@ -1,13 +1,13 @@
 use std::ops::{self, Not as _};
 
-use utils::Token;
+use utils::{Ident, Token};
 
 use crate::{BinaryOperation, Primitive};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Arithmetic<'a> {
     Primitive(Primitive<'a>),
-    Identifier(&'a str),
+    Ident(Ident<'a>),
     Unary(Box<Token<Arithmetic<'a>>>),
     Binary {
         lhs: Box<Token<Arithmetic<'a>>>,
@@ -28,7 +28,7 @@ impl<'a> Arithmetic<'a> {
     pub fn simplify(self) -> Arithmetic<'a> {
         match self {
             Arithmetic::Primitive(_) => {}
-            Arithmetic::Identifier(_) => {}
+            Arithmetic::Ident(_) => {}
             Arithmetic::Unary(ref expression) => match &expression.kind {
                 Arithmetic::Primitive(primitive) => {
                     // Primitives are cheap to clone

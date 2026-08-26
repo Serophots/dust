@@ -38,17 +38,20 @@ pub enum TokenKind<'a> {
     False,
     Loop,
     For,
+    While,
     Function,
     Nil,
     Return,
     Let,
-    Print,
     Comment(&'a str),
     DocComment(&'a str),
     StringLiteral(&'a str),
     NumberLiteral(f64),
-    Ident(&'a str),
+    Ident(Ident<'a>),
 }
+
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub struct Ident<'a>(pub &'a str);
 
 impl<T> Token<T> {
     pub fn new(kind: T, src: impl Into<SourceSpan>) -> Token<T> {

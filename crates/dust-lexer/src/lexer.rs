@@ -2,6 +2,7 @@ use std::str::Chars;
 
 use miette::LabeledSpan;
 use miette::Result;
+use utils::Ident;
 use utils::Token;
 use utils::TokenKind;
 
@@ -295,15 +296,18 @@ impl<'a> Lexer<'a> {
             "false" => return Ok(Token::new(TokenKind::False, range.clone())),
             "loop" => return Ok(Token::new(TokenKind::Loop, range.clone())),
             "for" => return Ok(Token::new(TokenKind::For, range.clone())),
+            "while" => return Ok(Token::new(TokenKind::While, range.clone())),
             "fn" => return Ok(Token::new(TokenKind::Function, range.clone())),
             "nil" => return Ok(Token::new(TokenKind::Nil, range.clone())),
             "return" => {
                 return Ok(Token::new(TokenKind::Return, range.clone()));
             }
             "let" => return Ok(Token::new(TokenKind::Let, range.clone())),
-            "print" => return Ok(Token::new(TokenKind::Print, range.clone())),
             _ => {
-                return Ok(Token::new(TokenKind::Ident(identifier), range.clone()));
+                return Ok(Token::new(
+                    TokenKind::Ident(Ident(identifier)),
+                    range.clone(),
+                ));
             }
         };
     }
@@ -385,7 +389,7 @@ impl<'a> Iterator for Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Token, TokenKind};
+    use utils::{Ident, Token, TokenKind};
 
     use crate::Lexer;
 
@@ -403,7 +407,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(0), 3)
                 },
                 Token {
-                    kind: TokenKind::Ident("test"),
+                    kind: TokenKind::Ident(Ident("test")),
                     src: SourceSpan::new(SourceOffset::from(4), 4)
                 },
                 Token {
@@ -423,7 +427,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(25), 2)
                 },
                 Token {
-                    kind: TokenKind::Ident("test"),
+                    kind: TokenKind::Ident(Ident("test")),
                     src: SourceSpan::new(SourceOffset::from(28), 4)
                 },
                 Token {
@@ -439,7 +443,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(48), 1)
                 },
                 Token {
-                    kind: TokenKind::Print,
+                    kind: TokenKind::Ident(Ident("print")),
                     src: SourceSpan::new(SourceOffset::from(54), 5)
                 },
                 Token {
@@ -499,7 +503,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(151), 1)
                 },
                 Token {
-                    kind: TokenKind::Print,
+                    kind: TokenKind::Ident(Ident("print")),
                     src: SourceSpan::new(SourceOffset::from(157), 5)
                 },
                 Token {
@@ -535,7 +539,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(187), 1)
                 },
                 Token {
-                    kind: TokenKind::Ident("jeepers"),
+                    kind: TokenKind::Ident(Ident("jeepers")),
                     src: SourceSpan::new(SourceOffset::from(193), 7)
                 },
                 Token {
@@ -563,7 +567,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(238), 2)
                 },
                 Token {
-                    kind: TokenKind::Ident("jeepers"),
+                    kind: TokenKind::Ident(Ident("jeepers")),
                     src: SourceSpan::new(SourceOffset::from(241), 7)
                 },
                 Token {
@@ -579,7 +583,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(251), 1)
                 },
                 Token {
-                    kind: TokenKind::Print,
+                    kind: TokenKind::Ident(Ident("print")),
                     src: SourceSpan::new(SourceOffset::from(257), 5)
                 },
                 Token {
@@ -645,7 +649,7 @@ mod tests {
         assert_eq!(
             tokens,
             vec![Token {
-                kind: TokenKind::Ident("trailing_identifier"),
+                kind: TokenKind::Ident(Ident("trailing_identifier")),
                 src: SourceSpan::new(SourceOffset::from(0), 19)
             },]
         );
