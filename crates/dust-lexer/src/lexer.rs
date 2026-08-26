@@ -7,19 +7,16 @@ use utils::TokenKind;
 
 /// Transforms utf8 text input into an iterator of `TokenKind`
 /// `impl Iterator<Item = Result<Token<TokenKind<'a>>>>`
+#[derive(Clone)]
 pub struct Lexer<'a> {
-    /// The source code fed into this lexer
-    pub source: &'a str,
-    /// The remaining source code to be lexed
+    source: &'a str,
     remaining: Chars<'a>,
-
-    // Internal lexer state:
-    pub byte: usize,
+    byte: usize,
     rest: &'a str,
     started: Started,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Started {
     None,
     StringLiteral(usize),
@@ -296,7 +293,7 @@ impl<'a> Lexer<'a> {
             "else" => return Ok(Token::new(TokenKind::Else, range.clone())),
             "true" => return Ok(Token::new(TokenKind::True, range.clone())),
             "false" => return Ok(Token::new(TokenKind::False, range.clone())),
-            "while" => return Ok(Token::new(TokenKind::While, range.clone())),
+            "loop" => return Ok(Token::new(TokenKind::Loop, range.clone())),
             "for" => return Ok(Token::new(TokenKind::For, range.clone())),
             "fn" => return Ok(Token::new(TokenKind::Function, range.clone())),
             "nil" => return Ok(Token::new(TokenKind::Nil, range.clone())),
@@ -306,7 +303,7 @@ impl<'a> Lexer<'a> {
             "let" => return Ok(Token::new(TokenKind::Let, range.clone())),
             "print" => return Ok(Token::new(TokenKind::Print, range.clone())),
             _ => {
-                return Ok(Token::new(TokenKind::Identifier(identifier), range.clone()));
+                return Ok(Token::new(TokenKind::Ident(identifier), range.clone()));
             }
         };
     }
@@ -394,7 +391,7 @@ mod tests {
 
     #[test]
     fn test_lexer() {
-        let lexer_test_script = include_str!("../../../assets/tests/lexer.dst");
+        let lexer_test_script = include_str!("../../../assets/tests/lexer/lexer.dst");
         let lexer = Lexer::new(lexer_test_script);
         let tokens = lexer.map(|t| t.unwrap()).collect::<Vec<_>>();
 
@@ -406,7 +403,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(0), 3)
                 },
                 Token {
-                    kind: TokenKind::Identifier("test"),
+                    kind: TokenKind::Ident("test"),
                     src: SourceSpan::new(SourceOffset::from(4), 4)
                 },
                 Token {
@@ -426,7 +423,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(25), 2)
                 },
                 Token {
-                    kind: TokenKind::Identifier("test"),
+                    kind: TokenKind::Ident("test"),
                     src: SourceSpan::new(SourceOffset::from(28), 4)
                 },
                 Token {
@@ -538,7 +535,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(187), 1)
                 },
                 Token {
-                    kind: TokenKind::Identifier("jeepers"),
+                    kind: TokenKind::Ident("jeepers"),
                     src: SourceSpan::new(SourceOffset::from(193), 7)
                 },
                 Token {
@@ -566,7 +563,7 @@ mod tests {
                     src: SourceSpan::new(SourceOffset::from(238), 2)
                 },
                 Token {
-                    kind: TokenKind::Identifier("jeepers"),
+                    kind: TokenKind::Ident("jeepers"),
                     src: SourceSpan::new(SourceOffset::from(241), 7)
                 },
                 Token {
@@ -648,7 +645,7 @@ mod tests {
         assert_eq!(
             tokens,
             vec![Token {
-                kind: TokenKind::Identifier("trailing_identifier"),
+                kind: TokenKind::Ident("trailing_identifier"),
                 src: SourceSpan::new(SourceOffset::from(0), 19)
             },]
         );

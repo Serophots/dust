@@ -35,7 +35,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::Or) => Some(EqualityOperator::Or),
                 _ => None,
             }) else {
@@ -73,7 +73,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::And) => Some(EqualityOperator::And),
                 _ => None,
             }) else {
@@ -112,7 +112,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::EqualEqual) => Some(EqualityOperator::Equal),
                 Some(TokenKind::BangEqual) => Some(EqualityOperator::NotEqual),
                 _ => None,
@@ -155,7 +155,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::Greater) => Some(ComparisonOperator::Greater),
                 Some(TokenKind::GreaterEqual) => Some(ComparisonOperator::GreaterEqual),
                 Some(TokenKind::Lesser) => Some(ComparisonOperator::Lesser),
@@ -200,7 +200,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::Plus) => Some(TermOperator::Add),
                 Some(TokenKind::Minus) => Some(TermOperator::Sub),
                 _ => None,
@@ -241,7 +241,7 @@ impl<'a> Parser<'a> {
             }
 
             // If the operator token should be an error then don't greedily gobble it up into the equality
-            let Some(operator) = (match self.peek_token_kind() {
+            let Some(operator) = (match self.first_token_kind() {
                 Some(TokenKind::Star) => Some(FactorOperator::Mul),
                 Some(TokenKind::Slash) => Some(FactorOperator::Div),
                 _ => None,
@@ -274,7 +274,7 @@ impl<'a> Parser<'a> {
     ///  unary          → ( "!" | "-" ) unary | primary
     fn unary(&mut self) -> Result<Token<Arithmetic<'a>>> {
         let unary = matches!(
-            self.peek_token_kind(),
+            self.first_token_kind(),
             Some(TokenKind::Bang) | Some(TokenKind::Minus)
         );
 
@@ -341,7 +341,7 @@ impl<'a> Parser<'a> {
                     .with_source_code(self.source.to_owned()))
                 }
             }
-            TokenKind::Identifier(str) => Ok(Token::new(Arithmetic::Identifier(str), token.src)),
+            TokenKind::Ident(str) => Ok(Token::new(Arithmetic::Identifier(str), token.src)),
 
             t => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(

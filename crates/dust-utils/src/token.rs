@@ -36,7 +36,7 @@ pub enum TokenKind<'a> {
     Else,
     True,
     False,
-    While,
+    Loop,
     For,
     Function,
     Nil,
@@ -47,7 +47,7 @@ pub enum TokenKind<'a> {
     DocComment(&'a str),
     StringLiteral(&'a str),
     NumberLiteral(f64),
-    Identifier(&'a str),
+    Ident(&'a str),
 }
 
 impl<T> Token<T> {
@@ -55,6 +55,16 @@ impl<T> Token<T> {
         Token {
             kind,
             src: src.into(),
+        }
+    }
+
+    pub fn map<U, F>(self, f: F) -> Token<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        Token {
+            kind: f(self.kind),
+            src: self.src,
         }
     }
 }

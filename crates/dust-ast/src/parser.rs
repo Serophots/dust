@@ -1,16 +1,19 @@
-use std::iter::{Filter, Peekable};
+use std::iter::Filter;
 
 use dust_lexer::Lexer;
 use miette::Result;
-use utils::{Token, TokenKind, TransposeRef};
+use utils::{Token, TokenKind};
 
 mod arithmetic;
 mod expression;
+mod statement;
+
+pub use expression::*;
+pub use statement::*;
 
 pub struct Parser<'a> {
     pub source: &'a str,
-    // Warning: Type gymnastics incoming
-    lexer: Peekable<Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>>,
+    lexer: Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>,
 }
 
 impl<'a> Parser<'a> {
@@ -20,7 +23,7 @@ impl<'a> Parser<'a> {
         }
 
         let predicate: fn(&Result<Token<TokenKind<'_>>>) -> bool = predicate;
-        let lexer = Lexer::new(source).filter(predicate).peekable();
+        let lexer = Lexer::new(source).filter(predicate);
 
         Parser { source, lexer }
     }
@@ -33,41 +36,27 @@ impl<'a> Parser<'a> {
         Ok(self.lexer.next().transpose()?.map(f))
     }
 
-    /// Peek the next token in the lexer.
-    /// If the lexer yeilds an error for the next token,
-    /// this error token is consumed (not peeked) and
-    /// returned as an Err()
-    pub fn peek_token_or_err<'s>(&'s mut self) -> Result<Option<&'s Token<TokenKind<'s>>>> {
-        let is_err = self.lexer.peek().transpose_ref().is_err();
-
-        if is_err {
-            if let Err(err) = self.lexer.next().transpose() {
-                Err(err)
-            } else {
-                unreachable!("expected Err")
-            }
-        } else {
-            if let Ok(token) = self.lexer.peek().transpose_ref() {
-                Ok(token)
-            } else {
-                unreachable!("expected Ok")
-            }
-        }
+    /// Peek the first token in the lexer
+    pub fn first_token<'s>(&'s self) -> Option<Token<TokenKind<'a>>> {
+        let mut lexer = self.lexer.clone();
+        lexer.next().map(Result::ok).flatten()
     }
 
-    /// Peek the next token in the lexer, ignoring any
-    /// errors parsed up by the lexer as None
-    pub fn peek_token<'s>(&'s mut self) -> Option<&'s Token<TokenKind>> {
-        if let Ok(Some(token)) = self.lexer.peek().transpose_ref() {
-            Some(token)
-        } else {
-            None
-        }
+    pub fn first_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
+        self.first_token().map(|t| t.kind)
     }
 
-    /// Peek the next token in the lexer, ignoring any
-    /// errors parsed up by the lexer as None
-    pub fn peek_token_kind<'s>(&'s mut self) -> Option<&'s TokenKind> {
-        self.peek_token().map(|token| &token.kind)
+    /// Peek the second token in the lexer
+    // We don't want this to take &mut self
+    // it'd mutually exclude the first_token
+    // &mut borrow.
+    pub fn second_token<'s>(&'s self) -> Option<Token<TokenKind<'a>>> {
+        let mut lexer = self.lexer.clone();
+        let _ = lexer.next();
+        lexer.next().map(Result::ok).flatten()
+    }
+
+    pub fn second_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
+        self.second_token().map(|t| t.kind)
     }
 }
