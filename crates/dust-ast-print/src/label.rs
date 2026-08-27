@@ -1,5 +1,6 @@
 use dust_ast::{
-    Block, Expression, Function, Item, ItemType, LetStatement, Module, Statement, Visibility,
+    Block, CallExpression, Expression, Function, Item, ItemType, LetStatement, Module, Path,
+    Statement, Visibility,
 };
 use miette::LabeledSpan;
 use utils::{Ident, Token};
@@ -7,15 +8,6 @@ use utils::{Ident, Token};
 /// Recurse a data structure, labelling each part as you go
 pub trait LabelPrinter {
     fn label(self, labels: &mut Vec<LabeledSpan>);
-}
-
-impl<'a, T> LabelPrinter for &'a Token<T>
-where
-    &'a T: LabelPrinter,
-{
-    fn label(self, labels: &mut Vec<LabeledSpan>) {
-        self.kind.label(labels);
-    }
 }
 
 impl<'a, T> LabelPrinter for &'a Token<T>
@@ -75,7 +67,7 @@ impl<'a> LabelPrinter for &Block<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Token<Statement<'a>> {
+impl<'a> LabelPrinter for Token<&Statement<'a>> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match &self.kind {
             Statement::Semicolon => {}
@@ -105,11 +97,40 @@ impl<'a> LabelPrinter for &LetStatement<'a> {
 
 impl<'a> LabelPrinter for Token<&Expression<'a>> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
-        labels.push(LabeledSpan::at(self.src, "expr"));
+        match self.kind {
+            Expression::Arithmetic(_) => {
+                labels.push(LabeledSpan::at(self.src, "arithmetic"));
+            }
+            Expression::Assign => todo!(),
+            Expression::CallExpr(call_expression) => call_expression.label(labels),
+            Expression::Path(path) => {
+                let token = Token {
+                    kind: path,
+                    src: self.src,
+                };
+
+                token.label(labels);
+            }
+            Expression::Block(block) => todo!(),
+            Expression::IfExpr => todo!(),
+            Expression::LoopExpr => todo!(),
+        }
     }
 }
 
-impl<'a> LabelPrinter for &Token<Visibility> {
+impl<'a> LabelPrinter for &CallExpression<'a> {
+    fn label(self, labels: &mut Vec<LabeledSpan>) {
+        labels.push(LabeledSpan::at(self.expr.src, "call"));
+    }
+}
+
+impl<'a> LabelPrinter for Token<&Path<'a>> {
+    fn label(self, labels: &mut Vec<LabeledSpan>) {
+        labels.push(LabeledSpan::at(self.src, "path"));
+    }
+}
+
+impl<'a> LabelPrinter for Token<&Visibility> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(
             self.src,
@@ -120,7 +141,7 @@ impl<'a> LabelPrinter for &Token<Visibility> {
     }
 }
 
-impl<'a> LabelPrinter for &Token<Ident<'a>> {
+impl<'a> LabelPrinter for Token<&Ident<'a>> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.src, "ident"));
     }

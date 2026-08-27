@@ -24,12 +24,15 @@ let_stmt       → "let" ident ("=" expression )? ";"
 
 expression     →  arithmetic
                 | ident "=" expression
+                | expression "()"
+                | path
                 | todo..
             (the block ones)
                 | block_expr
                 | if_expr
                 | loop_expr ;
 
+path           → ident ( "::" ident )*  ;
 
 if_expr        → "if" expression block_expr
                 ("else" (block_expr | if_expr) )? ;
@@ -46,7 +49,7 @@ equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 
 term           → factor ( ( "-" | "+" ) factor )* ;
-factor         → unary ( ( "/" | "*" ) unary )* ;
+factor         → unary ( ( "/" | "\*" ) unary )* ;
 
 unary          → ( "!" | "-" ) unary
                | primary ;

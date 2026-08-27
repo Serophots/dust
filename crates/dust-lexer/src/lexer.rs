@@ -62,7 +62,7 @@ impl<'a> Lexer<'a> {
 
     /// Peak at the next char without incrementing the reader
     /// and without mutating any state
-    fn peak_char(&self) -> Option<char> {
+    fn peek_char(&self) -> Option<char> {
         self.rest.chars().next()
     }
 
@@ -73,7 +73,7 @@ impl<'a> Lexer<'a> {
     /// by itself. The caller must check whether the source has ran out.
     fn process_next_char(&mut self) -> Option<Result<Token<TokenKind<'a>>>> {
         let byte = self.byte;
-        let char = self.peak_char()?;
+        let char = self.peek_char()?;
 
         match self.started {
             Started::None => {
@@ -91,28 +91,28 @@ impl<'a> Lexer<'a> {
                     ';' => return Some(Ok(Token::new(TokenKind::Semicolon, byte..self.byte))),
                     '*' => return Some(Ok(Token::new(TokenKind::Star, byte..self.byte))),
 
-                    '!' => match self.peak_char() {
+                    '!' => match self.peek_char() {
                         Some('=') => {
                             self.next_char();
                             return Some(Ok(Token::new(TokenKind::BangEqual, byte..self.byte)));
                         }
                         _ => return Some(Ok(Token::new(TokenKind::Bang, byte..self.byte))),
                     },
-                    '=' => match self.peak_char() {
+                    '=' => match self.peek_char() {
                         Some('=') => {
                             self.next_char();
                             return Some(Ok(Token::new(TokenKind::EqualEqual, byte..self.byte)));
                         }
                         _ => return Some(Ok(Token::new(TokenKind::Equal, byte..self.byte))),
                     },
-                    '<' => match self.peak_char() {
+                    '<' => match self.peek_char() {
                         Some('=') => {
                             self.next_char();
                             return Some(Ok(Token::new(TokenKind::LesserEqual, byte..self.byte)));
                         }
                         _ => return Some(Ok(Token::new(TokenKind::Lesser, byte..self.byte))),
                     },
-                    '>' => match self.peak_char() {
+                    '>' => match self.peek_char() {
                         Some('=') => {
                             self.next_char();
                             return Some(Ok(Token::new(TokenKind::GreaterEqual, byte..self.byte)));
@@ -120,11 +120,11 @@ impl<'a> Lexer<'a> {
                         _ => return Some(Ok(Token::new(TokenKind::Greater, byte..self.byte))),
                     },
 
-                    '/' => match self.peak_char() {
+                    '/' => match self.peek_char() {
                         Some('/') => {
                             self.next_char();
 
-                            if let Some('/') = self.peak_char() {
+                            if let Some('/') = self.peek_char() {
                                 self.next_char();
                                 Started::LineComment {
                                     lower: byte,
@@ -149,12 +149,17 @@ impl<'a> Lexer<'a> {
                         _ => return Some(Ok(Token::new(TokenKind::Slash, byte..self.byte))),
                     },
 
-                    '&' if self.peak_char() == Some('&') => {
+                    ':' if self.peek_char() == Some(':') => {
+                        self.next_char();
+                        return Some(Ok(Token::new(TokenKind::PathSep, byte..self.byte)));
+                    }
+
+                    '&' if self.peek_char() == Some('&') => {
                         self.next_char();
                         return Some(Ok(Token::new(TokenKind::And, byte..self.byte)));
                     }
 
-                    '|' if self.peak_char() == Some('|') => {
+                    '|' if self.peek_char() == Some('|') => {
                         self.next_char();
                         return Some(Ok(Token::new(TokenKind::Or, byte..self.byte)));
                     }
@@ -242,7 +247,7 @@ impl<'a> Lexer<'a> {
                 let _ = self.next_char();
 
                 match char {
-                    '*' if self.peak_char() == Some('/') => {
+                    '*' if self.peek_char() == Some('/') => {
                         // Consume the character
                         let _ = self.next_char();
 

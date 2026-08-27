@@ -41,10 +41,14 @@ impl<'a> Parser<'a> {
 
     /// Consume the next token, erroring otherwise
     pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token<TokenKind<'a>>> {
-        let token = self.next_token(|t| t)?;
+        let token = self.first_token();
 
         match token {
-            Some(Token { kind, .. }) if kind == exp_kind => Ok(token.unwrap()),
+            Some(Token { kind, .. }) if kind == exp_kind => {
+                self.next_token(|t| t).unwrap();
+
+                Ok(token.unwrap())
+            }
             Some(Token { src, .. }) => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(
                     src,

@@ -18,6 +18,8 @@ pub enum TokenKind<'a> {
     Minus,
     Plus,
     Semicolon,
+    /// ::
+    PathSep,
     Star,
     Bang,
     BangEqual,

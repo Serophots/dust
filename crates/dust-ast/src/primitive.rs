@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Primitive<'a> {
     Number(f64),
     String(&'a str),
@@ -22,77 +22,55 @@ pub enum BinaryOperation {
     Or,
 }
 
-impl<'a> std::ops::Not for Primitive<'a> {
-    type Output = Primitive<'a>;
-
-    fn not(self) -> Self::Output {
-        match self {
-            Primitive::Number(n) => Primitive::Number(-n),
-            Primitive::Bool(b) => Primitive::Bool(!b),
-            Primitive::String(_) => todo!(),
-            Primitive::Nil => todo!(),
-        }
-    }
-}
-
 impl<'a> Primitive<'a> {
-    pub fn logical_and(&self, rhs: &Self) -> bool {
-        match (self, rhs) {
-            (Primitive::Bool(b1), Primitive::Bool(b2)) => *b1 && *b2,
-            _ => todo!(),
+    pub fn not(self) -> Result<Primitive<'a>, ()> {
+        match self {
+            Primitive::Number(n) => Ok(Primitive::Number(-n)),
+            Primitive::Bool(b) => Ok(Primitive::Bool(!b)),
+            Primitive::String(_) => Err(()),
+            Primitive::Nil => Err(()),
         }
     }
 
-    pub fn logical_or(&self, rhs: &Self) -> bool {
+    pub fn logical_and(&self, rhs: &Self) -> Result<Primitive<'a>, ()> {
         match (self, rhs) {
-            (Primitive::Bool(b1), Primitive::Bool(b2)) => *b1 || *b2,
-            _ => todo!(),
+            (Primitive::Bool(b1), Primitive::Bool(b2)) => Ok(Primitive::Bool(*b1 && *b2)),
+            _ => Err(()),
         }
     }
-}
 
-impl<'a> std::ops::Mul for Primitive<'a> {
-    type Output = Primitive<'a>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
+    pub fn logical_or(&self, rhs: &Self) -> Result<Primitive<'a>, ()> {
         match (self, rhs) {
-            (Primitive::Number(n1), Primitive::Number(n2)) => Primitive::Number(n1 * n2),
-            (a, b) => {
-                panic!("tried to multiply {:?} by {:?}", a, b);
-            }
+            (Primitive::Bool(b1), Primitive::Bool(b2)) => Ok(Primitive::Bool(*b1 || *b2)),
+            _ => Err(()),
         }
     }
-}
 
-impl<'a> std::ops::Div for Primitive<'a> {
-    type Output = Primitive<'a>;
-
-    fn div(self, rhs: Self) -> Self::Output {
+    pub fn mul(self, rhs: Self) -> Result<Primitive<'a>, ()> {
         match (self, rhs) {
-            (Primitive::Number(n1), Primitive::Number(n2)) => Primitive::Number(n1 / n2),
-            _ => todo!(),
+            (Primitive::Number(n1), Primitive::Number(n2)) => Ok(Primitive::Number(n1 * n2)),
+            _ => Err(()),
         }
     }
-}
 
-impl<'a> std::ops::Add for Primitive<'a> {
-    type Output = Primitive<'a>;
-
-    fn add(self, rhs: Self) -> Self::Output {
+    pub fn div(self, rhs: Self) -> Result<Primitive<'a>, ()> {
         match (self, rhs) {
-            (Primitive::Number(n1), Primitive::Number(n2)) => Primitive::Number(n1 + n2),
-            _ => todo!(),
+            (Primitive::Number(n1), Primitive::Number(n2)) => Ok(Primitive::Number(n1 / n2)),
+            _ => Err(()),
         }
     }
-}
 
-impl<'a> std::ops::Sub for Primitive<'a> {
-    type Output = Primitive<'a>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
+    pub fn add(self, rhs: Self) -> Result<Primitive<'a>, ()> {
         match (self, rhs) {
-            (Primitive::Number(n1), Primitive::Number(n2)) => Primitive::Number(n1 - n2),
-            _ => todo!(),
+            (Primitive::Number(n1), Primitive::Number(n2)) => Ok(Primitive::Number(n1 + n2)),
+            _ => Err(()),
+        }
+    }
+
+    pub fn sub(self, rhs: Self) -> Result<Primitive<'a>, ()> {
+        match (self, rhs) {
+            (Primitive::Number(n1), Primitive::Number(n2)) => Ok(Primitive::Number(n1 - n2)),
+            _ => Err(()),
         }
     }
 }

@@ -54,7 +54,7 @@ impl<'a> Parser<'a> {
                         EqualityOperator::Or => BinaryOperation::Or,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
                         EqualityOperator::And => BinaryOperation::And,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -133,7 +133,7 @@ impl<'a> Parser<'a> {
                         EqualityOperator::NotEqual => BinaryOperation::NotEqual,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -180,7 +180,7 @@ impl<'a> Parser<'a> {
                         ComparisonOperator::LesserEqual => BinaryOperation::LesserEqual,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -221,7 +221,7 @@ impl<'a> Parser<'a> {
                         TermOperator::Sub => BinaryOperation::Sub,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -262,7 +262,7 @@ impl<'a> Parser<'a> {
                         FactorOperator::Div => BinaryOperation::Div,
                     },
                 }
-                .simplify(),
+                .simplify(&self.source)?,
                 src,
             };
         }
@@ -284,7 +284,7 @@ impl<'a> Parser<'a> {
             let src = combine_src(op, unary.src);
 
             Ok(Token {
-                kind: Arithmetic::Unary(Box::new(unary)).simplify(),
+                kind: Arithmetic::Unary(Box::new(unary)).simplify(&self.source)?,
                 src,
             })
         } else {
