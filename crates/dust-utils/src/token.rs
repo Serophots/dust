@@ -1,8 +1,8 @@
-use miette::SourceSpan;
+use miette::{SourceOffset, SourceSpan};
 
 use crate::combine_src;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub struct Token<T> {
     pub kind: T,
     pub src: SourceSpan,
@@ -63,6 +63,14 @@ impl<T> Token<T> {
         }
     }
 
+    /// Intended for use in tests
+    pub fn kind(kind: T) -> Token<T> {
+        Token {
+            kind,
+            src: SourceSpan::new(SourceOffset::from(0), 0),
+        }
+    }
+
     pub fn map<U, F>(self, f: F) -> Token<U>
     where
         F: FnOnce(T) -> U,
@@ -79,16 +87,16 @@ where
     T: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match true {
-            true => {
-                write!(f, "{:?}", self.kind)
-            }
-            false => f
-                .debug_struct("Token")
-                .field("kind", &self.kind)
-                .field("src", &self.src)
-                .finish(),
-        }
+        write!(f, "{:?}", self.kind)
+    }
+}
+
+impl<T> PartialEq for Token<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
     }
 }
 

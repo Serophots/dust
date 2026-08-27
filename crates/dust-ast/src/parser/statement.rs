@@ -161,28 +161,28 @@ mod tests {
                 Statement::LetStatement(LetStatement {
                     ident: Token {
                         kind: Ident("foo"),
-                        src: SourceSpan::new(SourceOffset::from(49), 3)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     },
                     expr: None
                 }),
                 Statement::LetStatement(LetStatement {
                     ident: Token {
                         kind: Ident("bar"),
-                        src: SourceSpan::new(SourceOffset::from(58), 3)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     },
                     expr: Some(Token {
                         kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
-                        src: SourceSpan::new(SourceOffset::from(64), 1)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     })
                 }),
                 Statement::LetStatement(LetStatement {
                     ident: Token {
                         kind: Ident("far"),
-                        src: SourceSpan::new(SourceOffset::from(71), 3)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     },
                     expr: Some(Token {
                         kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
-                        src: SourceSpan::new(SourceOffset::from(77), 18)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     })
                 }),
                 Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
@@ -217,23 +217,23 @@ mod tests {
                             kind: Statement::LetStatement(LetStatement {
                                 ident: Token {
                                     kind: Ident("foo"),
-                                    src: SourceSpan::new(SourceOffset::from(10), 3)
+                                    src: SourceSpan::new(SourceOffset::from(0), 0),
                                 },
                                 expr: None
                             }),
-                            src: SourceSpan::new(SourceOffset::from(6), 8)
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
                         },
                         Token {
                             kind: Statement::Expression(Expression::Arithmetic(
                                 Arithmetic::Primitive(Primitive::Number(15.0))
                             )),
-                            src: SourceSpan::new(SourceOffset::from(19), 5)
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
                         }
                     ]
                     .into_boxed_slice(),
                     expr: Some(Token {
                         kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
-                        src: SourceSpan::new(SourceOffset::from(30), 4)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     })
                 },
                 Block {
@@ -241,17 +241,39 @@ mod tests {
                         kind: Statement::LetStatement(LetStatement {
                             ident: Token {
                                 kind: Ident("foo"),
-                                src: SourceSpan::new(SourceOffset::from(48), 3)
+                                src: SourceSpan::new(SourceOffset::from(0), 0),
                             },
                             expr: None
                         }),
-                        src: SourceSpan::new(SourceOffset::from(44), 8)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     }]
                     .into_boxed_slice(),
                     expr: Some(Token {
                         kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
-                        src: SourceSpan::new(SourceOffset::from(82), 3)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     })
+                },
+                Block {
+                    stmts: vec![
+                        Token::kind(Statement::LetStatement(LetStatement {
+                            ident: Token::kind(Ident("foo")),
+                            expr: None
+                        })),
+                        Token::kind(Statement::LetStatement(LetStatement {
+                            ident: Token::kind(Ident("bar")),
+                            expr: Some(Token::kind(Expression::Arithmetic(Arithmetic::Primitive(
+                                Primitive::Number(2.0)
+                            ))))
+                        })),
+                        Token::kind(Statement::LetStatement(LetStatement {
+                            ident: Token::kind(Ident("far")),
+                            expr: Some(Token::kind(Expression::Arithmetic(Arithmetic::Primitive(
+                                Primitive::Bool(true)
+                            ))))
+                        }))
+                    ]
+                    .into_boxed_slice(),
+                    expr: None
                 }
             ]
         );

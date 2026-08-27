@@ -406,207 +406,207 @@ mod tests {
             vec![
                 Token {
                     kind: TokenKind::Let,
-                    src: SourceSpan::new(SourceOffset::from(0), 3)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("test")),
-                    src: SourceSpan::new(SourceOffset::from(4), 4)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Equal,
-                    src: SourceSpan::new(SourceOffset::from(9), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::StringLiteral("beep boop"),
-                    src: SourceSpan::new(SourceOffset::from(12), 9)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(22), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::If,
-                    src: SourceSpan::new(SourceOffset::from(25), 2)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("test")),
-                    src: SourceSpan::new(SourceOffset::from(28), 4)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::EqualEqual,
-                    src: SourceSpan::new(SourceOffset::from(33), 2)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::StringLiteral("beep boop"),
-                    src: SourceSpan::new(SourceOffset::from(37), 9)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(48), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(54), 5)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(59), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::StringLiteral("boop beep"),
-                    src: SourceSpan::new(SourceOffset::from(61), 9)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(71), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(72), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Comment("Bog standard comment"),
-                    src: SourceSpan::new(SourceOffset::from(74), 22)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Comment("whoo"),
-                    src: SourceSpan::new(SourceOffset::from(101), 7)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(109), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Else,
-                    src: SourceSpan::new(SourceOffset::from(111), 4)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(116), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::NumberLiteral(5.0),
-                    src: SourceSpan::new(SourceOffset::from(122), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Plus,
-                    src: SourceSpan::new(SourceOffset::from(124), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Comment("a snippet comment"),
-                    src: SourceSpan::new(SourceOffset::from(126), 23)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::NumberLiteral(7.0),
-                    src: SourceSpan::new(SourceOffset::from(150), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(151), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(157), 5)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(162), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::StringLiteral("foop fleep"),
-                    src: SourceSpan::new(SourceOffset::from(164), 10)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Comma,
-                    src: SourceSpan::new(SourceOffset::from(175), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::NumberLiteral(5.0),
-                    src: SourceSpan::new(SourceOffset::from(177), 3)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Slash,
-                    src: SourceSpan::new(SourceOffset::from(181), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::NumberLiteral(3.0),
-                    src: SourceSpan::new(SourceOffset::from(183), 3)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(186), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(187), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("jeepers")),
-                    src: SourceSpan::new(SourceOffset::from(193), 7)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(200), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(201), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(202), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(204), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::DocComment("A doc comment on `jeepers`"),
-                    src: SourceSpan::new(SourceOffset::from(207), 30)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Function,
-                    src: SourceSpan::new(SourceOffset::from(238), 2)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("jeepers")),
-                    src: SourceSpan::new(SourceOffset::from(241), 7)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(248), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(249), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(251), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(257), 5)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(262), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::StringLiteral("jeepers"),
-                    src: SourceSpan::new(SourceOffset::from(264), 7)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(272), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(273), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 },
                 Token {
                     kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(275), 1)
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
                 }
             ]
         );
@@ -620,7 +620,7 @@ mod tests {
             tokens,
             vec![Token {
                 kind: TokenKind::NumberLiteral(5.0),
-                src: SourceSpan::new(SourceOffset::from(0), 1)
+                src: SourceSpan::new(SourceOffset::from(0), 0),
             },]
         );
 
@@ -632,7 +632,7 @@ mod tests {
             tokens,
             vec![Token {
                 kind: TokenKind::Comment("trailing comment"),
-                src: SourceSpan::new(SourceOffset::from(0), 19)
+                src: SourceSpan::new(SourceOffset::from(0), 0),
             },]
         );
 
@@ -652,7 +652,7 @@ mod tests {
             tokens,
             vec![Token {
                 kind: TokenKind::Ident(Ident("trailing_identifier")),
-                src: SourceSpan::new(SourceOffset::from(0), 19)
+                src: SourceSpan::new(SourceOffset::from(0), 0),
             },]
         );
     }

@@ -121,7 +121,7 @@ mod tests {
 
     use crate::{
         Arithmetic, Block, Expression, Function, Item, ItemType, LetStatement, Module, Parser,
-        Primitive, Statement,
+        Primitive, Statement, Visibility,
     };
 
     #[test]
@@ -140,7 +140,7 @@ mod tests {
                             r#type: ItemType::Function(Function {
                                 ident: Token {
                                     kind: Ident("first"),
-                                    src: SourceSpan::new(SourceOffset::from(3), 5)
+                                    src: SourceSpan::new(SourceOffset::from(0), 0),
                                 },
                                 block: Token {
                                     kind: Block {
@@ -149,22 +149,22 @@ mod tests {
                                             kind: Expression::Arithmetic(Arithmetic::Primitive(
                                                 Primitive::Number(15.0)
                                             )),
-                                            src: SourceSpan::new(SourceOffset::from(17), 9)
+                                            src: SourceSpan::new(SourceOffset::from(0), 0),
                                         })
                                     },
-                                    src: SourceSpan::new(SourceOffset::from(11), 17)
+                                    src: SourceSpan::new(SourceOffset::from(0), 0),
                                 }
                             })
                         },
-                        src: SourceSpan::new(SourceOffset::from(0), 28)
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
                     },
                     Token {
                         kind: Item {
-                            vis: None,
+                            vis: Some(Token::kind(Visibility::Pub)),
                             r#type: ItemType::Function(Function {
                                 ident: Token {
                                     kind: Ident("second"),
-                                    src: SourceSpan::new(SourceOffset::from(33), 6)
+                                    src: SourceSpan::new(SourceOffset::from(0), 0),
                                 },
                                 block: Token {
                                     kind: Block {
@@ -174,8 +174,8 @@ mod tests {
                                                     ident: Token {
                                                         kind: Ident("foo"),
                                                         src: SourceSpan::new(
-                                                            SourceOffset::from(52),
-                                                            3
+                                                            SourceOffset::from(0),
+                                                            0
                                                         )
                                                     },
                                                     expr: Some(Token {
@@ -185,25 +185,25 @@ mod tests {
                                                             )
                                                         ),
                                                         src: SourceSpan::new(
-                                                            SourceOffset::from(58),
-                                                            9
+                                                            SourceOffset::from(0),
+                                                            0
                                                         )
                                                     })
                                                 }),
-                                                src: SourceSpan::new(SourceOffset::from(48), 20)
+                                                src: SourceSpan::new(SourceOffset::from(0), 0),
                                             },
                                             Token {
                                                 kind: Statement::LetStatement(LetStatement {
                                                     ident: Token {
                                                         kind: Ident("bar"),
                                                         src: SourceSpan::new(
-                                                            SourceOffset::from(77),
-                                                            3
+                                                            SourceOffset::from(0),
+                                                            0
                                                         )
                                                     },
                                                     expr: None
                                                 }),
-                                                src: SourceSpan::new(SourceOffset::from(73), 8)
+                                                src: SourceSpan::new(SourceOffset::from(0), 0),
                                             }
                                         ]
                                         .into_boxed_slice(),
@@ -211,15 +211,39 @@ mod tests {
                                             kind: Expression::Arithmetic(Arithmetic::Ident(Ident(
                                                 "foo"
                                             ))),
-                                            src: SourceSpan::new(SourceOffset::from(86), 3)
+                                            src: SourceSpan::new(SourceOffset::from(0), 0),
                                         })
                                     },
-                                    src: SourceSpan::new(SourceOffset::from(42), 49)
+                                    src: SourceSpan::new(SourceOffset::from(0), 0),
                                 }
                             })
                         },
-                        src: SourceSpan::new(SourceOffset::from(30), 61)
-                    }
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token::kind(Item {
+                        vis: None,
+                        r#type: ItemType::Function(Function {
+                            ident: Token::kind(Ident("third")),
+                            block: Token::kind(Block {
+                                stmts: vec![Token::kind(Statement::Item(Item {
+                                    vis: None,
+                                    r#type: ItemType::Function(Function {
+                                        ident: Token::kind(Ident("fourth")),
+                                        block: Token::kind(Block {
+                                            stmts: vec![].into_boxed_slice(),
+                                            expr: Some(Token::kind(Expression::Arithmetic(
+                                                Arithmetic::Primitive(Primitive::Number(3.0))
+                                            )))
+                                        })
+                                    })
+                                }))]
+                                .into_boxed_slice(),
+                                expr: Some(Token::kind(Expression::Arithmetic(
+                                    Arithmetic::Primitive(Primitive::Number(5.0))
+                                )))
+                            })
+                        })
+                    })
                 ]
                 .into_boxed_slice()
             }
