@@ -1,10 +1,10 @@
 [package]
-name = "dust-ast"
+name = "dust-hir"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dust-lexer.workspace = true
+dust-ast.workspace = true
 utils.workspace = true
 
 miette.workspace = true

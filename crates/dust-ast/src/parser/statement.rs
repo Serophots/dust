@@ -18,27 +18,27 @@ use utils::{Ident, Token, TokenKind, combine_src};
 use crate::{Item, Parser, parser::Expression};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Block<'a> {
-    pub stmts: Box<[Token<Statement<'a>>]>,
-    pub expr: Option<Token<Expression<'a>>>,
+pub struct Block {
+    pub stmts: Box<[Token<Statement>]>,
+    pub expr: Option<Token<Expression>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Statement<'a> {
+pub enum Statement {
     Semicolon,
-    Item(Item<'a>),
-    LetStatement(LetStatement<'a>),
-    Expression(Expression<'a>),
+    Item(Item),
+    LetStatement(LetStatement),
+    Expression(Expression),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LetStatement<'a> {
-    pub ident: Token<Ident<'a>>,
-    pub expr: Option<Token<Expression<'a>>>,
+pub struct LetStatement {
+    pub ident: Token<Ident>,
+    pub expr: Option<Token<Expression>>,
 }
 
 impl<'a> Parser<'a> {
-    pub(crate) fn block(&mut self) -> Result<Token<Block<'a>>> {
+    pub(crate) fn block(&mut self) -> Result<Token<Block>> {
         let left_brace = self.expect_token(TokenKind::LeftBrace)?;
 
         let mut statements = Vec::new();
@@ -63,7 +63,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn statement(&mut self) -> Result<Option<Token<Statement<'a>>>> {
+    fn statement(&mut self) -> Result<Option<Token<Statement>>> {
         loop {
             // First, try to pass an item
             if let Some(item) = self.try_to_parse(|parser| {
@@ -101,7 +101,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn let_stmt(&mut self) -> Result<Token<Statement<'a>>> {
+    fn let_stmt(&mut self) -> Result<Token<Statement>> {
         let r#let = self.expect_token(TokenKind::Let)?;
         let ident = self.expect_token_ident()?;
 
@@ -138,7 +138,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token};
+    use utils::{Ident, Token, create_and_enter_global_ctxt};
 
     use crate::{
         Arithmetic, Block, LetStatement, Parser, Primitive, Statement,
@@ -147,135 +147,147 @@ mod tests {
 
     #[test]
     fn test_statement() {
-        let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
-        let mut parser = Parser::new(test_script);
-        let mut statements = Vec::new();
+        create_and_enter_global_ctxt(|ctx| {
+            let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
+            let mut parser = Parser::new(test_script, ctx);
+            let mut statements = Vec::new();
 
-        while let Some(token) = parser.statement().unwrap() {
-            statements.push(token.kind);
-        }
+            while let Some(token) = parser.statement().unwrap() {
+                statements.push(token.kind);
+            }
 
-        assert_eq!(
-            statements,
-            vec![
-                Statement::LetStatement(LetStatement {
-                    ident: Token {
-                        kind: Ident("foo"),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    },
-                    expr: None
-                }),
-                Statement::LetStatement(LetStatement {
-                    ident: Token {
-                        kind: Ident("bar"),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    },
-                    expr: Some(Token {
-                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    })
-                }),
-                Statement::LetStatement(LetStatement {
-                    ident: Token {
-                        kind: Ident("far"),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    },
-                    expr: Some(Token {
-                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    })
-                }),
-                Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                    Primitive::Number(4.0)
-                ))),
-                Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                    Primitive::Bool(true)
-                ))),
-                Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                    Primitive::Bool(false)
-                ))),
-            ]
-        );
+            assert_eq!(
+                statements,
+                vec![
+                    Statement::LetStatement(LetStatement {
+                        ident: Token {
+                            kind: Ident(ctx.symbols.get_or_intern("foo")),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        },
+                        expr: None
+                    }),
+                    Statement::LetStatement(LetStatement {
+                        ident: Token {
+                            kind: Ident(ctx.symbols.get_or_intern("bar")),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        },
+                        expr: Some(Token {
+                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
+                                2.0
+                            ))),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        })
+                    }),
+                    Statement::LetStatement(LetStatement {
+                        ident: Token {
+                            kind: Ident(ctx.symbols.get_or_intern("far")),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        },
+                        expr: Some(Token {
+                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
+                                true
+                            ))),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        })
+                    }),
+                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                        Primitive::Number(4.0)
+                    ))),
+                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                        Primitive::Bool(true)
+                    ))),
+                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                        Primitive::Bool(false)
+                    ))),
+                ]
+            );
+        });
     }
 
     #[test]
     fn test_block() {
-        let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
-        let mut parser = Parser::new(test_script);
-        let mut blocks = Vec::new();
+        create_and_enter_global_ctxt(|ctx| {
+            let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
+            let mut parser = Parser::new(test_script, ctx);
+            let mut blocks = Vec::new();
 
-        while let Ok(token) = parser.block() {
-            blocks.push(token.kind);
-        }
+            while let Ok(token) = parser.block() {
+                blocks.push(token.kind);
+            }
 
-        assert_eq!(
-            blocks,
-            vec![
-                Block {
-                    stmts: vec![
-                        Token {
+            assert_eq!(
+                blocks,
+                vec![
+                    Block {
+                        stmts: vec![
+                            Token {
+                                kind: Statement::LetStatement(LetStatement {
+                                    ident: Token {
+                                        kind: Ident(ctx.symbols.get_or_intern("foo")),
+                                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                                    },
+                                    expr: None
+                                }),
+                                src: SourceSpan::new(SourceOffset::from(0), 0),
+                            },
+                            Token {
+                                kind: Statement::Expression(Expression::Arithmetic(
+                                    Arithmetic::Primitive(Primitive::Number(15.0))
+                                )),
+                                src: SourceSpan::new(SourceOffset::from(0), 0),
+                            }
+                        ]
+                        .into_boxed_slice(),
+                        expr: Some(Token {
+                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
+                                true
+                            ))),
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        })
+                    },
+                    Block {
+                        stmts: vec![Token {
                             kind: Statement::LetStatement(LetStatement {
                                 ident: Token {
-                                    kind: Ident("foo"),
+                                    kind: Ident(ctx.symbols.get_or_intern("foo")),
                                     src: SourceSpan::new(SourceOffset::from(0), 0),
                                 },
                                 expr: None
                             }),
                             src: SourceSpan::new(SourceOffset::from(0), 0),
-                        },
-                        Token {
-                            kind: Statement::Expression(Expression::Arithmetic(
-                                Arithmetic::Primitive(Primitive::Number(15.0))
-                            )),
+                        }]
+                        .into_boxed_slice(),
+                        expr: Some(Token {
+                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
+                                2.0
+                            ))),
                             src: SourceSpan::new(SourceOffset::from(0), 0),
-                        }
-                    ]
-                    .into_boxed_slice(),
-                    expr: Some(Token {
-                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    })
-                },
-                Block {
-                    stmts: vec![Token {
-                        kind: Statement::LetStatement(LetStatement {
-                            ident: Token {
-                                kind: Ident("foo"),
-                                src: SourceSpan::new(SourceOffset::from(0), 0),
-                            },
-                            expr: None
-                        }),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    }]
-                    .into_boxed_slice(),
-                    expr: Some(Token {
-                        kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(2.0))),
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    })
-                },
-                Block {
-                    stmts: vec![
-                        Token::kind(Statement::LetStatement(LetStatement {
-                            ident: Token::kind(Ident("foo")),
-                            expr: None
-                        })),
-                        Token::kind(Statement::LetStatement(LetStatement {
-                            ident: Token::kind(Ident("bar")),
-                            expr: Some(Token::kind(Expression::Arithmetic(Arithmetic::Primitive(
-                                Primitive::Number(2.0)
-                            ))))
-                        })),
-                        Token::kind(Statement::LetStatement(LetStatement {
-                            ident: Token::kind(Ident("far")),
-                            expr: Some(Token::kind(Expression::Arithmetic(Arithmetic::Primitive(
-                                Primitive::Bool(true)
-                            ))))
-                        }))
-                    ]
-                    .into_boxed_slice(),
-                    expr: None
-                }
-            ]
-        );
+                        })
+                    },
+                    Block {
+                        stmts: vec![
+                            Token::kind(Statement::LetStatement(LetStatement {
+                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("foo"))),
+                                expr: None
+                            })),
+                            Token::kind(Statement::LetStatement(LetStatement {
+                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("bar"))),
+                                expr: Some(Token::kind(Expression::Arithmetic(
+                                    Arithmetic::Primitive(Primitive::Number(2.0))
+                                )))
+                            })),
+                            Token::kind(Statement::LetStatement(LetStatement {
+                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("far"))),
+                                expr: Some(Token::kind(Expression::Arithmetic(
+                                    Arithmetic::Primitive(Primitive::Bool(true))
+                                )))
+                            }))
+                        ]
+                        .into_boxed_slice(),
+                        expr: None
+                    }
+                ]
+            );
+        });
     }
 }

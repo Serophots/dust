@@ -2,6 +2,7 @@ use std::str::Chars;
 
 use miette::LabeledSpan;
 use miette::Result;
+use utils::GblCx;
 use utils::Ident;
 use utils::Token;
 use utils::TokenKind;
@@ -15,6 +16,7 @@ pub struct Lexer<'a> {
     byte: usize,
     rest: &'a str,
     started: Started,
+    gcx: GblCx<'a>,
 }
 
 #[derive(Clone, Debug)]
@@ -39,7 +41,7 @@ enum Started {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str) -> Self {
+    pub fn new(source: &'a str, gcx: GblCx<'a>) -> Self {
         Lexer {
             source: source,
             remaining: source.chars(),
@@ -47,6 +49,8 @@ impl<'a> Lexer<'a> {
             byte: 0,
             rest: source,
             started: Started::None,
+
+            gcx,
         }
     }
 
@@ -71,7 +75,7 @@ impl<'a> Lexer<'a> {
     /// NOTE: a None return does **NOT** indicate that the source has ran out,
     /// but rather just that this character was not enough to constitute a Token
     /// by itself. The caller must check whether the source has ran out.
-    fn process_next_char(&mut self) -> Option<Result<Token<TokenKind<'a>>>> {
+    fn process_next_char(&mut self) -> Option<Result<Token<TokenKind>>> {
         let byte = self.byte;
         let char = self.peek_char()?;
 
@@ -200,8 +204,9 @@ impl<'a> Lexer<'a> {
                         // exclude the upper byte which is *on* the trailing "
                         let range = lower..byte;
                         let literal = self.source.get(range.clone()).unwrap();
+                        let symbol = self.gcx.symbols.get_or_intern(literal);
 
-                        return Some(Ok(Token::new(TokenKind::StringLiteral(literal), range)));
+                        return Some(Ok(Token::new(TokenKind::StringLiteral(symbol), range)));
                     }
                     _ => {}
                 };
@@ -256,7 +261,9 @@ impl<'a> Lexer<'a> {
                         let literal_range = lower_literal..byte;
                         let literal = self.source.get(literal_range).unwrap().trim();
 
-                        return Some(Ok(Token::new(TokenKind::Comment(literal), range)));
+                        let _ = literal;
+
+                        return Some(Ok(Token::new(TokenKind::Comment, range)));
                     }
                     _ => {}
                 }
@@ -268,7 +275,7 @@ impl<'a> Lexer<'a> {
         return self.process_next_char();
     }
 
-    fn finish_number_literal(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind<'a>>> {
+    fn finish_number_literal(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind>> {
         self.started = Started::None;
 
         // include the lower byte which starts on the first digit
@@ -286,7 +293,7 @@ impl<'a> Lexer<'a> {
         return Ok(Token::new(TokenKind::NumberLiteral(number), range));
     }
 
-    fn finish_identifier(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind<'a>>> {
+    fn finish_identifier(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind>> {
         self.started = Started::None;
 
         // include the lower byte which begins the identifier
@@ -312,10 +319,9 @@ impl<'a> Lexer<'a> {
             }
             "let" => return Ok(Token::new(TokenKind::Let, range.clone())),
             _ => {
-                return Ok(Token::new(
-                    TokenKind::Ident(Ident(identifier)),
-                    range.clone(),
-                ));
+                let symbol = self.gcx.symbols.get_or_intern(identifier);
+
+                return Ok(Token::new(TokenKind::Ident(Ident(symbol)), range.clone()));
             }
         };
     }
@@ -326,23 +332,25 @@ impl<'a> Lexer<'a> {
         lower_literal: usize,
         doc: bool,
         byte: usize,
-    ) -> Result<Token<TokenKind<'a>>> {
+    ) -> Result<Token<TokenKind>> {
         self.started = Started::None;
 
         let token_range = lower..byte;
         let literal_range = lower_literal..byte;
         let literal = self.source.get(literal_range).unwrap().trim();
 
+        let _ = literal;
+
         if doc {
-            return Ok(Token::new(TokenKind::DocComment(literal), token_range));
+            return Ok(Token::new(TokenKind::DocComment, token_range));
         } else {
-            return Ok(Token::new(TokenKind::Comment(literal), token_range));
+            return Ok(Token::new(TokenKind::Comment, token_range));
         }
     }
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = Result<Token<TokenKind<'a>>>;
+    type Item = Result<Token<TokenKind>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.process_next_char() {
@@ -397,269 +405,273 @@ impl<'a> Iterator for Lexer<'a> {
 #[cfg(test)]
 mod tests {
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token, TokenKind};
+    use utils::{Ident, Token, TokenKind, create_and_enter_global_ctxt};
 
     use crate::Lexer;
 
     #[test]
     fn test_lexer() {
-        let lexer_test_script = include_str!("../../../assets/tests/lexer/lexer.dst");
-        let lexer = Lexer::new(lexer_test_script);
-        let tokens = lexer.map(|t| t.unwrap()).collect::<Vec<_>>();
+        create_and_enter_global_ctxt(|ctx| {
+            let lexer_test_script = include_str!("../../../assets/tests/lexer/lexer.dst");
+            let lexer = Lexer::new(lexer_test_script, ctx);
+            let tokens = lexer.map(|t| t.unwrap()).collect::<Vec<_>>();
 
-        assert_eq!(
-            tokens,
-            vec![
-                Token {
-                    kind: TokenKind::Let,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("test")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Equal,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::StringLiteral("beep boop"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::If,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("test")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::EqualEqual,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::StringLiteral("beep boop"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::StringLiteral("boop beep"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Comment("Bog standard comment"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Comment("whoo"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Else,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::NumberLiteral(5.0),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Plus,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Comment("a snippet comment"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::NumberLiteral(7.0),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::StringLiteral("foop fleep"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Comma,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::NumberLiteral(5.0),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Slash,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::NumberLiteral(3.0),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("jeepers")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::DocComment("A doc comment on `jeepers`"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Function,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("jeepers")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Ident(Ident("print")),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::LeftParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::StringLiteral("jeepers"),
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightParen,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::Semicolon,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                },
-                Token {
-                    kind: TokenKind::RightBrace,
-                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                }
-            ]
-        );
+            assert_eq!(
+                tokens,
+                vec![
+                    Token {
+                        kind: TokenKind::Let,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("test"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Equal,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::StringLiteral(ctx.symbols.get_or_intern("beep boop")),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::If,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("test"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::EqualEqual,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::StringLiteral(ctx.symbols.get_or_intern("beep boop")),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("print"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::StringLiteral(ctx.symbols.get_or_intern("boop beep")),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Comment,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Comment,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Else,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::NumberLiteral(5.0),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Plus,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Comment,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::NumberLiteral(7.0),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("print"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::StringLiteral(ctx.symbols.get_or_intern("foop fleep")),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Comma,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::NumberLiteral(5.0),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Slash,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::NumberLiteral(3.0),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("jeepers"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::DocComment,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Function,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("jeepers"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("print"))),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::LeftParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::StringLiteral(ctx.symbols.get_or_intern("jeepers")),
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightParen,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::Semicolon,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    },
+                    Token {
+                        kind: TokenKind::RightBrace,
+                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                    }
+                ]
+            );
+        });
     }
 
     #[test]
     fn test_trailing() {
-        let tokens = Lexer::new("5").map(|t| t.unwrap()).collect::<Vec<_>>();
+        create_and_enter_global_ctxt(|ctx| {
+            let tokens = Lexer::new("5", ctx).map(|t| t.unwrap()).collect::<Vec<_>>();
 
-        assert_eq!(
-            tokens,
-            vec![Token {
-                kind: TokenKind::NumberLiteral(5.0),
-                src: SourceSpan::new(SourceOffset::from(0), 0),
-            },]
-        );
+            assert_eq!(
+                tokens,
+                vec![Token {
+                    kind: TokenKind::NumberLiteral(5.0),
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
+                },]
+            );
 
-        let tokens = Lexer::new("// trailing comment")
-            .map(|t| t.unwrap())
-            .collect::<Vec<_>>();
+            let tokens = Lexer::new("// trailing comment", ctx)
+                .map(|t| t.unwrap())
+                .collect::<Vec<_>>();
 
-        assert_eq!(
-            tokens,
-            vec![Token {
-                kind: TokenKind::Comment("trailing comment"),
-                src: SourceSpan::new(SourceOffset::from(0), 0),
-            },]
-        );
+            assert_eq!(
+                tokens,
+                vec![Token {
+                    kind: TokenKind::Comment,
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
+                }]
+            );
 
-        let tokens = Lexer::new("/* trailing snippet comment").collect::<Vec<_>>();
-        assert!(tokens.len() == 1);
-        assert!(tokens[0].is_err());
+            let tokens = Lexer::new("/* trailing snippet comment", ctx).collect::<Vec<_>>();
+            assert!(tokens.len() == 1);
+            assert!(tokens[0].is_err());
 
-        let tokens = Lexer::new("\"trailing string literal").collect::<Vec<_>>();
-        assert!(tokens.len() == 1);
-        assert!(tokens[0].is_err());
+            let tokens = Lexer::new("\"trailing string literal", ctx).collect::<Vec<_>>();
+            assert!(tokens.len() == 1);
+            assert!(tokens[0].is_err());
 
-        let tokens = Lexer::new("trailing_identifier")
-            .map(|t| t.unwrap())
-            .collect::<Vec<_>>();
+            let tokens = Lexer::new("trailing_identifier", ctx)
+                .map(|t| t.unwrap())
+                .collect::<Vec<_>>();
 
-        assert_eq!(
-            tokens,
-            vec![Token {
-                kind: TokenKind::Ident(Ident("trailing_identifier")),
-                src: SourceSpan::new(SourceOffset::from(0), 0),
-            },]
-        );
+            assert_eq!(
+                tokens,
+                vec![Token {
+                    kind: TokenKind::Ident(Ident(ctx.symbols.get_or_intern("trailing_identifier"))),
+                    src: SourceSpan::new(SourceOffset::from(0), 0),
+                },]
+            );
+        });
     }
 }

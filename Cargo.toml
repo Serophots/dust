@@ -1,12 +1,14 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/dust",
+    "crates/dust-compiler",
     "crates/dust-ast",
     "crates/dust-ast-print",
+    "crates/dust-hir",
+    "crates/dust-interpretter",
     "crates/dust-lexer",
     "crates/dust-print",
-    "crates/dust-utils",
+    "crates/dust-utils", "crates/dust-ast-lowering",
 ]
 
 [workspace.dependencies]
@@ -14,6 +16,12 @@ dust-lexer = { path = "crates/dust-lexer" }
 dust-ast = { path = "crates/dust-ast" }
 dust-ast-print = { path = "crates/dust-ast-print" }
 dust-print = { path = "crates/dust-print" }
+dust-hir = { path = "crates/dust-hir" }
+dust-interpretter = { path = "crates/dust-interpretter/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 
+typed-arena = "2.0.2"
+string-interner = "0.20"
+
 miette = { version = "7.6", features = ["fancy"] }
+camino = "1.2"

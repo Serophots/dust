@@ -1,0 +1,11 @@
+[package]
+name = "dust-ast-lowering"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/lowering.rs"
+
+[dependencies]
+dust-ast.workspace = true
+dust-hir.workspace = true

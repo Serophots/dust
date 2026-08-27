@@ -2,7 +2,7 @@ use std::iter::Filter;
 
 use dust_lexer::Lexer;
 use miette::{LabeledSpan, Result, SourceSpan};
-use utils::{Ident, Token, TokenKind};
+use utils::{GblCx, Ident, Token, TokenKind};
 
 mod arithmetic;
 mod expression;
@@ -16,17 +16,17 @@ pub use statement::*;
 #[derive(Clone)]
 pub struct Parser<'a> {
     pub source: &'a str,
-    lexer: Filter<Lexer<'a>, fn(&Result<Token<TokenKind<'_>>>) -> bool>,
+    lexer: Filter<Lexer<'a>, fn(&Result<Token<TokenKind>>) -> bool>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str) -> Parser<'a> {
-        fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind<'b>>>) -> bool {
-            !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment(_)))
+    pub fn new(source: &'a str, ctx: GblCx<'a>) -> Parser<'a> {
+        fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind>>) -> bool {
+            !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }
 
-        let predicate: fn(&Result<Token<TokenKind<'_>>>) -> bool = predicate;
-        let lexer = Lexer::new(source).filter(predicate);
+        let predicate: fn(&Result<Token<TokenKind>>) -> bool = predicate;
+        let lexer = Lexer::new(source, ctx).filter(predicate);
 
         Parser { source, lexer }
     }
@@ -34,13 +34,13 @@ impl<'a> Parser<'a> {
     /// Consume the next token in the lexer
     pub fn next_token<F, R>(&mut self, f: F) -> Result<Option<R>>
     where
-        F: Fn(Token<TokenKind<'a>>) -> R,
+        F: Fn(Token<TokenKind>) -> R,
     {
         Ok(self.lexer.next().transpose()?.map(f))
     }
 
     /// Consume the next token, erroring otherwise
-    pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token<TokenKind<'a>>> {
+    pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token<TokenKind>> {
         let token = self.first_token();
 
         match token {
@@ -67,7 +67,7 @@ impl<'a> Parser<'a> {
     pub fn expect_token_matches<F>(
         &mut self,
         f: F,
-    ) -> Result<std::result::Result<Token<TokenKind<'a>>, Option<SourceSpan>>>
+    ) -> Result<std::result::Result<Token<TokenKind>, Option<SourceSpan>>>
     where
         F: Fn(TokenKind) -> bool,
     {
@@ -80,7 +80,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    pub fn expect_token_ident(&mut self) -> Result<Token<Ident<'a>>> {
+    pub fn expect_token_ident(&mut self) -> Result<Token<Ident>> {
         let token = self.next_token(|t| t)?;
 
         match token {
@@ -101,25 +101,25 @@ impl<'a> Parser<'a> {
     }
 
     /// Peek the first token in the lexer
-    pub fn first_token<'s>(&'s self) -> Option<Token<TokenKind<'a>>> {
+    pub fn first_token<'s>(&'s self) -> Option<Token<TokenKind>> {
         let mut lexer = self.lexer.clone();
         lexer.next().map(Result::ok).flatten()
     }
 
     /// Peek the first token in the lexer
-    pub fn first_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
+    pub fn first_token_kind<'s>(&'s self) -> Option<TokenKind> {
         self.first_token().map(|t| t.kind)
     }
 
     /// Peek the second token in the lexer
-    pub fn second_token<'s>(&'s self) -> Option<Token<TokenKind<'a>>> {
+    pub fn second_token<'s>(&'s self) -> Option<Token<TokenKind>> {
         let mut lexer = self.lexer.clone();
         let _ = lexer.next();
         lexer.next().map(Result::ok).flatten()
     }
 
     /// Peek the second token in the lexer
-    pub fn second_token_kind<'s>(&'s self) -> Option<TokenKind<'a>> {
+    pub fn second_token_kind<'s>(&'s self) -> Option<TokenKind> {
         self.second_token().map(|t| t.kind)
     }
 

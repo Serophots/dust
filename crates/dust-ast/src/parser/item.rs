@@ -6,21 +6,21 @@
 //!
 //! function       → "fn" ident "()" block_expr ;
 
-use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
+use miette::{LabeledSpan, Result};
 use utils::{Ident, Token, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Module<'a> {
-    pub ident: Option<Token<Ident<'a>>>,
-    pub items: Box<[Token<Item<'a>>]>,
+pub struct Module {
+    pub ident: Option<Token<Ident>>,
+    pub items: Box<[Token<Item>]>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Item<'a> {
+pub struct Item {
     pub vis: Option<Token<Visibility>>,
-    pub r#type: ItemType<'a>,
+    pub r#type: ItemType,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,25 +29,25 @@ pub enum Visibility {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ItemType<'a> {
-    Module(Module<'a>),
-    Function(Function<'a>),
-    Use(Use<'a>),
+pub enum ItemType {
+    Module(Module),
+    Function(Function),
+    Use(Use),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Use<'a> {
-    pub path: Token<Path<'a>>,
+pub struct Use {
+    pub path: Token<Path>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Function<'a> {
-    pub ident: Token<Ident<'a>>,
-    pub block: Token<Block<'a>>,
+pub struct Function {
+    pub ident: Token<Ident>,
+    pub block: Token<Block>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn mod_file(&mut self) -> Result<Token<Module<'a>>> {
+    pub fn mod_file(&mut self) -> Result<Module> {
         let mut items = Vec::new();
 
         loop {
@@ -59,23 +59,17 @@ impl<'a> Parser<'a> {
             items.push(item);
         }
 
-        Ok(Token {
-            src: match (items.first(), items.last()) {
-                (Some(first), Some(last)) => combine_src(first.src, last.src),
-                _ => SourceSpan::new(SourceOffset::from(0), 0),
-            },
-            kind: Module {
-                ident: None,
-                items: items.into_boxed_slice(),
-            },
+        Ok(Module {
+            ident: None,
+            items: items.into_boxed_slice(),
         })
     }
 
-    pub fn mod_block(&mut self) -> Result<Token<Module<'a>>> {
+    pub fn mod_block(&mut self) -> Result<Token<Module>> {
         todo!()
     }
 
-    pub(crate) fn item(&mut self) -> Result<Token<Item<'a>>> {
+    pub(crate) fn item(&mut self) -> Result<Token<Item>> {
         let visibility = match self.first_token_kind() {
             Some(TokenKind::Pub) => {
                 let token = self.expect_token(TokenKind::Pub)?;
@@ -118,7 +112,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn use_decl(&mut self) -> Result<Token<Use<'a>>> {
+    fn use_decl(&mut self) -> Result<Token<Use>> {
         let r#use = self.expect_token(TokenKind::Use)?;
         let path = self.path_expr()?;
         let semi = self.expect_token(TokenKind::Semicolon)?;
@@ -129,7 +123,7 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn function(&mut self) -> Result<Token<Function<'a>>> {
+    fn function(&mut self) -> Result<Token<Function>> {
         let r#fn = self.expect_token(TokenKind::Function)?;
         let ident = self.expect_token_ident()?;
         self.expect_token(TokenKind::LeftParen)?;
@@ -146,7 +140,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod tests {
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token};
+    use utils::{Ident, Token, create_and_enter_global_ctxt};
 
     use crate::{
         Arithmetic, Block, Expression, Function, Item, ItemType, LetStatement, Module, Parser,
@@ -155,127 +149,135 @@ mod tests {
 
     #[test]
     fn test_item() {
-        let test_script = include_str!("../../../../assets/tests/ast-parser/item.dst");
-        let mut parser = Parser::new(test_script);
+        create_and_enter_global_ctxt(|ctx| {
+            let test_script = include_str!("../../../../assets/tests/ast-parser/item.dst");
+            let mut parser = Parser::new(test_script, ctx);
 
-        assert_eq!(
-            parser.mod_file().unwrap().kind,
-            Module {
-                ident: None,
-                items: vec![
-                    Token {
-                        kind: Item {
+            assert_eq!(
+                parser.mod_file().unwrap(),
+                Module {
+                    ident: None,
+                    items: vec![
+                        Token {
+                            kind: Item {
+                                vis: None,
+                                r#type: ItemType::Function(Function {
+                                    ident: Token {
+                                        kind: Ident(ctx.symbols.get_or_intern("first")),
+                                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                                    },
+                                    block: Token {
+                                        kind: Block {
+                                            stmts: vec![].into_boxed_slice(),
+                                            expr: Some(Token {
+                                                kind: Expression::Arithmetic(
+                                                    Arithmetic::Primitive(Primitive::Number(15.0))
+                                                ),
+                                                src: SourceSpan::new(SourceOffset::from(0), 0),
+                                            })
+                                        },
+                                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                                    }
+                                })
+                            },
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        },
+                        Token {
+                            kind: Item {
+                                vis: Some(Token::kind(Visibility::Pub)),
+                                r#type: ItemType::Function(Function {
+                                    ident: Token {
+                                        kind: Ident(ctx.symbols.get_or_intern("second")),
+                                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                                    },
+                                    block: Token {
+                                        kind: Block {
+                                            stmts: vec![
+                                                Token {
+                                                    kind: Statement::LetStatement(LetStatement {
+                                                        ident: Token {
+                                                            kind: Ident(
+                                                                ctx.symbols.get_or_intern("foo")
+                                                            ),
+                                                            src: SourceSpan::new(
+                                                                SourceOffset::from(0),
+                                                                0
+                                                            )
+                                                        },
+                                                        expr: Some(Token {
+                                                            kind: Expression::Arithmetic(
+                                                                Arithmetic::Primitive(
+                                                                    Primitive::Number(15.0)
+                                                                )
+                                                            ),
+                                                            src: SourceSpan::new(
+                                                                SourceOffset::from(0),
+                                                                0
+                                                            )
+                                                        })
+                                                    }),
+                                                    src: SourceSpan::new(SourceOffset::from(0), 0),
+                                                },
+                                                Token {
+                                                    kind: Statement::LetStatement(LetStatement {
+                                                        ident: Token {
+                                                            kind: Ident(
+                                                                ctx.symbols.get_or_intern("bar")
+                                                            ),
+                                                            src: SourceSpan::new(
+                                                                SourceOffset::from(0),
+                                                                0
+                                                            )
+                                                        },
+                                                        expr: None
+                                                    }),
+                                                    src: SourceSpan::new(SourceOffset::from(0), 0),
+                                                }
+                                            ]
+                                            .into_boxed_slice(),
+                                            expr: Some(Token {
+                                                kind: Expression::Arithmetic(Arithmetic::Ident(
+                                                    Ident(ctx.symbols.get_or_intern("foo"))
+                                                )),
+                                                src: SourceSpan::new(SourceOffset::from(0), 0),
+                                            })
+                                        },
+                                        src: SourceSpan::new(SourceOffset::from(0), 0),
+                                    }
+                                })
+                            },
+                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                        },
+                        Token::kind(Item {
                             vis: None,
                             r#type: ItemType::Function(Function {
-                                ident: Token {
-                                    kind: Ident("first"),
-                                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                                },
-                                block: Token {
-                                    kind: Block {
-                                        stmts: vec![].into_boxed_slice(),
-                                        expr: Some(Token {
-                                            kind: Expression::Arithmetic(Arithmetic::Primitive(
-                                                Primitive::Number(15.0)
+                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("third"))),
+                                block: Token::kind(Block {
+                                    stmts: vec![Token::kind(Statement::Item(Item {
+                                        vis: None,
+                                        r#type: ItemType::Function(Function {
+                                            ident: Token::kind(Ident(
+                                                ctx.symbols.get_or_intern("fourth")
                                             )),
-                                            src: SourceSpan::new(SourceOffset::from(0), 0),
+                                            block: Token::kind(Block {
+                                                stmts: vec![].into_boxed_slice(),
+                                                expr: Some(Token::kind(Expression::Arithmetic(
+                                                    Arithmetic::Primitive(Primitive::Number(3.0))
+                                                )))
+                                            })
                                         })
-                                    },
-                                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                                }
-                            })
-                        },
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    },
-                    Token {
-                        kind: Item {
-                            vis: Some(Token::kind(Visibility::Pub)),
-                            r#type: ItemType::Function(Function {
-                                ident: Token {
-                                    kind: Ident("second"),
-                                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                                },
-                                block: Token {
-                                    kind: Block {
-                                        stmts: vec![
-                                            Token {
-                                                kind: Statement::LetStatement(LetStatement {
-                                                    ident: Token {
-                                                        kind: Ident("foo"),
-                                                        src: SourceSpan::new(
-                                                            SourceOffset::from(0),
-                                                            0
-                                                        )
-                                                    },
-                                                    expr: Some(Token {
-                                                        kind: Expression::Arithmetic(
-                                                            Arithmetic::Primitive(
-                                                                Primitive::Number(15.0)
-                                                            )
-                                                        ),
-                                                        src: SourceSpan::new(
-                                                            SourceOffset::from(0),
-                                                            0
-                                                        )
-                                                    })
-                                                }),
-                                                src: SourceSpan::new(SourceOffset::from(0), 0),
-                                            },
-                                            Token {
-                                                kind: Statement::LetStatement(LetStatement {
-                                                    ident: Token {
-                                                        kind: Ident("bar"),
-                                                        src: SourceSpan::new(
-                                                            SourceOffset::from(0),
-                                                            0
-                                                        )
-                                                    },
-                                                    expr: None
-                                                }),
-                                                src: SourceSpan::new(SourceOffset::from(0), 0),
-                                            }
-                                        ]
-                                        .into_boxed_slice(),
-                                        expr: Some(Token {
-                                            kind: Expression::Arithmetic(Arithmetic::Ident(Ident(
-                                                "foo"
-                                            ))),
-                                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                                        })
-                                    },
-                                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                                }
-                            })
-                        },
-                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                    },
-                    Token::kind(Item {
-                        vis: None,
-                        r#type: ItemType::Function(Function {
-                            ident: Token::kind(Ident("third")),
-                            block: Token::kind(Block {
-                                stmts: vec![Token::kind(Statement::Item(Item {
-                                    vis: None,
-                                    r#type: ItemType::Function(Function {
-                                        ident: Token::kind(Ident("fourth")),
-                                        block: Token::kind(Block {
-                                            stmts: vec![].into_boxed_slice(),
-                                            expr: Some(Token::kind(Expression::Arithmetic(
-                                                Arithmetic::Primitive(Primitive::Number(3.0))
-                                            )))
-                                        })
-                                    })
-                                }))]
-                                .into_boxed_slice(),
-                                expr: Some(Token::kind(Expression::Arithmetic(
-                                    Arithmetic::Primitive(Primitive::Number(5.0))
-                                )))
+                                    }))]
+                                    .into_boxed_slice(),
+                                    expr: Some(Token::kind(Expression::Arithmetic(
+                                        Arithmetic::Primitive(Primitive::Number(5.0))
+                                    )))
+                                })
                             })
                         })
-                    })
-                ]
-                .into_boxed_slice()
-            }
-        );
+                    ]
+                    .into_boxed_slice()
+                }
+            );
+        });
     }
 }

@@ -20,13 +20,13 @@ use utils::{Token, TokenKind, combine_src};
 use crate::{Arithmetic, BinaryOperation, Primitive, parser::Parser};
 
 impl<'a> Parser<'a> {
-    pub fn arithmetic(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    pub fn arithmetic(&mut self) -> Result<Token<Arithmetic>> {
         self.logic_or()
     }
 
     /// Read a string of or's ||
     ///  logic_or       → logic_and ( "||" logic_and )* ;
-    fn logic_or(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn logic_or(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.logic_and()?;
 
         loop {
@@ -64,7 +64,7 @@ impl<'a> Parser<'a> {
 
     /// Read a string of and's &&
     ///  logic_and      → equality ( "&&" equality )* ;
-    fn logic_and(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn logic_and(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.equality()?;
 
         loop {
@@ -102,7 +102,7 @@ impl<'a> Parser<'a> {
 
     /// Read a string of equalities == / !=
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn equality(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.comparison()?;
 
         loop {
@@ -143,7 +143,7 @@ impl<'a> Parser<'a> {
 
     /// Read a string of comparisons GT/GE/LT/LE
     ///  comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn comparison(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn comparison(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.term()?;
 
         loop {
@@ -190,7 +190,7 @@ impl<'a> Parser<'a> {
 
     /// Read a string of additions/subtractions
     ///  term           → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn term(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.factor()?;
 
         loop {
@@ -231,7 +231,7 @@ impl<'a> Parser<'a> {
 
     /// Read a string of multiplications/divisions
     ///  factor         → unary ( ( "/" | "\*" ) unary )\* ;
-    fn factor(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn factor(&mut self) -> Result<Token<Arithmetic>> {
         let mut lhs = self.unary()?;
 
         loop {
@@ -272,7 +272,7 @@ impl<'a> Parser<'a> {
 
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
-    fn unary(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn unary(&mut self) -> Result<Token<Arithmetic>> {
         let unary = matches!(
             self.first_token_kind(),
             Some(TokenKind::Bang) | Some(TokenKind::Minus)
@@ -296,7 +296,7 @@ impl<'a> Parser<'a> {
     ///  primary        → NUMBER | STRING | "true" | "false" | "nil"
     ///                | "(" arithmetic ")"
     ///                | IDENTIFIER ;
-    fn primary(&mut self) -> Result<Token<Arithmetic<'a>>> {
+    fn primary(&mut self) -> Result<Token<Arithmetic>> {
         let Some(token) = self.next_token(|token| token)? else {
             let eof = self.source.chars().count();
 
@@ -359,131 +359,135 @@ impl<'a> Parser<'a> {
 mod tests {
     use std::assert_matches;
 
+    use utils::create_and_enter_global_ctxt;
+
     use crate::{Arithmetic, Primitive, parser::Parser};
 
     #[test]
     fn test_expression() {
-        let parse = |s| Parser::new(s).arithmetic().unwrap().kind;
+        create_and_enter_global_ctxt(|ctx| {
+            let parse = |s| Parser::new(s, ctx).arithmetic().unwrap().kind;
 
-        assert_eq!(parse("5"), Arithmetic::Primitive(Primitive::Number(5.0)));
+            assert_eq!(parse("5"), Arithmetic::Primitive(Primitive::Number(5.0)));
 
-        assert_eq!(parse("-5"), Arithmetic::Primitive(Primitive::Number(-5.0)));
+            assert_eq!(parse("-5"), Arithmetic::Primitive(Primitive::Number(-5.0)));
 
-        assert_eq!(
-            parse("3 * 5 / 7"),
-            Arithmetic::Primitive(Primitive::Number(15.0 / 7.0))
-        );
+            assert_eq!(
+                parse("3 * 5 / 7"),
+                Arithmetic::Primitive(Primitive::Number(15.0 / 7.0))
+            );
 
-        assert_eq!(
-            parse("-7 * 5 / 7"),
-            Arithmetic::Primitive(Primitive::Number(-5.0))
-        );
+            assert_eq!(
+                parse("-7 * 5 / 7"),
+                Arithmetic::Primitive(Primitive::Number(-5.0))
+            );
 
-        assert_eq!(
-            parse("-7 + 5 * 7"),
-            Arithmetic::Primitive(Primitive::Number(28.0))
-        );
+            assert_eq!(
+                parse("-7 + 5 * 7"),
+                Arithmetic::Primitive(Primitive::Number(28.0))
+            );
 
-        assert_eq!(
-            parse("(-3 + 5) * 5 / 7"),
-            Arithmetic::Primitive(Primitive::Number(10.0 / 7.0))
-        );
+            assert_eq!(
+                parse("(-3 + 5) * 5 / 7"),
+                Arithmetic::Primitive(Primitive::Number(10.0 / 7.0))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3"),
-            Arithmetic::Primitive(Primitive::Number(-5.0))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3"),
+                Arithmetic::Primitive(Primitive::Number(-5.0))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 < 4"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 < 4"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 > 4"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 > 4"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 <= -5"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 <= -5"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 >= -5"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 >= -5"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 >= -5 == true"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 >= -5 == true"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 >= -5 == false"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 >= -5 == false"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 >= -5 != true"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 >= -5 != true"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("1 - 2 * 3 >= -5 != false"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("1 - 2 * 3 >= -5 != false"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("(1 / 2) == (1 / 2)"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("(1 / 2) == (1 / 2)"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_matches!(parse("(0 / 0)"), Arithmetic::Primitive(Primitive::Number(f)) if f.is_nan());
+            assert_matches!(parse("(0 / 0)"), Arithmetic::Primitive(Primitive::Number(f)) if f.is_nan());
 
-        assert_eq!(
-            parse("(0 / 0) == (0 / 0)"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("(0 / 0) == (0 / 0)"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("true && true"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("true && true"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("true && false"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("true && false"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("false && false"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("false && false"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("false || false"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("false || false"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
 
-        assert_eq!(
-            parse("true || false"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("true || false"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("true || true"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("true || true"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("(4/2==2) && true"),
-            Arithmetic::Primitive(Primitive::Bool(true))
-        );
+            assert_eq!(
+                parse("(4/2==2) && true"),
+                Arithmetic::Primitive(Primitive::Bool(true))
+            );
 
-        assert_eq!(
-            parse("(4/2==2) && (5<3)"),
-            Arithmetic::Primitive(Primitive::Bool(false))
-        );
+            assert_eq!(
+                parse("(4/2==2) && (5<3)"),
+                Arithmetic::Primitive(Primitive::Bool(false))
+            );
+        });
     }
 }

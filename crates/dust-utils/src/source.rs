@@ -1,35 +1,5 @@
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use miette::{Context as _, IntoDiagnostic as _};
-
-#[derive(clap::Parser)]
-#[command(author, version, about)]
-pub struct Args {
-    #[command(subcommand)]
-    pub cmd: Option<Command>,
-}
-
-#[derive(clap::Subcommand)]
-pub enum Command {
-    /// Tokenize a source file
-    Lex { input: TextSource },
-    /// Parse a source file into Abstract Syntax Tree
-    Parse { input: TextSource },
-    /// Compile a source file into bytecode
-    Compile { input: TextSource },
-    /// Interpret pre-compiled bytecode
-    Interpret { input: ByteSource },
-    /// Compile & interpret a source file
-    Run { input: TextSource },
-    /// Start an interactive dust terminal interpretter
-    Interactive,
-    /// Use dusts' parser as a comp-time calculator
-    /// to evaluate static expressions from a text
-    /// source e.g.
-    /// `1 + 1 == 2` -> TRUE
-    /// `1 + 1 < 2` -> FALSE
-    /// `1 + 1 == 2 == false` -> FALSE
-    Calculate { input: TextSource },
-}
 
 #[derive(Clone, Debug)]
 pub enum TextSource {
@@ -61,7 +31,14 @@ impl std::str::FromStr for TextSource {
 }
 
 impl TextSource {
-    pub fn read(&self) -> miette::Result<String> {
+    pub fn path(&self) -> Option<&Utf8Path> {
+        match self {
+            TextSource::File(utf8_path_buf) => Some(&utf8_path_buf),
+            TextSource::Text(_) => None,
+        }
+    }
+
+    pub fn content(&self) -> miette::Result<String> {
         match self {
             Self::File(path) => std::fs::read_to_string(path),
             Self::Text(text) => Ok(text.clone()),

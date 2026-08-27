@@ -4,18 +4,18 @@ use utils::{Ident, Token};
 use crate::{BinaryOperation, Primitive};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Arithmetic<'a> {
-    Primitive(Primitive<'a>),
-    Ident(Ident<'a>),
-    Unary(Box<Token<Arithmetic<'a>>>),
+pub enum Arithmetic {
+    Primitive(Primitive),
+    Ident(Ident),
+    Unary(Box<Token<Arithmetic>>),
     Binary {
-        lhs: Box<Token<Arithmetic<'a>>>,
-        rhs: Box<Token<Arithmetic<'a>>>,
+        lhs: Box<Token<Arithmetic>>,
+        rhs: Box<Token<Arithmetic>>,
         op: BinaryOperation,
     },
 }
 
-impl<'a> Arithmetic<'a> {
+impl Arithmetic {
     /// Try to eagerly simplify the tree where possible;
     /// i.e. a Primitive::Number(a) + Primitive::Number(b)
     /// can be reduced to Primitive::Number(a+b) at
@@ -24,7 +24,7 @@ impl<'a> Arithmetic<'a> {
     /// The tree is simplified leaves-up so that this function
     /// needn't recurse; it can assume that any leaves dangling
     /// from this expression have been simplified fully already.
-    pub fn simplify(self, source: &'_ str) -> Result<Arithmetic<'a>> {
+    pub fn simplify(self, source: &'_ str) -> Result<Arithmetic> {
         match self {
             Arithmetic::Primitive(_) => {}
             Arithmetic::Ident(_) => {}

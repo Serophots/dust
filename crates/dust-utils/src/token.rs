@@ -1,6 +1,8 @@
+use std::fmt::Debug;
+
 use miette::{SourceOffset, SourceSpan};
 
-use crate::combine_src;
+use crate::{Symbol, combine_src};
 
 #[derive(Clone)]
 pub struct Token<T> {
@@ -9,7 +11,7 @@ pub struct Token<T> {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub enum TokenKind<'a> {
+pub enum TokenKind {
     LeftParen,
     RightParen,
     LeftBrace,
@@ -48,15 +50,15 @@ pub enum TokenKind<'a> {
     Nil,
     Return,
     Let,
-    Comment(&'a str),
-    DocComment(&'a str),
-    StringLiteral(&'a str),
+    Comment,
+    DocComment,
+    StringLiteral(Symbol),
     NumberLiteral(f64),
-    Ident(Ident<'a>),
+    Ident(Ident),
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub struct Ident<'a>(pub &'a str);
+pub struct Ident(pub Symbol);
 
 impl<T> Token<T> {
     pub fn new(kind: T, src: impl Into<SourceSpan>) -> Token<T> {

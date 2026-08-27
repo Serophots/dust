@@ -21,36 +21,33 @@ use utils::{Ident, Token, TokenKind, combine_src};
 use crate::{Arithmetic, Block, Parser};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Expression<'a> {
-    Arithmetic(Arithmetic<'a>),
+pub enum Expression {
+    Arithmetic(Arithmetic),
     Assign,
-    CallExpr(CallExpression<'a>),
-    Path(Path<'a>),
-    Block(Box<Block<'a>>),
+    CallExpr(CallExpression),
+    Path(Path),
+    Block(Box<Block>),
     IfExpr,
     LoopExpr,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Path<'a> {
-    cmpts: Vec<Token<Ident<'a>>>,
+pub struct Path {
+    cmpts: Vec<Token<Ident>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct CallExpression<'a> {
-    pub expr: Box<Token<Expression<'a>>>,
+pub struct CallExpression {
+    pub expr: Box<Token<Expression>>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn expression(&mut self) -> Result<Token<Expression<'a>>> {
+    pub fn expression(&mut self) -> Result<Token<Expression>> {
         let expr = self.expression_no_call()?;
-        println!("passed inner expr {:?}", expr);
-        println!("next {:?}", self.first_token_kind());
 
         match self.first_token_kind() {
             Some(TokenKind::LeftParen) => {
                 // Call this expression
-                println!("got a call");
                 self.expect_token(TokenKind::LeftParen)?;
                 let right_paren = self.expect_token(TokenKind::RightParen)?;
 
@@ -65,7 +62,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn expression_no_call(&mut self) -> Result<Token<Expression<'a>>> {
+    fn expression_no_call(&mut self) -> Result<Token<Expression>> {
         match self.first_token_kind() {
             Some(TokenKind::If) => return Ok(self.if_expr()?),
             Some(TokenKind::Loop) => return Ok(self.loop_expr()?),
@@ -92,7 +89,7 @@ impl<'a> Parser<'a> {
         Ok(self.arithmetic()?.map(Expression::Arithmetic))
     }
 
-    pub fn path_expr(&mut self) -> Result<Token<Path<'a>>> {
+    pub fn path_expr(&mut self) -> Result<Token<Path>> {
         let first = self.expect_token_ident()?;
         let mut cmpts = vec![first];
 
@@ -100,8 +97,6 @@ impl<'a> Parser<'a> {
             let next = self.expect_token_ident()?;
             cmpts.push(next);
         }
-
-        println!("passed cmpts as path {:?}", cmpts);
 
         Ok(Token {
             src: match (cmpts.first(), cmpts.last()) {
@@ -112,40 +107,44 @@ impl<'a> Parser<'a> {
         })
     }
 
-    fn if_expr(&mut self) -> Result<Token<Expression<'a>>> {
+    fn if_expr(&mut self) -> Result<Token<Expression>> {
         todo!()
     }
 
-    fn loop_expr(&mut self) -> Result<Token<Expression<'a>>> {
+    fn loop_expr(&mut self) -> Result<Token<Expression>> {
         todo!()
     }
 
-    fn assign_expr(&mut self) -> Result<Token<Expression<'a>>> {
+    fn assign_expr(&mut self) -> Result<Token<Expression>> {
         todo!()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use utils::create_and_enter_global_ctxt;
+
     use crate::{Arithmetic, Parser, Primitive, parser::expression::Expression};
 
     #[test]
     fn test_lexer() {
-        let test_script = include_str!("../../../../assets/tests/ast-parser/expression.dst");
-        let mut parser = Parser::new(test_script);
-        let mut expressions = Vec::new();
+        create_and_enter_global_ctxt(|ctx| {
+            let test_script = include_str!("../../../../assets/tests/ast-parser/expression.dst");
+            let mut parser = Parser::new(test_script, ctx);
+            let mut expressions = Vec::new();
 
-        while let Ok(token) = parser.expression() {
-            expressions.push(token.kind);
-        }
+            while let Ok(token) = parser.expression() {
+                expressions.push(token.kind);
+            }
 
-        assert_eq!(
-            expressions,
-            vec![
-                Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(4.0))),
-                Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
-                Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(false))),
-            ]
-        );
+            assert_eq!(
+                expressions,
+                vec![
+                    Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(4.0))),
+                    Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(true))),
+                    Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(false))),
+                ]
+            );
+        });
     }
 }
