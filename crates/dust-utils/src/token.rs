@@ -44,6 +44,7 @@ pub enum TokenKind<'a> {
     Pub,
     Function,
     Mod,
+    Use,
     Nil,
     Return,
     Let,

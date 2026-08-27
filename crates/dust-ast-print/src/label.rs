@@ -1,6 +1,6 @@
 use dust_ast::{
     Block, CallExpression, Expression, Function, Item, ItemType, LetStatement, Module, Path,
-    Statement, Visibility,
+    Statement, Use, Visibility,
 };
 use miette::LabeledSpan;
 use utils::{Ident, Token};
@@ -44,7 +44,20 @@ impl<'a> LabelPrinter for &Item<'a> {
         match &self.r#type {
             ItemType::Module(module) => module.label(labels),
             ItemType::Function(function) => function.label(labels),
+            ItemType::Use(path) => path.label(labels),
         }
+    }
+}
+
+impl<'a> LabelPrinter for &Token<Item<'a>> {
+    fn label(self, labels: &mut Vec<LabeledSpan>) {
+        self.kind.label(labels);
+    }
+}
+
+impl<'a> LabelPrinter for &Use<'a> {
+    fn label(self, labels: &mut Vec<LabeledSpan>) {
+        self.path.label(labels);
     }
 }
 
@@ -64,6 +77,12 @@ impl<'a> LabelPrinter for &Block<'a> {
         if let Some(expr) = &self.expr {
             expr.label(labels);
         }
+    }
+}
+
+impl<'a> LabelPrinter for &Token<Block<'a>> {
+    fn label(self, labels: &mut Vec<LabeledSpan>) {
+        self.kind.label(labels);
     }
 }
 
@@ -111,7 +130,7 @@ impl<'a> LabelPrinter for Token<&Expression<'a>> {
 
                 token.label(labels);
             }
-            Expression::Block(block) => todo!(),
+            Expression::Block(block) => block.label(labels),
             Expression::IfExpr => todo!(),
             Expression::LoopExpr => todo!(),
         }

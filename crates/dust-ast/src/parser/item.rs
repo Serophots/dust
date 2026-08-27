@@ -6,10 +6,10 @@
 //!
 //! function       → "fn" ident "()" block_expr ;
 
-use miette::{Result, SourceOffset, SourceSpan};
+use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
 use utils::{Ident, Token, TokenKind, combine_src};
 
-use crate::{Block, Parser};
+use crate::{Block, Parser, Path};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Module<'a> {
@@ -30,9 +30,14 @@ pub enum Visibility {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ItemType<'a> {
-    // TODO: Token<..> these?
     Module(Module<'a>),
     Function(Function<'a>),
+    Use(Use<'a>),
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Use<'a> {
+    pub path: Token<Path<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -82,10 +87,23 @@ impl<'a> Parser<'a> {
         let item_type = match self.first_token_kind() {
             Some(TokenKind::Function) => self.function()?.map(ItemType::Function),
             Some(TokenKind::Mod) => self.mod_block()?.map(ItemType::Module),
-            _ => {
-                return Err(miette::miette!("expected an item ('fn', 'mod', ..)",)
+            Some(TokenKind::Use) => self.use_decl()?.map(ItemType::Use),
+            _ => match self.first_token() {
+                Some(got) => {
+                    return Err(miette::miette!(
+                        labels = vec![LabeledSpan::at(got.src, "here")],
+                        "expected an item ('fn', 'mod', 'use', ..), got {:?}",
+                        got.kind
+                    )
                     .with_source_code(self.source.to_owned()));
-            }
+                }
+                None => {
+                    return Err(miette::miette!(
+                        "expected an item ('fn', 'mod', 'use', ..), got EOF"
+                    )
+                    .with_source_code(self.source.to_owned()));
+                }
+            },
         };
 
         Ok(Token {
@@ -97,6 +115,17 @@ impl<'a> Parser<'a> {
                 vis: visibility,
                 r#type: item_type.kind,
             },
+        })
+    }
+
+    fn use_decl(&mut self) -> Result<Token<Use<'a>>> {
+        let r#use = self.expect_token(TokenKind::Use)?;
+        let path = self.path_expr()?;
+        let semi = self.expect_token(TokenKind::Semicolon)?;
+
+        Ok(Token {
+            src: combine_src(r#use.src, semi.src),
+            kind: Use { path },
         })
     }
 

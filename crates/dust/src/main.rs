@@ -45,7 +45,7 @@ fn main() -> miette::Result<()> {
             let ast = Parser::new(contents).mod_file()?;
 
             let mut labels = Vec::new();
-            ast.label(&mut labels);
+            ast.kind.label(&mut labels);
 
             return Err(
                 miette::miette!(labels = labels, "debug").with_source_code(contents.clone())

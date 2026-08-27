@@ -2,7 +2,7 @@
 
 module         → item* EOF | mod ident "{" item* "}";
 item           → visibility? (
-                  module | function
+                  module | function | "use" path ";"
                 ) ;
 
                   

@@ -304,6 +304,7 @@ impl<'a> Lexer<'a> {
             "while" => return Ok(Token::new(TokenKind::While, range.clone())),
             "pub" => return Ok(Token::new(TokenKind::Pub, range.clone())),
             "mod" => return Ok(Token::new(TokenKind::Mod, range.clone())),
+            "use" => return Ok(Token::new(TokenKind::Use, range.clone())),
             "fn" => return Ok(Token::new(TokenKind::Function, range.clone())),
             "nil" => return Ok(Token::new(TokenKind::Nil, range.clone())),
             "return" => {

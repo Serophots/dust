@@ -92,7 +92,7 @@ impl<'a> Parser<'a> {
         Ok(self.arithmetic()?.map(Expression::Arithmetic))
     }
 
-    fn path_expr(&mut self) -> Result<Token<Path<'a>>> {
+    pub fn path_expr(&mut self) -> Result<Token<Path<'a>>> {
         let first = self.expect_token_ident()?;
         let mut cmpts = vec![first];
 

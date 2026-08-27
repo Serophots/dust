@@ -10,6 +10,7 @@ I'd like to do so without bringing in too many dependencies.
 ## Sources:
 - https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 - https://sdiehl.github.io/typechecker-zoo
+- https://doc.rust-lang.org/reference/items.html
 
 Implemented
 -
