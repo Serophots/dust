@@ -8,19 +8,21 @@ members = [
     "crates/dust-interpretter",
     "crates/dust-lexer",
     "crates/dust-print",
-    "crates/dust-utils", "crates/dust-ast-lowering",
+    "crates/dust-utils", "crates/dust-ast-lowering", "crates/dust-ctxt",
 ]
 
 [workspace.dependencies]
 dust-lexer = { path = "crates/dust-lexer" }
 dust-ast = { path = "crates/dust-ast" }
+dust-ast-lowering = {path = "crates/dust-ast-lowering/"}
 dust-ast-print = { path = "crates/dust-ast-print" }
 dust-print = { path = "crates/dust-print" }
 dust-hir = { path = "crates/dust-hir" }
 dust-interpretter = { path = "crates/dust-interpretter/" }
+dust-ctxt = { path = "crates/dust-ctxt/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 
-typed-arena = "2.0.2"
+bumpalo = "3.20"
 string-interner = "0.20"
 
 miette = { version = "7.6", features = ["fancy"] }

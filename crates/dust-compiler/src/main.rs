@@ -1,12 +1,14 @@
-use dust_ast::{Parser, create_and_enter_ast_ctxt};
-use dust_hir::create_and_enter_hir_ctxt;
+use dust_ast::Parser;
+use dust_ctxt::{CtxtRunner, GblCtx, create_and_enter_global_ctxt};
 use dust_lexer::Lexer;
 use miette::LabeledSpan;
-use utils::{GblCx, create_and_enter_global_ctxt};
 
 use crate::args::{Args, Command};
 
 mod args;
+mod compiler;
+mod lexer;
+mod parser;
 
 trait ArenaVec<T> {
     fn push_arena(&mut self, v: T) -> &T;
@@ -23,7 +25,7 @@ fn main() -> miette::Result<()> {
     create_and_enter_global_ctxt(|ctx| main_in_gbl_ctx(ctx))
 }
 
-fn main_in_gbl_ctx(ctx: GblCx) -> miette::Result<()> {
+fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
     let args = <Args as clap::Parser>::parse();
 
     let mut arena = Vec::new();
@@ -71,22 +73,11 @@ fn main_in_gbl_ctx(ctx: GblCx) -> miette::Result<()> {
         }
 
         Some(Command::Compile { input }) => {
-            // AST
-            create_and_enter_ast_ctxt(ctx, |ctx| {
-                // Parse the root module into AST
-                let root = ctx.parse_root_module(input)?;
-
-                Ok::<(), miette::Error>(())
-            })?;
-
-            // HIR
-            create_and_enter_hir_ctxt(ctx, |ctx| {
-                // AST -> HIR lowering
-
-                Ok::<(), miette::Error>(())
-            })?;
+            compiler::Compiler { root_module: input }.run(ctx);
         }
-        Some(Command::Run { input }) => {}
+        Some(Command::Run { input }) => {
+            compiler::Compiler { root_module: input }.run(ctx);
+        }
 
         _ => todo!(),
     }

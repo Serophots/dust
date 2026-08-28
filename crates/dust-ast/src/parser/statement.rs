@@ -137,8 +137,9 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
+    use dust_ctxt::create_and_enter_global_ctxt;
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token, create_and_enter_global_ctxt};
+    use utils::{Ident, Token};
 
     use crate::{
         Arithmetic, Block, LetStatement, Parser, Primitive, Statement,

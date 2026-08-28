@@ -1,11 +1,9 @@
 use miette::SourceSpan;
 
-mod context;
 mod source;
 mod symbol;
 mod token;
 
-pub use context::*;
 pub use source::*;
 pub use symbol::*;
 pub use token::*;

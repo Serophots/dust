@@ -122,7 +122,8 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use utils::create_and_enter_global_ctxt;
+
+    use dust_ctxt::create_and_enter_global_ctxt;
 
     use crate::{Arithmetic, Parser, Primitive, parser::expression::Expression};
 

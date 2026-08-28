@@ -98,6 +98,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
+name = "bumpalo"
+version = "3.20.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
+
+[[package]]
 name = "camino"
 version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -159,7 +165,9 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 name = "dust-ast"
 version = "0.1.0"
 dependencies = [
+ "bumpalo",
  "camino",
+ "dust-ctxt",
  "dust-lexer",
  "dust-utils",
  "miette",
@@ -169,8 +177,11 @@ dependencies = [
 name = "dust-ast-lowering"
 version = "0.1.0"
 dependencies = [
+ "bumpalo",
  "dust-ast",
+ "dust-ctxt",
  "dust-hir",
+ "dust-utils",
 ]
 
 [[package]]
@@ -190,12 +201,23 @@ dependencies = [
  "camino",
  "clap",
  "dust-ast",
+ "dust-ast-lowering",
  "dust-ast-print",
+ "dust-ctxt",
  "dust-hir",
  "dust-interpretter",
  "dust-lexer",
  "dust-utils",
  "miette",
+]
+
+[[package]]
+name = "dust-ctxt"
+version = "0.1.0"
+dependencies = [
+ "bumpalo",
+ "dust-utils",
+ "string-interner",
 ]
 
 [[package]]
@@ -216,6 +238,7 @@ version = "0.1.0"
 name = "dust-lexer"
 version = "0.1.0"
 dependencies = [
+ "dust-ctxt",
  "dust-utils",
  "miette",
 ]
@@ -231,7 +254,6 @@ dependencies = [
  "camino",
  "miette",
  "string-interner",
- "typed-arena",
 ]
 
 [[package]]
@@ -505,12 +527,6 @@ dependencies = [
  "unicode-linebreak",
  "unicode-width 0.2.2",
 ]
-
-[[package]]
-name = "typed-arena"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"
 
 [[package]]
 name = "unicode-ident"

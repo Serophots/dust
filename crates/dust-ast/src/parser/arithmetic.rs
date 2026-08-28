@@ -359,7 +359,7 @@ impl<'a> Parser<'a> {
 mod tests {
     use std::assert_matches;
 
-    use utils::create_and_enter_global_ctxt;
+    use dust_ctxt::create_and_enter_global_ctxt;
 
     use crate::{Arithmetic, Primitive, parser::Parser};
 

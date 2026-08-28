@@ -1,8 +1,9 @@
 use std::iter::Filter;
 
+use dust_ctxt::GblCtx;
 use dust_lexer::Lexer;
 use miette::{LabeledSpan, Result, SourceSpan};
-use utils::{GblCx, Ident, Token, TokenKind};
+use utils::{Ident, Token, TokenKind};
 
 mod arithmetic;
 mod expression;
@@ -20,7 +21,7 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(source: &'a str, ctx: GblCx<'a>) -> Parser<'a> {
+    pub fn new(source: &'a str, ctx: GblCtx<'a>) -> Parser<'a> {
         fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind>>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }

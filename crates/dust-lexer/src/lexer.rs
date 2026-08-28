@@ -1,8 +1,8 @@
 use std::str::Chars;
 
+use dust_ctxt::GblCtx;
 use miette::LabeledSpan;
 use miette::Result;
-use utils::GblCx;
 use utils::Ident;
 use utils::Token;
 use utils::TokenKind;
@@ -16,7 +16,7 @@ pub struct Lexer<'a> {
     byte: usize,
     rest: &'a str,
     started: Started,
-    gcx: GblCx<'a>,
+    gcx: GblCtx<'a>,
 }
 
 #[derive(Clone, Debug)]
@@ -41,7 +41,7 @@ enum Started {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str, gcx: GblCx<'a>) -> Self {
+    pub fn new(source: &'a str, gcx: GblCtx<'a>) -> Self {
         Lexer {
             source: source,
             remaining: source.chars(),
@@ -404,8 +404,9 @@ impl<'a> Iterator for Lexer<'a> {
 
 #[cfg(test)]
 mod tests {
+    use dust_ctxt::create_and_enter_global_ctxt;
     use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token, TokenKind, create_and_enter_global_ctxt};
+    use utils::{Ident, Token, TokenKind};
 
     use crate::Lexer;
 

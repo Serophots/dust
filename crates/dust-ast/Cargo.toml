@@ -5,7 +5,10 @@ edition = "2024"
 
 [dependencies]
 dust-lexer.workspace = true
+dust-ctxt.workspace = true
 utils.workspace = true
+
+bumpalo.workspace = true
 
 miette.workspace = true
 camino.workspace = true

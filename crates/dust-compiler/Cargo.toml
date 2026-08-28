@@ -8,8 +8,10 @@ dust-interpretter.workspace = true
 
 dust-lexer.workspace = true
 dust-ast.workspace = true
+dust-ast-lowering.workspace = true
 dust-ast-print.workspace = true
 dust-hir.workspace = true
+dust-ctxt.workspace = true
 utils.workspace = true
 
 miette = { version = "7.6", features = ["fancy"] }

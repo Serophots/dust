@@ -9,7 +9,6 @@ path = "src/utils.rs"
 [dependencies]
 # Leaf crate - depend on no other crates in /crates
 
-typed-arena.workspace = true
 string-interner.workspace = true
 
 miette.workspace = true
