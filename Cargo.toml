@@ -22,8 +22,9 @@ dust-interpretter = { path = "crates/dust-interpretter/" }
 dust-ctxt = { path = "crates/dust-ctxt/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 
-bumpalo = "3.20"
+bumpalo = {version = "3.20", features = ["allocator_api"]}
 string-interner = "0.20"
+ahash = "0.8"
 
 miette = { version = "7.6", features = ["fancy"] }
 camino = "1.2"

@@ -1,6 +1,6 @@
 use std::iter::Filter;
 
-use dust_ctxt::GblCtx;
+use dust_ctxt::AstCtx;
 use dust_lexer::Lexer;
 use miette::{LabeledSpan, Result, SourceSpan};
 use utils::{Ident, Token, TokenKind};
@@ -15,13 +15,13 @@ pub use item::*;
 pub use statement::*;
 
 #[derive(Clone)]
-pub struct Parser<'a> {
-    pub source: &'a str,
-    lexer: Filter<Lexer<'a>, fn(&Result<Token<TokenKind>>) -> bool>,
+pub struct Parser<'ast> {
+    pub source: &'ast str,
+    lexer: Filter<Lexer<'ast>, fn(&Result<Token<TokenKind>>) -> bool>,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(source: &'a str, ctx: GblCtx<'a>) -> Parser<'a> {
+impl<'ast> Parser<'ast> {
+    pub fn new(source: &'ast str, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
         fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind>>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }
@@ -34,6 +34,7 @@ impl<'a> Parser<'a> {
 
     /// Consume the next token in the lexer
     pub fn next_token<F, R>(&mut self, f: F) -> Result<Option<R>>
+    // TODO: Is this closure ever used to do anything interesting? I suspect not
     where
         F: Fn(Token<TokenKind>) -> R,
     {
@@ -50,7 +51,7 @@ impl<'a> Parser<'a> {
 
                 Ok(token.unwrap())
             }
-            Some(Token { src, .. }) => Err(miette::miette!(
+            Some(Token { span: src, .. }) => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(
                     src,
                     format!("expected token '{:?}' following", exp_kind)
@@ -76,20 +77,20 @@ impl<'a> Parser<'a> {
 
         Ok(match token {
             Some(Token { kind, .. }) if f(kind) => Ok(token.unwrap()),
-            Some(Token { src, .. }) => Err(Some(src)),
+            Some(Token { span: src, .. }) => Err(Some(src)),
             None => Err(None),
         })
     }
 
-    pub fn expect_token_ident(&mut self) -> Result<Token<Ident>> {
+    pub fn expect_token_ident(&mut self) -> Result<Ident> {
         let token = self.next_token(|t| t)?;
 
         match token {
             Some(Token {
-                kind: TokenKind::Ident(ident),
-                src,
-            }) => Ok(Token { kind: ident, src }),
-            Some(Token { src, .. }) => Err(miette::miette!(
+                kind: TokenKind::Ident(symbol),
+                span,
+            }) => Ok(Ident { symbol, span }),
+            Some(Token { span: src, .. }) => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(src, "expected identifier following")],
                 "expected identifier",
             )
@@ -129,7 +130,7 @@ impl<'a> Parser<'a> {
     /// upon returning Some, retains its' state.
     pub fn try_to_parse<F, T>(&mut self, f: F) -> Option<T>
     where
-        F: Fn(&mut Parser<'a>) -> Option<T>,
+        F: Fn(&mut Parser<'ast>) -> Option<T>,
     {
         let mut new = self.clone();
         let ret = f(&mut new);

@@ -1,5 +1,5 @@
 use dust_ast::Parser;
-use dust_ctxt::{CtxtRunner, GblCtx, create_and_enter_global_ctxt};
+use dust_ctxt::{CtxtRunner, GblCtx, create_and_enter_ast_ctxt, create_and_enter_global_ctxt};
 use dust_lexer::Lexer;
 use miette::LabeledSpan;
 
@@ -10,17 +10,6 @@ mod compiler;
 mod lexer;
 mod parser;
 
-trait ArenaVec<T> {
-    fn push_arena(&mut self, v: T) -> &T;
-}
-
-impl<T> ArenaVec<T> for Vec<T> {
-    fn push_arena(&mut self, v: T) -> &T {
-        self.push(v);
-        self.last().unwrap()
-    }
-}
-
 fn main() -> miette::Result<()> {
     create_and_enter_global_ctxt(|ctx| main_in_gbl_ctx(ctx))
 }
@@ -28,55 +17,63 @@ fn main() -> miette::Result<()> {
 fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
     let args = <Args as clap::Parser>::parse();
 
-    let mut arena = Vec::new();
-
     match args.cmd {
         Some(Command::Lex { input }) => {
-            let contents = arena.push_arena(input.content()?);
-            let lexer = Lexer::new(contents, ctx);
+            create_and_enter_ast_ctxt(ctx, |ctx| {
+                let contents = ctx.arena.alloc(input.content()?);
+                let lexer = Lexer::new(contents, ctx);
 
-            return Err(miette::miette!(
-                labels = lexer
-                    .map(|token| {
-                        let token = token.unwrap();
-                        LabeledSpan::at(token.src, format!("{:?}", token.kind))
-                    })
-                    .collect::<Vec<_>>(),
-                "debug"
-            )
-            .with_source_code(contents.clone()));
+                Err(miette::miette!(
+                    labels = lexer
+                        .map(|token| {
+                            let token = token.unwrap();
+                            LabeledSpan::at(token.span, format!("{:?}", token.kind))
+                        })
+                        .collect::<Vec<_>>(),
+                    "debug"
+                )
+                .with_source_code(contents.clone()))
+            })?;
         }
         Some(Command::Parse { input, tree: false }) => {
-            use dust_ast_print::LabelPrinter;
+            create_and_enter_ast_ctxt(ctx, |ctx| {
+                use dust_ast_print::LabelPrinter;
 
-            let contents = arena.push_arena(input.content()?);
-            let ast = Parser::new(contents, ctx).mod_file()?;
+                let contents = ctx.arena.alloc(input.content()?);
+                let ast = Parser::new(contents, ctx).mod_file(ctx)?;
 
-            let mut labels = Vec::new();
-            ast.label(&mut labels);
+                let mut labels = Vec::new();
+                ast.label(&mut labels);
 
-            return Err(
-                miette::miette!(labels = labels, "debug").with_source_code(contents.clone())
-            );
+                Err(miette::miette!(labels = labels, "debug").with_source_code(contents.clone()))
+            })?;
         }
         Some(Command::Parse { input, tree: true }) => {
-            let contents = arena.push_arena(input.content()?);
-            let ast = Parser::new(contents, ctx).mod_file()?;
+            create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
+                let contents = ctx.arena.alloc(input.content()?);
+                let ast = Parser::new(contents, ctx).mod_file(ctx)?;
 
-            println!("{:#?}", ast.items);
+                println!("{:#?}", ast.items);
+
+                Ok(())
+            })?;
         }
         Some(Command::Calculate { input }) => {
-            let contents = arena.push_arena(input.content()?);
+            create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
+                let contents = ctx.arena.alloc(input.content()?);
 
-            let mut parser = Parser::new(&contents, ctx);
-            println!("{:?}", parser.arithmetic());
+                let mut parser = Parser::new(&contents, ctx);
+                println!("{:?}", parser.arithmetic(ctx));
+
+                Ok(())
+            })?;
         }
 
         Some(Command::Compile { input }) => {
-            compiler::Compiler { root_module: input }.run(ctx);
+            compiler::Compiler { root_module: input }.run(ctx)?;
         }
         Some(Command::Run { input }) => {
-            compiler::Compiler { root_module: input }.run(ctx);
+            compiler::Compiler { root_module: input }.run(ctx)?;
         }
 
         _ => todo!(),

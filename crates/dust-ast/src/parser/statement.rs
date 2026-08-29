@@ -12,65 +12,69 @@
 //!
 //! let_stmt       → "let" ident ("=" expression )? ";"
 
-use miette::{LabeledSpan, Result};
-use utils::{Ident, Token, TokenKind, combine_src};
+use bumpalo::Bump;
+use dust_ctxt::AstCtx;
+use miette::{LabeledSpan, Result, SourceSpan};
+use utils::{Ident, TokenKind, combine_src};
 
-use crate::{Item, Parser, parser::Expression};
+use crate::{Item, Parser, parser::Expr};
+
+type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Block {
-    pub stmts: Box<[Token<Statement>]>,
-    pub expr: Option<Token<Expression>>,
+pub struct Block<'ast> {
+    pub stmts: Box<'ast, [&'ast Statement<'ast>]>,
+    pub expr: Option<&'ast Expr<'ast>>,
+    pub span: SourceSpan,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Statement {
+pub enum Statement<'ast> {
     Semicolon,
-    Item(Item),
-    LetStatement(LetStatement),
-    Expression(Expression),
+    Item(&'ast Item<'ast>),
+    LetStatement(&'ast LetStatement<'ast>),
+    Expression(&'ast Expr<'ast>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LetStatement {
-    pub ident: Token<Ident>,
-    pub expr: Option<Token<Expression>>,
+pub struct LetStatement<'ast> {
+    pub ident: Ident,
+    pub expr: Option<&'ast Expr<'ast>>,
+    pub span: SourceSpan,
 }
 
-impl<'a> Parser<'a> {
-    pub(crate) fn block(&mut self) -> Result<Token<Block>> {
+impl<'ast> Parser<'ast> {
+    pub(crate) fn block(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Block<'ast>> {
         let left_brace = self.expect_token(TokenKind::LeftBrace)?;
 
-        let mut statements = Vec::new();
-        while let Some(statement) = self.statement()? {
-            statements.push(statement);
+        let mut stmts = Vec::new_in(ctx.arena);
+        while let Some(statement) = self.statement(ctx)? {
+            stmts.push(statement);
         }
 
-        let expression = if !matches!(self.first_token_kind(), Some(TokenKind::RightBrace)) {
-            Some(self.expression()?)
+        let expr = if !matches!(self.first_token_kind(), Some(TokenKind::RightBrace)) {
+            Some(self.expression(ctx)?)
         } else {
             None
         };
 
         let right_brace = self.expect_token(TokenKind::RightBrace)?;
 
-        Ok(Token {
-            kind: Block {
-                stmts: statements.into_boxed_slice(),
-                expr: expression,
-            },
-            src: combine_src(left_brace.src, right_brace.src),
-        })
+        Ok(ctx.arena.alloc(Block {
+            span: combine_src(left_brace.span, right_brace.span),
+            stmts: stmts.into_boxed_slice(),
+            expr,
+        }))
     }
 
-    fn statement(&mut self) -> Result<Option<Token<Statement>>> {
+    fn statement(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<Option<&'ast Statement<'ast>>> {
         loop {
             // First, try to pass an item
             if let Some(item) = self.try_to_parse(|parser| {
-                //
-                parser.item().ok()
+                // formating
+                parser.item(ctx).ok()
             }) {
-                return Ok(Some(item.map(Statement::Item)));
+                return Ok(Some(ctx.arena.alloc(Statement::Item(item))));
             }
 
             match self.first_token_kind() {
@@ -78,20 +82,17 @@ impl<'a> Parser<'a> {
                     self.expect_token(TokenKind::Semicolon)?;
                 }
                 Some(TokenKind::Let) => {
-                    return Ok(Some(self.let_stmt()?));
+                    return Ok(Some(self.let_stmt(ctx)?));
                 }
                 Some(_) => {
                     // Expression
 
-                    if let Some((expr, semi)) = self.try_to_parse(|parser| {
-                        let expr = parser.expression().ok()?;
+                    if let Some((expr, _semi)) = self.try_to_parse(|parser| {
+                        let expr = parser.expression(ctx).ok()?;
                         let semi = parser.expect_token(TokenKind::Semicolon).ok()?;
                         Some((expr, semi))
                     }) {
-                        return Ok(Some(Token {
-                            kind: Statement::Expression(expr.kind),
-                            src: combine_src(expr.src, semi.src),
-                        }));
+                        return Ok(Some(ctx.arena.alloc(Statement::Expression(expr))));
                     } else {
                         return Ok(None);
                     };
@@ -101,33 +102,45 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn let_stmt(&mut self) -> Result<Token<Statement>> {
+    fn let_stmt(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Statement<'ast>> {
         let r#let = self.expect_token(TokenKind::Let)?;
         let ident = self.expect_token_ident()?;
 
         match self.first_token_kind() {
             Some(TokenKind::Equal) => {
                 self.expect_token(TokenKind::Equal)?;
-                let expr = self.expression()?;
+                let expr = self.expression(ctx)?;
                 let semi = self.expect_token(TokenKind::Semicolon)?;
 
-                Ok(Token {
-                    kind: Statement::LetStatement(LetStatement {
+                // Ok(Token {
+                //     kind: ctx
+                //         .arena
+                //         .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
+                //             ident,
+                //             expr: Some(expr),
+                //         }))),
+                //     span: combine_src(r#let.span, semi.span),
+                // });
+                Ok(ctx
+                    .arena
+                    .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
                         ident,
                         expr: Some(expr),
-                    }),
-                    src: combine_src(r#let.src, semi.src),
-                })
+                        span: combine_src(r#let.span, semi.span),
+                    }))))
             }
             Some(TokenKind::Semicolon) => {
                 let semi = self.expect_token(TokenKind::Semicolon)?;
-                Ok(Token {
-                    kind: Statement::LetStatement(LetStatement { ident, expr: None }),
-                    src: combine_src(r#let.src, semi.src),
-                })
+                Ok(ctx
+                    .arena
+                    .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
+                        ident,
+                        expr: None,
+                        span: combine_src(r#let.span, semi.span),
+                    }))))
             }
             _ => Err(miette::miette!(
-                labels = vec![LabeledSpan::at(ident.src, "expected '=' or ';' following")],
+                labels = vec![LabeledSpan::at(ident.span, "expected '=' or ';' following")],
                 "expected '=' or ';'",
             )
             .with_source_code(self.source.to_owned())),
@@ -137,158 +150,161 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use dust_ctxt::create_and_enter_global_ctxt;
-    use miette::{SourceOffset, SourceSpan};
-    use utils::{Ident, Token};
+    use dust_ctxt::{create_and_enter_ast_ctxt, create_and_enter_global_ctxt};
 
-    use crate::{
-        Arithmetic, Block, LetStatement, Parser, Primitive, Statement,
-        parser::expression::Expression,
-    };
+    use crate::Parser;
 
     #[test]
     fn test_statement() {
-        create_and_enter_global_ctxt(|ctx| {
-            let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
-            let mut parser = Parser::new(test_script, ctx);
-            let mut statements = Vec::new();
+        let () = create_and_enter_global_ctxt(|ctx| {
+            let () = create_and_enter_ast_ctxt(ctx, |ctx| {
+                let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
+                let mut parser = Parser::new(test_script, ctx);
+                let mut statements = Vec::new();
 
-            while let Some(token) = parser.statement().unwrap() {
-                statements.push(token.kind);
-            }
+                while let Some(token) = parser.statement(ctx).unwrap() {
+                    statements.push(token);
+                }
 
-            assert_eq!(
-                statements,
-                vec![
-                    Statement::LetStatement(LetStatement {
-                        ident: Token {
-                            kind: Ident(ctx.symbols.get_or_intern("foo")),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        },
-                        expr: None
-                    }),
-                    Statement::LetStatement(LetStatement {
-                        ident: Token {
-                            kind: Ident(ctx.symbols.get_or_intern("bar")),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        },
-                        expr: Some(Token {
-                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
-                                2.0
-                            ))),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        })
-                    }),
-                    Statement::LetStatement(LetStatement {
-                        ident: Token {
-                            kind: Ident(ctx.symbols.get_or_intern("far")),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        },
-                        expr: Some(Token {
-                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
-                                true
-                            ))),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        })
-                    }),
-                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                        Primitive::Number(4.0)
-                    ))),
-                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                        Primitive::Bool(true)
-                    ))),
-                    Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                        Primitive::Bool(false)
-                    ))),
-                ]
-            );
+                panic!("pissing nora");
+
+                // assert_eq!(
+                //     statements,
+                //     vec![
+                //         Statement::LetStatement(LetStatement {
+                //             ident: Token {
+                //                 kind: Ident(ctx.symbols.get_or_intern("foo")),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             },
+                //             expr: None
+                //         }),
+                //         Statement::LetStatement(LetStatement {
+                //             ident: Token {
+                //                 kind: Ident(ctx.symbols.get_or_intern("bar")),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             },
+                //             expr: Some(Token {
+                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(
+                //                     Primitive::Number(2.0)
+                //                 )),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             })
+                //         }),
+                //         Statement::LetStatement(LetStatement {
+                //             ident: Token {
+                //                 kind: Ident(ctx.symbols.get_or_intern("far")),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             },
+                //             expr: Some(Token {
+                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(
+                //                     Primitive::Bool(true)
+                //                 )),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             })
+                //         }),
+                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                //             Primitive::Number(4.0)
+                //         ))),
+                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                //             Primitive::Bool(true)
+                //         ))),
+                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
+                //             Primitive::Bool(false)
+                //         ))),
+                //     ]
+                // );
+            });
         });
     }
 
     #[test]
     fn test_block() {
-        create_and_enter_global_ctxt(|ctx| {
-            let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
-            let mut parser = Parser::new(test_script, ctx);
-            let mut blocks = Vec::new();
+        let () = create_and_enter_global_ctxt(|ctx| {
+            let () = create_and_enter_ast_ctxt(ctx, |ctx| {
+                let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
+                let mut parser = Parser::new(test_script, ctx);
+                let mut blocks = Vec::new();
 
-            while let Ok(token) = parser.block() {
-                blocks.push(token.kind);
-            }
+                while let Ok(token) = parser.block(ctx) {
+                    blocks.push(token);
+                }
 
-            assert_eq!(
-                blocks,
-                vec![
-                    Block {
-                        stmts: vec![
-                            Token {
-                                kind: Statement::LetStatement(LetStatement {
-                                    ident: Token {
-                                        kind: Ident(ctx.symbols.get_or_intern("foo")),
-                                        src: SourceSpan::new(SourceOffset::from(0), 0),
-                                    },
-                                    expr: None
-                                }),
-                                src: SourceSpan::new(SourceOffset::from(0), 0),
-                            },
-                            Token {
-                                kind: Statement::Expression(Expression::Arithmetic(
-                                    Arithmetic::Primitive(Primitive::Number(15.0))
-                                )),
-                                src: SourceSpan::new(SourceOffset::from(0), 0),
-                            }
-                        ]
-                        .into_boxed_slice(),
-                        expr: Some(Token {
-                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
-                                true
-                            ))),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        })
-                    },
-                    Block {
-                        stmts: vec![Token {
-                            kind: Statement::LetStatement(LetStatement {
-                                ident: Token {
-                                    kind: Ident(ctx.symbols.get_or_intern("foo")),
-                                    src: SourceSpan::new(SourceOffset::from(0), 0),
-                                },
-                                expr: None
-                            }),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        }]
-                        .into_boxed_slice(),
-                        expr: Some(Token {
-                            kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
-                                2.0
-                            ))),
-                            src: SourceSpan::new(SourceOffset::from(0), 0),
-                        })
-                    },
-                    Block {
-                        stmts: vec![
-                            Token::kind(Statement::LetStatement(LetStatement {
-                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("foo"))),
-                                expr: None
-                            })),
-                            Token::kind(Statement::LetStatement(LetStatement {
-                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("bar"))),
-                                expr: Some(Token::kind(Expression::Arithmetic(
-                                    Arithmetic::Primitive(Primitive::Number(2.0))
-                                )))
-                            })),
-                            Token::kind(Statement::LetStatement(LetStatement {
-                                ident: Token::kind(Ident(ctx.symbols.get_or_intern("far"))),
-                                expr: Some(Token::kind(Expression::Arithmetic(
-                                    Arithmetic::Primitive(Primitive::Bool(true))
-                                )))
-                            }))
-                        ]
-                        .into_boxed_slice(),
-                        expr: None
-                    }
-                ]
-            );
+                panic!("pissing nora");
+
+                // assert_eq!(
+                //     blocks,
+                //     vec![
+                //         Block {
+                //             stmts: vec![
+                //                 Token {
+                //                     kind: Statement::LetStatement(LetStatement {
+                //                         ident: Token {
+                //                             kind: Ident(ctx.symbols.get_or_intern("foo")),
+                //                             src: SourceSpan::new(SourceOffset::from(0), 0),
+                //                         },
+                //                         expr: None
+                //                     }),
+                //                     src: SourceSpan::new(SourceOffset::from(0), 0),
+                //                 },
+                //                 Token {
+                //                     kind: Statement::Expression(Expression::Arithmetic(
+                //                         Arithmetic::Primitive(Primitive::Number(15.0))
+                //                     )),
+                //                     src: SourceSpan::new(SourceOffset::from(0), 0),
+                //                 }
+                //             ]
+                //             .into_boxed_slice(),
+                //             expr: Some(Token {
+                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
+                //                     true
+                //                 ))),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             })
+                //         },
+                //         Block {
+                //             stmts: vec![Token {
+                //                 kind: Statement::LetStatement(LetStatement {
+                //                     ident: Token {
+                //                         kind: Ident(ctx.symbols.get_or_intern("foo")),
+                //                         src: SourceSpan::new(SourceOffset::from(0), 0),
+                //                     },
+                //                     expr: None
+                //                 }),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             }]
+                //             .into_boxed_slice(),
+                //             expr: Some(Token {
+                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
+                //                     2.0
+                //                 ))),
+                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
+                //             })
+                //         },
+                //         Block {
+                //             stmts: vec![
+                //                 Token::kind(Statement::LetStatement(LetStatement {
+                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("foo"))),
+                //                     expr: None
+                //                 })),
+                //                 Token::kind(Statement::LetStatement(LetStatement {
+                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("bar"))),
+                //                     expr: Some(Token::kind(Expression::Arithmetic(
+                //                         Arithmetic::Primitive(Primitive::Number(2.0))
+                //                     )))
+                //                 })),
+                //                 Token::kind(Statement::LetStatement(LetStatement {
+                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("far"))),
+                //                     expr: Some(Token::kind(Expression::Arithmetic(
+                //                         Arithmetic::Primitive(Primitive::Bool(true))
+                //                     )))
+                //                 }))
+                //             ]
+                //             .into_boxed_slice(),
+                //             expr: None
+                //         }
+                //     ]
+                // );
+            });
         });
     }
 }

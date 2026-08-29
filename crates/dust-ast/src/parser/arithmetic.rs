@@ -14,20 +14,21 @@
 //! primary        → NUMBER | STRING | "true" | "false" | "nil"
 //!                | "(" logic_or ")" ;
 //!
+use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result};
-use utils::{Token, TokenKind, combine_src};
+use utils::{Ident, TokenKind, combine_src};
 
-use crate::{Arithmetic, BinaryOperation, Primitive, parser::Parser};
+use crate::{Arith, BinaryOperation, Primitive, parser::Parser};
 
-impl<'a> Parser<'a> {
-    pub fn arithmetic(&mut self) -> Result<Token<Arithmetic>> {
-        self.logic_or()
+impl<'ast> Parser<'ast> {
+    pub fn arithmetic(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        self.logic_or(ctx)
     }
 
     /// Read a string of or's ||
     ///  logic_or       → logic_and ( "||" logic_and )* ;
-    fn logic_or(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.logic_and()?;
+    fn logic_or(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.logic_and(ctx)?;
 
         loop {
             enum EqualityOperator {
@@ -43,20 +44,20 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.logic_and()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.logic_and(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs,
+                    rhs,
                     op: match operator {
                         EqualityOperator::Or => BinaryOperation::Or,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -64,8 +65,8 @@ impl<'a> Parser<'a> {
 
     /// Read a string of and's &&
     ///  logic_and      → equality ( "&&" equality )* ;
-    fn logic_and(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.equality()?;
+    fn logic_and(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.equality(ctx)?;
 
         loop {
             enum EqualityOperator {
@@ -81,20 +82,20 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.equality()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.equality(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs,
+                    rhs,
                     op: match operator {
                         EqualityOperator::And => BinaryOperation::And,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -102,8 +103,8 @@ impl<'a> Parser<'a> {
 
     /// Read a string of equalities == / !=
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn equality(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.comparison()?;
+    fn equality(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.comparison(ctx)?;
 
         loop {
             enum EqualityOperator {
@@ -121,21 +122,21 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.comparison()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.comparison(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs: lhs,
+                    rhs: rhs,
                     op: match operator {
                         EqualityOperator::Equal => BinaryOperation::Equal,
                         EqualityOperator::NotEqual => BinaryOperation::NotEqual,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -143,8 +144,8 @@ impl<'a> Parser<'a> {
 
     /// Read a string of comparisons GT/GE/LT/LE
     ///  comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn comparison(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.term()?;
+    fn comparison(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.term(ctx)?;
 
         loop {
             enum ComparisonOperator {
@@ -166,23 +167,23 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.term()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.term(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs,
+                    rhs,
                     op: match operator {
                         ComparisonOperator::Greater => BinaryOperation::Greater,
                         ComparisonOperator::GreaterEqual => BinaryOperation::GreaterEqual,
                         ComparisonOperator::Lesser => BinaryOperation::Lesser,
                         ComparisonOperator::LesserEqual => BinaryOperation::LesserEqual,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -190,8 +191,8 @@ impl<'a> Parser<'a> {
 
     /// Read a string of additions/subtractions
     ///  term           → factor ( ( "-" | "+" ) factor )* ;
-    fn term(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.factor()?;
+    fn term(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.factor(ctx)?;
 
         loop {
             enum TermOperator {
@@ -209,21 +210,21 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.factor()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.factor(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs,
+                    rhs,
                     op: match operator {
                         TermOperator::Add => BinaryOperation::Add,
                         TermOperator::Sub => BinaryOperation::Sub,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -231,8 +232,8 @@ impl<'a> Parser<'a> {
 
     /// Read a string of multiplications/divisions
     ///  factor         → unary ( ( "/" | "\*" ) unary )\* ;
-    fn factor(&mut self) -> Result<Token<Arithmetic>> {
-        let mut lhs = self.unary()?;
+    fn factor(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
+        let mut lhs = self.unary(ctx)?;
 
         loop {
             enum FactorOperator {
@@ -250,21 +251,21 @@ impl<'a> Parser<'a> {
             };
 
             self.lexer.next();
-            let rhs = self.unary()?;
-            let src = combine_src(lhs.src, rhs.src);
+            let rhs = self.unary(ctx)?;
+            let span = combine_src(lhs.span(), rhs.span());
 
-            lhs = Token {
-                kind: Arithmetic::Binary {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
+            lhs = ctx.arena.alloc(
+                Arith::Binary {
+                    lhs,
+                    rhs,
                     op: match operator {
                         FactorOperator::Mul => BinaryOperation::Mul,
                         FactorOperator::Div => BinaryOperation::Div,
                     },
+                    span,
                 }
                 .simplify(&self.source)?,
-                src,
-            };
+            );
         }
 
         Ok(lhs)
@@ -272,23 +273,22 @@ impl<'a> Parser<'a> {
 
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
-    fn unary(&mut self) -> Result<Token<Arithmetic>> {
+    fn unary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
         let unary = matches!(
             self.first_token_kind(),
             Some(TokenKind::Bang) | Some(TokenKind::Minus)
         );
 
         if unary {
-            let op = self.next_token(|f| f.src)?.unwrap();
-            let unary = self.unary()?;
-            let src = combine_src(op, unary.src);
+            let op = self.next_token(|f| f.span)?.unwrap();
+            let unary = self.unary(ctx)?;
+            let span = combine_src(op, unary.span());
 
-            Ok(Token {
-                kind: Arithmetic::Unary(Box::new(unary)).simplify(&self.source)?,
-                src,
-            })
+            Ok(ctx
+                .arena
+                .alloc(Arith::Unary { unary, span }.simplify(&self.source)?))
         } else {
-            Ok(self.primary()?)
+            Ok(self.primary(ctx)?)
         }
     }
 
@@ -296,7 +296,7 @@ impl<'a> Parser<'a> {
     ///  primary        → NUMBER | STRING | "true" | "false" | "nil"
     ///                | "(" arithmetic ")"
     ///                | IDENTIFIER ;
-    fn primary(&mut self) -> Result<Token<Arithmetic>> {
+    fn primary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
         let Some(token) = self.next_token(|token| token)? else {
             let eof = self.source.chars().count();
 
@@ -308,25 +308,28 @@ impl<'a> Parser<'a> {
         };
 
         match token.kind {
-            TokenKind::True => Ok(Token::new(
-                Arithmetic::Primitive(Primitive::Bool(true)),
-                token.src,
-            )),
-            TokenKind::False => Ok(Token::new(
-                Arithmetic::Primitive(Primitive::Bool(false)),
-                token.src,
-            )),
-            TokenKind::Nil => Ok(Token::new(Arithmetic::Primitive(Primitive::Nil), token.src)),
-            TokenKind::StringLiteral(str) => Ok(Token::new(
-                Arithmetic::Primitive(Primitive::String(str)),
-                token.src,
-            )),
-            TokenKind::NumberLiteral(n) => Ok(Token::new(
-                Arithmetic::Primitive(Primitive::Number(n)),
-                token.src,
-            )),
+            TokenKind::True => Ok(ctx.arena.alloc(Arith::Primitive {
+                prim: Primitive::Bool(true),
+                span: token.span,
+            })),
+            TokenKind::False => Ok(ctx.arena.alloc(Arith::Primitive {
+                prim: Primitive::Bool(false),
+                span: token.span,
+            })),
+            TokenKind::Nil => Ok(ctx.arena.alloc(Arith::Primitive {
+                prim: Primitive::Nil,
+                span: token.span,
+            })),
+            TokenKind::StringLiteral(str) => Ok(ctx.arena.alloc(Arith::Primitive {
+                prim: Primitive::String(str),
+                span: token.span,
+            })),
+            TokenKind::NumberLiteral(n) => Ok(ctx.arena.alloc(Arith::Primitive {
+                prim: Primitive::Number(n),
+                span: token.span,
+            })),
             TokenKind::LeftParen => {
-                let equality = self.logic_or();
+                let equality = self.logic_or(ctx);
                 let right_paren = self
                     .next_token(|token| matches!(token.kind, TokenKind::RightParen))?
                     .unwrap_or(false);
@@ -335,17 +338,20 @@ impl<'a> Parser<'a> {
                     Ok(equality?)
                 } else {
                     Err(miette::miette!(
-                        labels = vec![LabeledSpan::at(token.src, "unclosed '('")],
+                        labels = vec![LabeledSpan::at(token.span, "unclosed '('")],
                         "expected ')'"
                     )
                     .with_source_code(self.source.to_owned()))
                 }
             }
-            TokenKind::Ident(str) => Ok(Token::new(Arithmetic::Ident(str), token.src)),
+            TokenKind::Ident(str) => Ok(ctx.arena.alloc(Arith::Ident(Ident {
+                symbol: str,
+                span: token.span,
+            }))),
 
             t => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(
-                    token.src,
+                    token.span,
                     format!("unexpected token '{t:?}'")
                 )],
                 "expected Primary token"
@@ -357,137 +363,140 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::assert_matches;
 
-    use dust_ctxt::create_and_enter_global_ctxt;
+    use dust_ctxt::{create_and_enter_ast_ctxt, create_and_enter_global_ctxt};
 
-    use crate::{Arithmetic, Primitive, parser::Parser};
+    use crate::parser::Parser;
 
     #[test]
     fn test_expression() {
-        create_and_enter_global_ctxt(|ctx| {
-            let parse = |s| Parser::new(s, ctx).arithmetic().unwrap().kind;
+        let () = create_and_enter_global_ctxt(|ctx| {
+            let () = create_and_enter_ast_ctxt(ctx, |ctx| {
+                let parse = |s| Parser::new(s, ctx).arithmetic(ctx).unwrap();
 
-            assert_eq!(parse("5"), Arithmetic::Primitive(Primitive::Number(5.0)));
+                panic!("TODO");
 
-            assert_eq!(parse("-5"), Arithmetic::Primitive(Primitive::Number(-5.0)));
+                // assert_eq!(parse("5"), &Arith::Primitive(Primitive::Number(5.0)));
 
-            assert_eq!(
-                parse("3 * 5 / 7"),
-                Arithmetic::Primitive(Primitive::Number(15.0 / 7.0))
-            );
+                // assert_eq!(parse("-5"), &Arith::Primitive(Primitive::Number(-5.0)));
 
-            assert_eq!(
-                parse("-7 * 5 / 7"),
-                Arithmetic::Primitive(Primitive::Number(-5.0))
-            );
+                // assert_eq!(
+                //     parse("3 * 5 / 7"),
+                //     &Arith::Primitive(Primitive::Number(15.0 / 7.0))
+                // );
 
-            assert_eq!(
-                parse("-7 + 5 * 7"),
-                Arithmetic::Primitive(Primitive::Number(28.0))
-            );
+                // assert_eq!(
+                //     parse("-7 * 5 / 7"),
+                //     &Arith::Primitive(Primitive::Number(-5.0))
+                // );
 
-            assert_eq!(
-                parse("(-3 + 5) * 5 / 7"),
-                Arithmetic::Primitive(Primitive::Number(10.0 / 7.0))
-            );
+                // assert_eq!(
+                //     parse("-7 + 5 * 7"),
+                //     &Arith::Primitive(Primitive::Number(28.0))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3"),
-                Arithmetic::Primitive(Primitive::Number(-5.0))
-            );
+                // assert_eq!(
+                //     parse("(-3 + 5) * 5 / 7"),
+                //     &Arith::Primitive(Primitive::Number(10.0 / 7.0))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 < 4"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3"),
+                //     &Arith::Primitive(Primitive::Number(-5.0))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 > 4"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 < 4"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 <= -5"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 > 4"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 >= -5"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 <= -5"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 >= -5 == true"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 >= -5"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 >= -5 == false"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 >= -5 == true"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 >= -5 != true"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 >= -5 == false"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("1 - 2 * 3 >= -5 != false"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 >= -5 != true"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("(1 / 2) == (1 / 2)"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("1 - 2 * 3 >= -5 != false"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_matches!(parse("(0 / 0)"), Arithmetic::Primitive(Primitive::Number(f)) if f.is_nan());
+                // assert_eq!(
+                //     parse("(1 / 2) == (1 / 2)"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("(0 / 0) == (0 / 0)"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_matches!(parse("(0 / 0)"), Arith::Primitive(Primitive::Number(f)) if f.is_nan());
 
-            assert_eq!(
-                parse("true && true"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("(0 / 0) == (0 / 0)"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("true && false"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("true && true"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("false && false"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("true && false"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("false || false"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("false && false"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("true || false"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("false || false"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
 
-            assert_eq!(
-                parse("true || true"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("true || false"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("(4/2==2) && true"),
-                Arithmetic::Primitive(Primitive::Bool(true))
-            );
+                // assert_eq!(
+                //     parse("true || true"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
 
-            assert_eq!(
-                parse("(4/2==2) && (5<3)"),
-                Arithmetic::Primitive(Primitive::Bool(false))
-            );
+                // assert_eq!(
+                //     parse("(4/2==2) && true"),
+                //     &Arith::Primitive(Primitive::Bool(true))
+                // );
+
+                // assert_eq!(
+                //     parse("(4/2==2) && (5<3)"),
+                //     &Arith::Primitive(Primitive::Bool(false))
+                // );
+            });
         });
     }
 }

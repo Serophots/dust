@@ -9,3 +9,5 @@ utils.workspace = true
 
 string-interner.workspace = true
 bumpalo.workspace = true
+
+miette.workspace = true

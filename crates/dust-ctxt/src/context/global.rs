@@ -1,6 +1,7 @@
 use std::sync::OnceLock;
 
 use bumpalo::Bump;
+use miette::Result;
 
 use crate::{AstCtx, AstLoweringCtx, HirCtx, SymbolInterner};
 
@@ -23,6 +24,7 @@ impl<'gcx> core::ops::Deref for GblCtx<'gcx> {
     }
 }
 
+#[must_use]
 pub fn create_and_enter_global_ctxt<T, F>(f: F) -> T
 where
     F: for<'gcx> FnOnce(GblCtx<'gcx>) -> T,
@@ -38,7 +40,7 @@ pub trait CtxtRunner<'gcx> {
     type RetAstLw;
     type RetHir;
 
-    fn run(&self, gcx: GblCtx<'gcx>) {
+    fn run(&self, gcx: GblCtx<'gcx>) -> Result<()> {
         let ast_arena = Bump::new();
         let ast_ctx = AstCtx::<'_, 'gcx> {
             gcx: gcx,
@@ -46,7 +48,7 @@ pub trait CtxtRunner<'gcx> {
         };
 
         // Run ast
-        let ref_ast = self.run_ast(ast_ctx);
+        let ref_ast = self.run_ast(ast_ctx)?;
 
         let hir_arena = Bump::new();
         let ast_lw_ctx = AstLoweringCtx::<'_, '_, 'gcx> {
@@ -56,7 +58,7 @@ pub trait CtxtRunner<'gcx> {
         };
 
         // Run ast lowering
-        let ref_hir = self.run_ast_lowering(ref_ast, ast_lw_ctx);
+        let ref_hir = self.run_ast_lowering(ref_ast, ast_lw_ctx)?;
         drop(ast_arena);
 
         let hir_ctx = HirCtx::<'_, 'gcx> {
@@ -66,19 +68,21 @@ pub trait CtxtRunner<'gcx> {
 
         // Run hir
         let ref_hir = self.run_hir(ref_hir, hir_ctx);
+
+        Ok(())
     }
 
-    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> &'ast Self::RetAst;
+    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Self::RetAst>;
 
     fn run_ast_lowering<'ast, 'hir>(
         &self,
         ref_ast: &'ast Self::RetAst,
         ctx: AstLoweringCtx<'ast, 'hir, 'gcx>,
-    ) -> &'hir Self::RetAstLw;
+    ) -> Result<&'hir Self::RetAstLw>;
 
     fn run_hir<'hir>(
         &self,
         ref_hir: &'hir Self::RetAstLw,
         ctx: HirCtx<'hir, 'gcx>,
-    ) -> &'hir Self::RetHir;
+    ) -> Result<&'hir Self::RetHir>;
 }

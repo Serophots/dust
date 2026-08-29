@@ -9,6 +9,7 @@ dust-ctxt.workspace = true
 utils.workspace = true
 
 bumpalo.workspace = true
+ahash.workspace = true
 
 miette.workspace = true
 camino.workspace = true

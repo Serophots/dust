@@ -5,9 +5,11 @@ use miette::{SourceOffset, SourceSpan};
 use crate::{Symbol, combine_src};
 
 #[derive(Clone)]
+// TODO: remove the generic, T should always be TokenKind
+// This isn't a pleasant abstraction in the AST or HIR
 pub struct Token<T> {
     pub kind: T,
-    pub src: SourceSpan,
+    pub span: SourceSpan,
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -54,17 +56,20 @@ pub enum TokenKind {
     DocComment,
     StringLiteral(Symbol),
     NumberLiteral(f64),
-    Ident(Ident),
+    Ident(Symbol),
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub struct Ident(pub Symbol);
+pub struct Ident {
+    pub symbol: Symbol,
+    pub span: SourceSpan,
+}
 
 impl<T> Token<T> {
     pub fn new(kind: T, src: impl Into<SourceSpan>) -> Token<T> {
         Token {
             kind,
-            src: src.into(),
+            span: src.into(),
         }
     }
 
@@ -72,17 +77,7 @@ impl<T> Token<T> {
     pub fn kind(kind: T) -> Token<T> {
         Token {
             kind,
-            src: SourceSpan::new(SourceOffset::from(0), 0),
-        }
-    }
-
-    pub fn map<U, F>(self, f: F) -> Token<U>
-    where
-        F: FnOnce(T) -> U,
-    {
-        Token {
-            kind: f(self.kind),
-            src: self.src,
+            span: SourceSpan::new(SourceOffset::from(0), 0),
         }
     }
 }
@@ -112,7 +107,7 @@ where
     type Output = Token<T::Output>;
 
     fn not(self) -> Self::Output {
-        Token::new(!self.kind, self.src)
+        Token::new(!self.kind, self.span)
     }
 }
 
@@ -123,7 +118,7 @@ where
     type Output = Token<T::Output>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind * rhs.kind, combine_src(self.src, rhs.src))
+        Token::new(self.kind * rhs.kind, combine_src(self.span, rhs.span))
     }
 }
 
@@ -134,7 +129,7 @@ where
     type Output = Token<T::Output>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind / rhs.kind, combine_src(self.src, rhs.src))
+        Token::new(self.kind / rhs.kind, combine_src(self.span, rhs.span))
     }
 }
 
@@ -145,7 +140,7 @@ where
     type Output = Token<T::Output>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind + rhs.kind, combine_src(self.src, rhs.src))
+        Token::new(self.kind + rhs.kind, combine_src(self.span, rhs.span))
     }
 }
 
@@ -156,7 +151,7 @@ where
     type Output = Token<T::Output>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind - rhs.kind, combine_src(self.src, rhs.src))
+        Token::new(self.kind - rhs.kind, combine_src(self.span, rhs.span))
     }
 }
 
