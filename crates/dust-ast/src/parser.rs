@@ -17,16 +17,16 @@ pub use statement::*;
 #[derive(Clone)]
 pub struct Parser<'ast> {
     pub source: &'ast str,
-    lexer: Filter<Lexer<'ast>, fn(&Result<Token<TokenKind>>) -> bool>,
+    lexer: Filter<Lexer<'ast>, fn(&Result<Token>) -> bool>,
 }
 
 impl<'ast> Parser<'ast> {
     pub fn new(source: &'ast str, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
-        fn predicate<'a, 'b>(token: &'a Result<Token<TokenKind>>) -> bool {
+        fn predicate<'a, 'b>(token: &'a Result<Token>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }
 
-        let predicate: fn(&Result<Token<TokenKind>>) -> bool = predicate;
+        let predicate: fn(&Result<Token>) -> bool = predicate;
         let lexer = Lexer::new(source, ctx).filter(predicate);
 
         Parser { source, lexer }
@@ -36,13 +36,13 @@ impl<'ast> Parser<'ast> {
     pub fn next_token<F, R>(&mut self, f: F) -> Result<Option<R>>
     // TODO: Is this closure ever used to do anything interesting? I suspect not
     where
-        F: Fn(Token<TokenKind>) -> R,
+        F: Fn(Token) -> R,
     {
         Ok(self.lexer.next().transpose()?.map(f))
     }
 
     /// Consume the next token, erroring otherwise
-    pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token<TokenKind>> {
+    pub fn expect_token(&mut self, exp_kind: TokenKind) -> Result<Token> {
         let token = self.first_token();
 
         match token {
@@ -69,7 +69,7 @@ impl<'ast> Parser<'ast> {
     pub fn expect_token_matches<F>(
         &mut self,
         f: F,
-    ) -> Result<std::result::Result<Token<TokenKind>, Option<SourceSpan>>>
+    ) -> Result<std::result::Result<Token, Option<SourceSpan>>>
     where
         F: Fn(TokenKind) -> bool,
     {
@@ -103,7 +103,7 @@ impl<'ast> Parser<'ast> {
     }
 
     /// Peek the first token in the lexer
-    pub fn first_token<'s>(&'s self) -> Option<Token<TokenKind>> {
+    pub fn first_token<'s>(&'s self) -> Option<Token> {
         let mut lexer = self.lexer.clone();
         lexer.next().map(Result::ok).flatten()
     }
@@ -114,7 +114,7 @@ impl<'ast> Parser<'ast> {
     }
 
     /// Peek the second token in the lexer
-    pub fn second_token<'s>(&'s self) -> Option<Token<TokenKind>> {
+    pub fn second_token<'s>(&'s self) -> Option<Token> {
         let mut lexer = self.lexer.clone();
         let _ = lexer.next();
         lexer.next().map(Result::ok).flatten()

@@ -1,18 +1,16 @@
 #![feature(allocator_api)]
+use ahash::HashMap;
+use camino::Utf8Path;
+use dust_ctxt::AstCtx;
+use miette::Result;
 
 mod arithmetic;
 mod parser;
 mod primitive;
-mod token;
 
-use ahash::HashMap;
 pub use arithmetic::*;
-use camino::Utf8Path;
-use dust_ctxt::AstCtx;
-use miette::Result;
 pub use parser::*;
 pub use primitive::*;
-pub use token::*;
 
 pub struct ParsedAst<'ast> {
     root: &'ast mut Module<'ast>,

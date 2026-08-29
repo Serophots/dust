@@ -1,14 +1,12 @@
 use std::fmt::Debug;
 
-use miette::{SourceOffset, SourceSpan};
+use miette::SourceSpan;
 
-use crate::{Symbol, combine_src};
+use crate::Symbol;
 
 #[derive(Clone)]
-// TODO: remove the generic, T should always be TokenKind
-// This isn't a pleasant abstraction in the AST or HIR
-pub struct Token<T> {
-    pub kind: T,
+pub struct Token {
+    pub kind: TokenKind,
     pub span: SourceSpan,
 }
 
@@ -65,102 +63,23 @@ pub struct Ident {
     pub span: SourceSpan,
 }
 
-impl<T> Token<T> {
-    pub fn new(kind: T, src: impl Into<SourceSpan>) -> Token<T> {
+impl Token {
+    pub fn new(kind: TokenKind, src: impl Into<SourceSpan>) -> Token {
         Token {
             kind,
             span: src.into(),
         }
     }
-
-    /// Intended for use in tests
-    pub fn kind(kind: T) -> Token<T> {
-        Token {
-            kind,
-            span: SourceSpan::new(SourceOffset::from(0), 0),
-        }
-    }
 }
 
-impl<T> core::fmt::Debug for Token<T>
-where
-    T: core::fmt::Debug,
-{
+impl core::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.kind)
     }
 }
 
-impl<T> PartialEq for Token<T>
-where
-    T: PartialEq,
-{
+impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
         self.kind == other.kind
-    }
-}
-
-impl<T> std::ops::Not for Token<T>
-where
-    T: std::ops::Not,
-{
-    type Output = Token<T::Output>;
-
-    fn not(self) -> Self::Output {
-        Token::new(!self.kind, self.span)
-    }
-}
-
-impl<T> std::ops::Mul for Token<T>
-where
-    T: std::ops::Mul,
-{
-    type Output = Token<T::Output>;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind * rhs.kind, combine_src(self.span, rhs.span))
-    }
-}
-
-impl<T> std::ops::Div for Token<T>
-where
-    T: std::ops::Div,
-{
-    type Output = Token<T::Output>;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind / rhs.kind, combine_src(self.span, rhs.span))
-    }
-}
-
-impl<T> std::ops::Add for Token<T>
-where
-    T: std::ops::Add,
-{
-    type Output = Token<T::Output>;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind + rhs.kind, combine_src(self.span, rhs.span))
-    }
-}
-
-impl<T> std::ops::Sub for Token<T>
-where
-    T: std::ops::Sub,
-{
-    type Output = Token<T::Output>;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        Token::new(self.kind - rhs.kind, combine_src(self.span, rhs.span))
-    }
-}
-
-impl<T> PartialOrd for Token<T>
-where
-    T: PartialOrd,
-    Token<T>: PartialEq,
-{
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        PartialOrd::partial_cmp(&self.kind, &other.kind)
     }
 }

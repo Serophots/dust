@@ -74,7 +74,7 @@ impl<'ast> Lexer<'ast> {
     /// NOTE: a None return does **NOT** indicate that the source has ran out,
     /// but rather just that this character was not enough to constitute a Token
     /// by itself. The caller must check whether the source has ran out.
-    fn process_next_char(&mut self) -> Option<Result<Token<TokenKind>>> {
+    fn process_next_char(&mut self) -> Option<Result<Token>> {
         let byte = self.byte;
         let char = self.peek_char()?;
 
@@ -274,7 +274,7 @@ impl<'ast> Lexer<'ast> {
         return self.process_next_char();
     }
 
-    fn finish_number_literal(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind>> {
+    fn finish_number_literal(&mut self, lower: usize, byte: usize) -> Result<Token> {
         self.started = Started::None;
 
         // include the lower byte which starts on the first digit
@@ -292,7 +292,7 @@ impl<'ast> Lexer<'ast> {
         return Ok(Token::new(TokenKind::NumberLiteral(number), range));
     }
 
-    fn finish_identifier(&mut self, lower: usize, byte: usize) -> Result<Token<TokenKind>> {
+    fn finish_identifier(&mut self, lower: usize, byte: usize) -> Result<Token> {
         self.started = Started::None;
 
         // include the lower byte which begins the identifier
@@ -331,7 +331,7 @@ impl<'ast> Lexer<'ast> {
         lower_literal: usize,
         doc: bool,
         byte: usize,
-    ) -> Result<Token<TokenKind>> {
+    ) -> Result<Token> {
         self.started = Started::None;
 
         let token_range = lower..byte;
@@ -349,7 +349,7 @@ impl<'ast> Lexer<'ast> {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = Result<Token<TokenKind>>;
+    type Item = Result<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.process_next_char() {
