@@ -6,18 +6,16 @@
 //!
 //! function       → "fn" ident "()" block_expr ;
 
-use bumpalo::Bump;
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
-use utils::{Ident, TokenKind, combine_src};
+use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
-type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
-
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Module<'ast> {
     pub ident: Option<Ident>,
+    #[serde(with = "utils::box_serialize_with")]
     pub items: Box<'ast, [&'ast Item<'ast>]>,
     pub span: SourceSpan,
 }
@@ -31,7 +29,7 @@ impl<'ast> core::fmt::Debug for Module<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Item<'ast> {
     pub vis: Option<Visibility>,
     pub r#type: ItemType<'ast>,
@@ -47,7 +45,7 @@ impl<'ast> core::fmt::Debug for Item<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub enum ItemType<'ast> {
     Module(&'ast Module<'ast>),
     Function(&'ast Function<'ast>),
@@ -64,7 +62,7 @@ impl<'ast> core::fmt::Debug for ItemType<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Visibility {
     pub r#type: VisibilityType,
     pub span: SourceSpan,
@@ -76,12 +74,12 @@ impl core::fmt::Debug for Visibility {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize)]
 pub enum VisibilityType {
     Pub,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Use<'ast> {
     pub path: &'ast Path<'ast>,
     pub span: SourceSpan,
@@ -93,7 +91,7 @@ impl<'ast> core::fmt::Debug for Use<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Function<'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'ast>,

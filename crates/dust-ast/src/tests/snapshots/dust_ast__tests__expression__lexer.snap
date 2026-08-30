@@ -1,0 +1,45 @@
+---
+source: crates/dust-ast/src/tests/expression.rs
+expression: expressions
+---
+[
+  {
+    "Arith": {
+      "Primitive": {
+        "prim": {
+          "Number": 4.0
+        },
+        "span": {
+          "offset": 26,
+          "length": 5
+        }
+      }
+    }
+  },
+  {
+    "Arith": {
+      "Primitive": {
+        "prim": {
+          "Bool": true
+        },
+        "span": {
+          "offset": 32,
+          "length": 18
+        }
+      }
+    }
+  },
+  {
+    "Arith": {
+      "Primitive": {
+        "prim": {
+          "Bool": false
+        },
+        "span": {
+          "offset": 51,
+          "length": 17
+        }
+      }
+    }
+  }
+]

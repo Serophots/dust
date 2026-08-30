@@ -1,9 +1,13 @@
+#![feature(allocator_api)]
+
 use miette::SourceSpan;
 
+mod r#box;
 mod source;
 mod symbol;
 mod token;
 
+pub use r#box::*;
 pub use source::*;
 pub use symbol::*;
 pub use token::*;

@@ -10,6 +10,7 @@ path = "src/utils.rs"
 # Leaf crate - depend on no other crates in /crates
 
 string-interner.workspace = true
+bumpalo.workspace = true
 
 miette.workspace = true
 camino.workspace = true

@@ -15,17 +15,14 @@
 //!
 //! loop_expr      → "loop" block_expr ;
 
-use bumpalo::Bump;
 use dust_ctxt::AstCtx;
 use miette::{Result, SourceSpan};
-use utils::{Ident, TokenKind, combine_src};
+use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Arith, Block, Parser};
 
-type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
-
 /// Expression
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, serde::Serialize)]
 pub enum Expr<'ast> {
     Arith(&'ast Arith<'ast>),
     Assign,
@@ -64,8 +61,9 @@ impl<'ast> Expr<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(PartialEq, serde::Serialize)]
 pub struct Path<'ast> {
+    #[serde(with = "utils::box_serialize_with")]
     pub cmpts: Box<'ast, [Ident]>,
     pub span: SourceSpan,
 }
@@ -76,7 +74,7 @@ impl<'ast> core::fmt::Debug for Path<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct CallExpr<'ast> {
     pub expr: &'ast Expr<'ast>,
     pub span: SourceSpan,
@@ -174,41 +172,5 @@ impl<'ast> Parser<'ast> {
 
     fn assign_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
         todo!()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-
-    use dust_ctxt::{create_and_enter_ast_ctxt, create_and_enter_global_ctxt};
-
-    use crate::Parser;
-
-    #[test]
-    fn test_lexer() {
-        let () = create_and_enter_global_ctxt(|ctx| {
-            let () = create_and_enter_ast_ctxt(ctx, |ctx| {
-                let test_script =
-                    include_str!("../../../../assets/tests/ast-parser/expression.dst");
-                let mut parser = Parser::new(test_script, ctx);
-                let mut expressions = Vec::new();
-
-                while let Ok(token) = parser.expression(ctx) {
-                    expressions.push(token);
-                }
-
-                panic!("todo");
-
-                // assert_eq!(expressions, {
-                //     let mut vec = Vec::new_in(ctx.arena);
-                //     vec.extend_from_slice(&[
-                //         &Expr::Arith(&Arith::Primitive{prim:Primitive::Number(4.0),span:  })),
-                //         &Expr::Arith(&Arith::Primitive{prim:Primitive::Bool(true),span:  })),
-                //             &Expr::Arith(&Arith::Primitive{prim:Primitive::Bool(false),span:  })),
-                //     ]);
-                //     vec
-                // });
-            });
-        });
     }
 }

@@ -12,17 +12,15 @@
 //!
 //! let_stmt       → "let" ident ("=" expression )? ";"
 
-use bumpalo::Bump;
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceSpan};
-use utils::{Ident, TokenKind, combine_src};
+use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Item, Parser, parser::Expr};
 
-type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
-
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct Block<'ast> {
+    #[serde(with = "utils::box_serialize_with")]
     pub stmts: Box<'ast, [&'ast Statement<'ast>]>,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
@@ -37,7 +35,7 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub enum Statement<'ast> {
     Semicolon,
     Item(&'ast Item<'ast>),
@@ -56,7 +54,7 @@ impl<'ast> core::fmt::Debug for Statement<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub struct LetStatement<'ast> {
     pub ident: Ident,
     pub expr: Option<&'ast Expr<'ast>>,
