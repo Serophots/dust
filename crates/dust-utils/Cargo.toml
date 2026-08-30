@@ -13,3 +13,5 @@ string-interner.workspace = true
 
 miette.workspace = true
 camino.workspace = true
+
+serde.workspace = true

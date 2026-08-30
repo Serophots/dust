@@ -3,6 +3,9 @@ name = "dust-ast"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+no-simplify = []
+
 [dependencies]
 dust-lexer.workspace = true
 dust-ctxt.workspace = true
@@ -13,3 +16,8 @@ ahash.workspace = true
 
 miette.workspace = true
 camino.workspace = true
+
+serde.workspace = true
+
+[dev-dependencies]
+insta.workspace = true

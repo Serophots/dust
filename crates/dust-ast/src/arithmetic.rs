@@ -4,7 +4,7 @@ use utils::Ident;
 use crate::{BinaryOperation, Primitive};
 
 /// Arithmetic
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, serde::Serialize)]
 pub enum Arith<'ast> {
     Primitive {
         prim: Primitive,
@@ -66,203 +66,223 @@ impl<'ast> Arith<'ast> {
     /// needn't recurse; it can assume that any leaves dangling
     /// from this expression have been simplified fully already.
     pub fn simplify(self, source: &'ast str) -> Result<Arith<'ast>> {
-        match self {
-            Arith::Primitive { .. } => {}
-            Arith::Ident(_) => {}
-            Arith::Unary { unary, span } => match unary {
-                Arith::Primitive { prim, .. } => {
-                    return Ok(Arith::Primitive {
-                        prim: Primitive::not(*prim).map_err(|()| {
-                            miette::miette!(
-                                labels =
-                                    vec![LabeledSpan::at(unary.span(), format!("not {:?}", prim)),],
-                                "cannot negate incompatible primitive"
-                            )
-                        })?,
-                        span,
-                    });
-                }
-                _ => {}
-            },
-            Arith::Binary { lhs, rhs, op, span } => match (lhs, rhs) {
-                (
-                    Arith::Primitive {
-                        prim: lhs_prim,
-                        span: lhs_span,
-                    },
-                    Arith::Primitive {
-                        prim: rhs_prim,
-                        span: rhs_span,
-                    },
-                ) => {
-                    match op {
-                        // Primitives are cheap to clone
-                        BinaryOperation::Add => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::add(*lhs_prim, *rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
+        if !cfg!(feature = "no-simplify") {
+            match self {
+                Arith::Primitive { .. } => {}
+                Arith::Ident(_) => {}
+                Arith::Unary { unary, span } => match unary {
+                    Arith::Primitive { prim, .. } => {
+                        return Ok(Arith::Primitive {
+                            prim: Primitive::not(*prim).map_err(|()| {
+                                miette::miette!(
+                                    labels = vec![LabeledSpan::at(
+                                        unary.span(),
+                                        format!("not {:?}", prim)
+                                    ),],
+                                    "cannot negate incompatible primitive"
+                                )
+                            })?,
+                            span,
+                        });
+                    }
+                    _ => {}
+                },
+                Arith::Binary { lhs, rhs, op, span } => match (lhs, rhs) {
+                    (
+                        Arith::Primitive {
+                            prim: lhs_prim,
+                            span: lhs_span,
+                        },
+                        Arith::Primitive {
+                            prim: rhs_prim,
+                            span: rhs_span,
+                        },
+                    ) => {
+                        match op {
+                            // Primitives are cheap to clone
+                            BinaryOperation::Add => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::add(*lhs_prim, *rhs_prim).map_err(|()| {
+                                        miette::miette!(
+                                            labels = vec![
+                                                LabeledSpan::at(
+                                                    *lhs_span,
+                                                    format!("lhs {:?}", lhs_prim)
+                                                ),
+                                                LabeledSpan::at(
+                                                    *rhs_span,
+                                                    format!("rhs {:?}", rhs_prim)
+                                                )
+                                            ],
+                                            "cannot add incompatible primitives"
+                                        )
+                                        .with_source_code(source.to_owned())
+                                    })?,
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Sub => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::sub(*lhs_prim, *rhs_prim).map_err(|()| {
+                                        miette::miette!(
+                                            labels = vec![
+                                                LabeledSpan::at(
+                                                    *lhs_span,
+                                                    format!("lhs {:?}", lhs_prim)
+                                                ),
+                                                LabeledSpan::at(
+                                                    *rhs_span,
+                                                    format!("rhs {:?}", rhs_prim)
+                                                )
+                                            ],
+                                            "cannot sub incompatible primitives"
+                                        )
+                                        .with_source_code(source.to_owned())
+                                    })?,
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Mul => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::mul(*lhs_prim, *rhs_prim).map_err(|()| {
+                                        miette::miette!(
+                                            labels = vec![
+                                                LabeledSpan::at(
+                                                    *lhs_span,
+                                                    format!("lhs {:?}", lhs_prim)
+                                                ),
+                                                LabeledSpan::at(
+                                                    *rhs_span,
+                                                    format!("rhs {:?}", rhs_prim)
+                                                )
+                                            ],
+                                            "cannot mul incompatible primitives"
+                                        )
+                                        .with_source_code(source.to_owned())
+                                    })?,
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Div => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::div(*lhs_prim, *rhs_prim).map_err(|()| {
+                                        miette::miette!(
+                                            labels = vec![
+                                                LabeledSpan::at(
+                                                    *lhs_span,
+                                                    format!("lhs {:?}", lhs_prim)
+                                                ),
+                                                LabeledSpan::at(
+                                                    *rhs_span,
+                                                    format!("rhs {:?}", rhs_prim)
+                                                )
+                                            ],
+                                            "cannot div incompatible primitives"
+                                        )
+                                        .with_source_code(source.to_owned())
+                                    })?,
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Equal => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialEq::eq(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::NotEqual => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialEq::ne(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Greater => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialOrd::gt(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::GreaterEqual => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialOrd::ge(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Lesser => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialOrd::lt(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::LesserEqual => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::Bool(std::cmp::PartialOrd::le(
+                                        lhs_prim, rhs_prim,
+                                    )),
+                                    span,
+                                });
+                            }
+                            BinaryOperation::And => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::logical_and(lhs_prim, rhs_prim).map_err(
+                                        |()| {
+                                            miette::miette!(
+                                                labels = vec![
+                                                    LabeledSpan::at(
+                                                        *lhs_span,
+                                                        format!("lhs {:?}", lhs_prim)
+                                                    ),
+                                                    LabeledSpan::at(
+                                                        *rhs_span,
+                                                        format!("rhs {:?}", rhs_prim)
+                                                    )
+                                                ],
+                                                "cannot and incompatible primitives"
                                             )
-                                        ],
-                                        "cannot add incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
-                        }
-                        BinaryOperation::Sub => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::sub(*lhs_prim, *rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
+                                            .with_source_code(source.to_owned())
+                                        },
+                                    )?,
+                                    span,
+                                });
+                            }
+                            BinaryOperation::Or => {
+                                return Ok(Arith::Primitive {
+                                    prim: Primitive::logical_or(lhs_prim, rhs_prim).map_err(
+                                        |()| {
+                                            miette::miette!(
+                                                labels = vec![
+                                                    LabeledSpan::at(
+                                                        *lhs_span,
+                                                        format!("lhs {:?}", lhs_prim)
+                                                    ),
+                                                    LabeledSpan::at(
+                                                        *rhs_span,
+                                                        format!("rhs {:?}", rhs_prim)
+                                                    )
+                                                ],
+                                                "cannot or incompatible primitives"
                                             )
-                                        ],
-                                        "cannot sub incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
-                        }
-                        BinaryOperation::Mul => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::mul(*lhs_prim, *rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
-                                            )
-                                        ],
-                                        "cannot mul incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
-                        }
-                        BinaryOperation::Div => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::div(*lhs_prim, *rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
-                                            )
-                                        ],
-                                        "cannot div incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
-                        }
-                        BinaryOperation::Equal => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialEq::eq(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::NotEqual => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialEq::ne(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::Greater => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialOrd::gt(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::GreaterEqual => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialOrd::ge(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::Lesser => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialOrd::lt(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::LesserEqual => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::Bool(std::cmp::PartialOrd::le(lhs_prim, rhs_prim)),
-                                span,
-                            });
-                        }
-                        BinaryOperation::And => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::logical_and(lhs_prim, rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
-                                            )
-                                        ],
-                                        "cannot and incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
-                        }
-                        BinaryOperation::Or => {
-                            return Ok(Arith::Primitive {
-                                prim: Primitive::logical_or(lhs_prim, rhs_prim).map_err(|()| {
-                                    miette::miette!(
-                                        labels = vec![
-                                            LabeledSpan::at(
-                                                *lhs_span,
-                                                format!("lhs {:?}", lhs_prim)
-                                            ),
-                                            LabeledSpan::at(
-                                                *rhs_span,
-                                                format!("rhs {:?}", rhs_prim)
-                                            )
-                                        ],
-                                        "cannot or incompatible primitives"
-                                    )
-                                    .with_source_code(source.to_owned())
-                                })?,
-                                span,
-                            });
+                                            .with_source_code(source.to_owned())
+                                        },
+                                    )?,
+                                    span,
+                                });
+                            }
                         }
                     }
-                }
-                _ => {}
-            },
+                    _ => {}
+                },
+            }
         }
 
         Ok(self)

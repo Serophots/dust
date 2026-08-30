@@ -8,6 +8,9 @@ mod arithmetic;
 mod parser;
 mod primitive;
 
+#[cfg(test)]
+mod tests;
+
 pub use arithmetic::*;
 pub use parser::*;
 pub use primitive::*;

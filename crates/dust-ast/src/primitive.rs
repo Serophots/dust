@@ -1,6 +1,6 @@
 use utils::Symbol;
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, serde::Serialize)]
 pub enum Primitive {
     Number(f64),
     String(Symbol),
@@ -8,7 +8,7 @@ pub enum Primitive {
     Nil,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub enum BinaryOperation {
     Add,
     Sub,

@@ -1,0 +1,15 @@
+---
+source: crates/dust-ast/src/tests/arithmetic.rs
+expression: parsed
+---
+{
+  "Primitive": {
+    "prim": {
+      "Bool": false
+    },
+    "span": {
+      "offset": 0,
+      "length": 24
+    }
+  }
+}

@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use miette::SourceSpan;
-use string_interner::Symbol as _;
 
 use crate::Symbol;
 
@@ -58,7 +57,7 @@ pub enum TokenKind {
     Ident(Symbol),
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, serde::Serialize)]
 pub struct Ident {
     pub symbol: Symbol,
     pub span: SourceSpan,
