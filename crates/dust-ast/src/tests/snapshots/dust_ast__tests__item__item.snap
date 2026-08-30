@@ -1,0 +1,233 @@
+---
+source: crates/dust-ast/src/tests/item.rs
+expression: module
+---
+{
+  "ident": null,
+  "items": [
+    {
+      "vis": null,
+      "type": {
+        "Function": {
+          "ident": {
+            "symbol": 0,
+            "span": {
+              "offset": 3,
+              "length": 5
+            }
+          },
+          "block": {
+            "stmts": [],
+            "expr": {
+              "Arith": {
+                "Primitive": {
+                  "prim": {
+                    "Number": 15.0
+                  },
+                  "span": {
+                    "offset": 17,
+                    "length": 9
+                  }
+                }
+              }
+            },
+            "span": {
+              "offset": 11,
+              "length": 17
+            }
+          },
+          "span": {
+            "offset": 0,
+            "length": 28
+          }
+        }
+      },
+      "span": {
+        "offset": 0,
+        "length": 28
+      }
+    },
+    {
+      "vis": {
+        "type": "Pub",
+        "span": {
+          "offset": 30,
+          "length": 3
+        }
+      },
+      "type": {
+        "Function": {
+          "ident": {
+            "symbol": 1,
+            "span": {
+              "offset": 37,
+              "length": 6
+            }
+          },
+          "block": {
+            "stmts": [
+              {
+                "LetStatement": {
+                  "ident": {
+                    "symbol": 2,
+                    "span": {
+                      "offset": 56,
+                      "length": 3
+                    }
+                  },
+                  "expr": {
+                    "Arith": {
+                      "Primitive": {
+                        "prim": {
+                          "Number": 15.0
+                        },
+                        "span": {
+                          "offset": 62,
+                          "length": 9
+                        }
+                      }
+                    }
+                  },
+                  "span": {
+                    "offset": 52,
+                    "length": 20
+                  }
+                }
+              },
+              {
+                "LetStatement": {
+                  "ident": {
+                    "symbol": 3,
+                    "span": {
+                      "offset": 81,
+                      "length": 3
+                    }
+                  },
+                  "expr": null,
+                  "span": {
+                    "offset": 77,
+                    "length": 8
+                  }
+                }
+              }
+            ],
+            "expr": {
+              "Arith": {
+                "Ident": {
+                  "symbol": 2,
+                  "span": {
+                    "offset": 90,
+                    "length": 3
+                  }
+                }
+              }
+            },
+            "span": {
+              "offset": 46,
+              "length": 49
+            }
+          },
+          "span": {
+            "offset": 34,
+            "length": 61
+          }
+        }
+      },
+      "span": {
+        "offset": 30,
+        "length": 65
+      }
+    },
+    {
+      "vis": null,
+      "type": {
+        "Function": {
+          "ident": {
+            "symbol": 4,
+            "span": {
+              "offset": 100,
+              "length": 5
+            }
+          },
+          "block": {
+            "stmts": [
+              {
+                "Item": {
+                  "vis": null,
+                  "type": {
+                    "Function": {
+                      "ident": {
+                        "symbol": 5,
+                        "span": {
+                          "offset": 117,
+                          "length": 6
+                        }
+                      },
+                      "block": {
+                        "stmts": [],
+                        "expr": {
+                          "Arith": {
+                            "Primitive": {
+                              "prim": {
+                                "Number": 3.0
+                              },
+                              "span": {
+                                "offset": 136,
+                                "length": 9
+                              }
+                            }
+                          }
+                        },
+                        "span": {
+                          "offset": 126,
+                          "length": 25
+                        }
+                      },
+                      "span": {
+                        "offset": 114,
+                        "length": 37
+                      }
+                    }
+                  },
+                  "span": {
+                    "offset": 114,
+                    "length": 37
+                  }
+                }
+              }
+            ],
+            "expr": {
+              "Arith": {
+                "Primitive": {
+                  "prim": {
+                    "Number": 5.0
+                  },
+                  "span": {
+                    "offset": 156,
+                    "length": 3
+                  }
+                }
+              }
+            },
+            "span": {
+              "offset": 108,
+              "length": 53
+            }
+          },
+          "span": {
+            "offset": 97,
+            "length": 64
+          }
+        }
+      },
+      "span": {
+        "offset": 97,
+        "length": 64
+      }
+    }
+  ],
+  "span": {
+    "offset": 0,
+    "length": 161
+  }
+}
