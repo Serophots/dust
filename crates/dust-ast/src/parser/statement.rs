@@ -21,14 +21,23 @@ use crate::{Item, Parser, parser::Expr};
 
 type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Block<'ast> {
     pub stmts: Box<'ast, [&'ast Statement<'ast>]>,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Block<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Block")
+            .field("expr", &self.expr)
+            .field("stmts", &self.stmts)
+            .finish()
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub enum Statement<'ast> {
     Semicolon,
     Item(&'ast Item<'ast>),
@@ -36,11 +45,31 @@ pub enum Statement<'ast> {
     Expression(&'ast Expr<'ast>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Statement<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Semicolon => write!(f, "Semicolon"),
+            Self::Item(arg0) => arg0.fmt(f),
+            Self::LetStatement(arg0) => arg0.fmt(f),
+            Self::Expression(arg0) => arg0.fmt(f),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub struct LetStatement<'ast> {
     pub ident: Ident,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
+}
+
+impl<'ast> core::fmt::Debug for LetStatement<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LetStatement")
+            .field("ident", &self.ident)
+            .field("expr", &self.expr)
+            .finish()
+    }
 }
 
 impl<'ast> Parser<'ast> {

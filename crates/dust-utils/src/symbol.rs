@@ -1,6 +1,14 @@
+use string_interner::Symbol as _;
+
 /// An interned symbol from the source
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Symbol(string_interner::symbol::SymbolUsize);
+
+impl core::fmt::Debug for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Symbol").field(&self.0.to_usize()).finish()
+    }
+}
 
 impl string_interner::Symbol for Symbol {
     fn try_from_usize(index: usize) -> Option<Self> {

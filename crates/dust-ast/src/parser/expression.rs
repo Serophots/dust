@@ -25,7 +25,7 @@ use crate::{Arith, Block, Parser};
 type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
 
 /// Expression
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Expr<'ast> {
     Arith(&'ast Arith<'ast>),
     Assign,
@@ -34,6 +34,20 @@ pub enum Expr<'ast> {
     Block(&'ast Block<'ast>),
     IfExpr,
     LoopExpr,
+}
+
+impl<'ast> core::fmt::Debug for Expr<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Arith(arg0) => arg0.fmt(f),
+            Self::Assign => todo!(),
+            Self::CallExpr(arg0) => arg0.fmt(f),
+            Self::Path(arg0) => arg0.fmt(f),
+            Self::Block(arg0) => arg0.fmt(f),
+            Self::IfExpr => todo!(),
+            Self::LoopExpr => todo!(),
+        }
+    }
 }
 
 impl<'ast> Expr<'ast> {
@@ -50,16 +64,28 @@ impl<'ast> Expr<'ast> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Path<'ast> {
     pub cmpts: Box<'ast, [Ident]>,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Path<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Path").field(&self.cmpts).finish()
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub struct CallExpr<'ast> {
     pub expr: &'ast Expr<'ast>,
     pub span: SourceSpan,
+}
+
+impl<'ast> core::fmt::Debug for CallExpr<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("CallExpr").field(&self.expr).finish()
+    }
 }
 
 impl<'ast> Parser<'ast> {

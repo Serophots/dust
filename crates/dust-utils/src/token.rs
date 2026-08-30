@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
 use miette::SourceSpan;
+use string_interner::Symbol as _;
 
 use crate::Symbol;
 
@@ -57,10 +58,16 @@ pub enum TokenKind {
     Ident(Symbol),
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub struct Ident {
     pub symbol: Symbol,
     pub span: SourceSpan,
+}
+
+impl core::fmt::Debug for Ident {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Ident").field(&self.symbol).finish()
+    }
 }
 
 impl Token {
@@ -74,7 +81,7 @@ impl Token {
 
 impl core::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.kind)
+        self.kind.fmt(f)
     }
 }
 

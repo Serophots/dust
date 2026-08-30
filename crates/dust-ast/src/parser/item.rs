@@ -15,31 +15,65 @@ use crate::{Block, Parser, Path};
 
 type Box<'ast, T> = std::boxed::Box<T, &'ast Bump>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Module<'ast> {
     pub ident: Option<Ident>,
     pub items: Box<'ast, [&'ast Item<'ast>]>,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Module<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Module")
+            .field("ident", &self.ident)
+            .field("items", &self.items)
+            .finish()
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub struct Item<'ast> {
     pub vis: Option<Visibility>,
     pub r#type: ItemType<'ast>,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Item<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Item")
+            .field("vis", &self.vis)
+            .field("r#type", &self.r#type)
+            .finish()
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub enum ItemType<'ast> {
     Module(&'ast Module<'ast>),
     Function(&'ast Function<'ast>),
     Use(&'ast Use<'ast>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for ItemType<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Module(arg0) => arg0.fmt(f),
+            Self::Function(arg0) => arg0.fmt(f),
+            Self::Use(arg0) => arg0.fmt(f),
+        }
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub struct Visibility {
     pub r#type: VisibilityType,
     pub span: SourceSpan,
+}
+
+impl core::fmt::Debug for Visibility {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Visibility").field(&self.r#type).finish()
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -47,17 +81,32 @@ pub enum VisibilityType {
     Pub,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Use<'ast> {
     pub path: &'ast Path<'ast>,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+impl<'ast> core::fmt::Debug for Use<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Use").field(&self.path).finish()
+    }
+}
+
+#[derive(Clone, PartialEq)]
 pub struct Function<'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'ast>,
     pub span: SourceSpan,
+}
+
+impl<'ast> core::fmt::Debug for Function<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Function")
+            .field("ident", &self.ident)
+            .field("block", &self.block)
+            .finish()
+    }
 }
 
 impl<'ast> Parser<'ast> {

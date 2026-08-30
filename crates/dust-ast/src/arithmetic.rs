@@ -4,7 +4,7 @@ use utils::Ident;
 use crate::{BinaryOperation, Primitive};
 
 /// Arithmetic
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Arith<'ast> {
     Primitive {
         prim: Primitive,
@@ -12,6 +12,7 @@ pub enum Arith<'ast> {
     },
     Ident(Ident),
     Unary {
+        // TODO: Specify the unary operation..? lol
         unary: &'ast Arith<'ast>,
         span: SourceSpan,
     },
@@ -21,6 +22,27 @@ pub enum Arith<'ast> {
         op: BinaryOperation,
         span: SourceSpan,
     },
+}
+
+impl<'ast> core::fmt::Debug for Arith<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Primitive { prim, .. } => match prim {
+                Primitive::Number(num) => f.debug_tuple("Number").field(num).finish(),
+                Primitive::String(symbol) => f.debug_tuple("Str").field(symbol).finish(),
+                Primitive::Bool(bool) => f.debug_tuple("Bool").field(bool).finish(),
+                Primitive::Nil => f.debug_tuple("Nil").finish(),
+            },
+            Self::Ident(arg0) => f.debug_tuple("Ident").field(arg0).finish(),
+            Self::Unary { unary, .. } => f.debug_struct("Unary").field("Field", unary).finish(),
+            Self::Binary { lhs, rhs, op, .. } => f
+                .debug_struct("Binary")
+                .field("op", op)
+                .field("lhs", lhs)
+                .field("rhs", rhs)
+                .finish(),
+        }
+    }
 }
 
 impl<'ast> Arith<'ast> {
