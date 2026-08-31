@@ -4,22 +4,29 @@ use utils::Ident;
 use crate::{BinaryOperation, Primitive};
 
 /// Arithmetic
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Arith<'ast> {
     Primitive {
         prim: Primitive,
+        // #[drive(skip)]
         span: SourceSpan,
     },
     Ident(Ident),
     Unary {
         // TODO: Specify the unary operation..? lol
+        // #[drive(skip)]
         unary: &'ast Arith<'ast>,
+        // #[drive(skip)]
         span: SourceSpan,
     },
     Binary {
+        // #[drive(skip)]
         lhs: &'ast Arith<'ast>,
+        // #[drive(skip)]
         rhs: &'ast Arith<'ast>,
+        // #[drive(skip)]
         op: BinaryOperation,
+        // #[drive(skip)]
         span: SourceSpan,
     },
 }

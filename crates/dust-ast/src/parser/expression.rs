@@ -22,7 +22,7 @@ use utils::{Box, Ident, TokenKind, combine_src};
 use crate::{Arith, Block, Parser};
 
 /// Expression
-#[derive(Copy, Clone, PartialEq, serde::Serialize)]
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Expr<'ast> {
     Arith(&'ast Arith<'ast>),
     Assign,
@@ -61,7 +61,7 @@ impl<'ast> Expr<'ast> {
     }
 }
 
-#[derive(PartialEq, serde::Serialize)]
+#[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Path<'ast> {
     #[serde(with = "utils::box_serialize_with")]
     pub cmpts: Box<'ast, [Ident]>,
@@ -74,7 +74,7 @@ impl<'ast> core::fmt::Debug for Path<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct CallExpr<'ast> {
     pub expr: &'ast Expr<'ast>,
     pub span: SourceSpan,

@@ -57,7 +57,7 @@ pub enum TokenKind {
     Ident(Symbol),
 }
 
-#[derive(PartialEq, Copy, Clone, serde::Serialize)]
+#[derive(PartialEq, Copy, Clone, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Ident {
     pub symbol: Symbol,
     pub span: SourceSpan,

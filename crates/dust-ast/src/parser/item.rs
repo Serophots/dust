@@ -12,7 +12,7 @@ use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Module<'ast> {
     pub ident: Option<Ident>,
     #[serde(with = "utils::box_serialize_with")]
@@ -29,7 +29,7 @@ impl<'ast> core::fmt::Debug for Module<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Item<'ast> {
     pub vis: Option<Visibility>,
     pub r#type: ItemType<'ast>,
@@ -45,7 +45,7 @@ impl<'ast> core::fmt::Debug for Item<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum ItemType<'ast> {
     Module(&'ast Module<'ast>),
     Function(&'ast Function<'ast>),
@@ -62,7 +62,7 @@ impl<'ast> core::fmt::Debug for ItemType<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Visibility {
     pub r#type: VisibilityType,
     pub span: SourceSpan,
@@ -74,12 +74,12 @@ impl core::fmt::Debug for Visibility {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum VisibilityType {
     Pub,
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Use<'ast> {
     pub path: &'ast Path<'ast>,
     pub span: SourceSpan,
@@ -91,7 +91,7 @@ impl<'ast> core::fmt::Debug for Use<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Function<'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'ast>,

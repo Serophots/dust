@@ -1,14 +1,18 @@
 use utils::Symbol;
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, serde::Serialize)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, PartialOrd, serde::Serialize, derive_generic_visitor::Drive,
+)]
 pub enum Primitive {
-    Number(f64),
+    Number(#[drive(skip)] f64),
     String(Symbol),
-    Bool(bool),
+    Bool(#[drive(skip)] bool),
     Nil,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize, derive_generic_visitor::Drive,
+)]
 pub enum BinaryOperation {
     Add,
     Sub,

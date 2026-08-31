@@ -15,4 +15,6 @@ bumpalo.workspace = true
 miette.workspace = true
 camino.workspace = true
 
+derive_generic_visitor.workspace = true
+
 serde.workspace = true

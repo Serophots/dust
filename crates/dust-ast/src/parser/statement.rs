@@ -18,7 +18,7 @@ use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Item, Parser, parser::Expr};
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Block<'ast> {
     #[serde(with = "utils::box_serialize_with")]
     pub stmts: Box<'ast, [&'ast Statement<'ast>]>,
@@ -35,7 +35,7 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Statement<'ast> {
     Semicolon,
     Item(&'ast Item<'ast>),
@@ -54,7 +54,7 @@ impl<'ast> core::fmt::Debug for Statement<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize)]
+#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct LetStatement<'ast> {
     pub ident: Ident,
     pub expr: Option<&'ast Expr<'ast>>,

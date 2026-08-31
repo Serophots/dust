@@ -1,7 +1,17 @@
 use string_interner::Symbol as _;
 
 /// An interned symbol from the source
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize)]
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    serde::Serialize,
+    derive_generic_visitor::Drive,
+)]
 pub struct Symbol(string_interner::symbol::SymbolUsize);
 
 impl core::fmt::Debug for Symbol {
