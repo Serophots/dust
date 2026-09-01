@@ -48,7 +48,7 @@ impl<'ast> core::fmt::Debug for Item<'ast> {
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum ItemType<'ast> {
     Module(&'ast Module<'ast>),
-    Function(&'ast Function<'ast>),
+    Func(&'ast Func<'ast>),
     Use(&'ast Use<'ast>),
 }
 
@@ -56,7 +56,7 @@ impl<'ast> core::fmt::Debug for ItemType<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Module(arg0) => arg0.fmt(f),
-            Self::Function(arg0) => arg0.fmt(f),
+            Self::Func(arg0) => arg0.fmt(f),
             Self::Use(arg0) => arg0.fmt(f),
         }
     }
@@ -92,13 +92,13 @@ impl<'ast> core::fmt::Debug for Use<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Function<'ast> {
+pub struct Func<'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'ast>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Function<'ast> {
+impl<'ast> core::fmt::Debug for Func<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Function")
             .field("ident", &self.ident)
@@ -108,7 +108,7 @@ impl<'ast> core::fmt::Debug for Function<'ast> {
 }
 
 impl<'ast> Parser<'ast> {
-    pub fn mod_file(mut self, ctx: AstCtx<'ast, 'ast>) -> Result<Module<'ast>> {
+    pub fn mod_file(mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mut Module<'ast>> {
         let mut items = Vec::new_in(ctx.arena);
 
         loop {
@@ -120,14 +120,14 @@ impl<'ast> Parser<'ast> {
             items.push(item);
         }
 
-        Ok(Module {
+        Ok(ctx.arena.alloc(Module {
             span: match (items.first(), items.last()) {
                 (Some(first), Some(last)) => combine_src(first.span, last.span),
                 _ => SourceSpan::new(SourceOffset::from(0), 0),
             },
             ident: None,
             items: items.into_boxed_slice(),
-        })
+        }))
     }
 
     pub(crate) fn mod_block(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Module<'ast>> {
@@ -150,7 +150,7 @@ impl<'ast> Parser<'ast> {
         let (item_type, item_span) = match self.first_token_kind() {
             Some(TokenKind::Function) => {
                 let function = self.function(ctx)?;
-                (ItemType::Function(function), function.span)
+                (ItemType::Func(function), function.span)
             }
             Some(TokenKind::Mod) => {
                 let r#mod = self.mod_block(ctx)?;
@@ -199,14 +199,14 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn function(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Function<'ast>> {
+    fn function(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Func<'ast>> {
         let r#fn = self.expect_token(TokenKind::Function)?;
         let ident = self.expect_token_ident()?;
         self.expect_token(TokenKind::LeftParen)?;
         self.expect_token(TokenKind::RightParen)?;
         let block = self.block(ctx)?;
 
-        Ok(ctx.arena.alloc(Function {
+        Ok(ctx.arena.alloc(Func {
             span: combine_src(r#fn.span, block.span),
             ident,
             block,

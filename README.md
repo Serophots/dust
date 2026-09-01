@@ -14,7 +14,7 @@ I'd like to do so without bringing in too many dependencies.
 - `dust-lexer ` lexes text into a stream of basic `TokenKind`s
 - `dust-ast` parses this stream into an abstract syntax tree, `Module`
 - `dust-hir` parses the ast into a high level intermediate representation:
-  - name resolution (variables, functions)
+  - name & visibility resolution (variables, functions)
   - collate referenced dust (`.dst`) files
   - expand syntactic sugar
 - The Abstract Syntax Tree

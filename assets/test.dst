@@ -1,11 +1,13 @@
-use std::print;
+// use std::print;
 
 fn main() {
-    let piss = 3;
-    let foo = piss * 2;
+    // let piss = 3;
+    // let foo = piss * 2;
 
-    print();
-    (1 + 3 == 4) && true();
+    // print();
+    // (1 + 3 == 4) && true();
 
-    std::print();
+    // std::print();
+
+
 }

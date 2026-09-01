@@ -26,7 +26,7 @@ use crate::{Arith, Block, Parser};
 pub enum Expr<'ast> {
     Arith(&'ast Arith<'ast>),
     Assign,
-    CallExpr(&'ast CallExpr<'ast>),
+    Call(&'ast Call<'ast>),
     Path(&'ast Path<'ast>),
     Block(&'ast Block<'ast>),
     IfExpr,
@@ -38,7 +38,7 @@ impl<'ast> core::fmt::Debug for Expr<'ast> {
         match self {
             Self::Arith(arg0) => arg0.fmt(f),
             Self::Assign => todo!(),
-            Self::CallExpr(arg0) => arg0.fmt(f),
+            Self::Call(arg0) => arg0.fmt(f),
             Self::Path(arg0) => arg0.fmt(f),
             Self::Block(arg0) => arg0.fmt(f),
             Self::IfExpr => todo!(),
@@ -52,7 +52,7 @@ impl<'ast> Expr<'ast> {
         match self {
             Expr::Arith(arith) => arith.span(),
             Expr::Assign => todo!(),
-            Expr::CallExpr(call_expr) => call_expr.span,
+            Expr::Call(call_expr) => call_expr.span,
             Expr::Path(path) => path.span,
             Expr::Block(block) => block.span,
             Expr::IfExpr => todo!(),
@@ -75,12 +75,12 @@ impl<'ast> core::fmt::Debug for Path<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct CallExpr<'ast> {
+pub struct Call<'ast> {
     pub expr: &'ast Expr<'ast>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for CallExpr<'ast> {
+impl<'ast> core::fmt::Debug for Call<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("CallExpr").field(&self.expr).finish()
     }
@@ -96,7 +96,7 @@ impl<'ast> Parser<'ast> {
                 self.expect_token(TokenKind::LeftParen)?;
                 let right_paren = self.expect_token(TokenKind::RightParen)?;
 
-                Ok(ctx.arena.alloc(Expr::CallExpr(ctx.arena.alloc(CallExpr {
+                Ok(ctx.arena.alloc(Expr::Call(ctx.arena.alloc(Call {
                     span: combine_src(expr.span(), right_paren.span),
                     expr,
                 }))))

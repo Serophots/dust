@@ -1,6 +1,6 @@
 use dust_ast::{
-    Block, CallExpr, Expr, Function, Item, ItemType, LetStatement, Module, Path, Statement, Use,
-    Visibility, VisibilityType,
+    Block, Call, Expr, Func, Item, ItemType, Let, Module, Path, Stmt, Use, Visibility,
+    VisibilityType,
 };
 use miette::LabeledSpan;
 use utils::Ident;
@@ -30,7 +30,7 @@ impl<'a> LabelPrinter for &Item<'a> {
 
         match &self.r#type {
             ItemType::Module(module) => module.label(labels),
-            ItemType::Function(function) => function.label(labels),
+            ItemType::Func(function) => function.label(labels),
             ItemType::Use(path) => path.label(labels),
         }
     }
@@ -42,7 +42,7 @@ impl<'a> LabelPrinter for &Use<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Function<'a> {
+impl<'a> LabelPrinter for &Func<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
         self.block.label(labels);
@@ -61,20 +61,20 @@ impl<'a> LabelPrinter for &Block<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Statement<'a> {
+impl<'a> LabelPrinter for &Stmt<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match self {
-            Statement::Semicolon => {}
-            Statement::Item(item) => item.label(labels),
-            Statement::LetStatement(let_statement) => let_statement.label(labels),
-            Statement::Expression(expression) => {
+            Stmt::Semicolon => {}
+            Stmt::Item(item) => item.label(labels),
+            Stmt::Let(let_statement) => let_statement.label(labels),
+            Stmt::Expr(expression) => {
                 expression.label(labels);
             }
         }
     }
 }
 
-impl<'a> LabelPrinter for &LetStatement<'a> {
+impl<'a> LabelPrinter for &Let<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
 
@@ -91,7 +91,7 @@ impl<'a> LabelPrinter for &Expr<'a> {
                 labels.push(LabeledSpan::at(arith.span(), "arithmetic"));
             }
             Expr::Assign => todo!(),
-            Expr::CallExpr(call_expression) => call_expression.label(labels),
+            Expr::Call(call_expression) => call_expression.label(labels),
             Expr::Path(path) => path.label(labels),
             Expr::Block(block) => block.label(labels),
             Expr::IfExpr => todo!(),
@@ -100,7 +100,7 @@ impl<'a> LabelPrinter for &Expr<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &CallExpr<'a> {
+impl<'a> LabelPrinter for &Call<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.expr.span(), "call"));
     }

@@ -21,7 +21,7 @@ use crate::{Item, Parser, parser::Expr};
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Block<'ast> {
     #[serde(with = "utils::box_serialize_with")]
-    pub stmts: Box<'ast, [&'ast Statement<'ast>]>,
+    pub stmts: Box<'ast, [&'ast Stmt<'ast>]>,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
 }
@@ -36,32 +36,32 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum Statement<'ast> {
+pub enum Stmt<'ast> {
     Semicolon,
     Item(&'ast Item<'ast>),
-    LetStatement(&'ast LetStatement<'ast>),
-    Expression(&'ast Expr<'ast>),
+    Let(&'ast Let<'ast>),
+    Expr(&'ast Expr<'ast>),
 }
 
-impl<'ast> core::fmt::Debug for Statement<'ast> {
+impl<'ast> core::fmt::Debug for Stmt<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Semicolon => write!(f, "Semicolon"),
             Self::Item(arg0) => arg0.fmt(f),
-            Self::LetStatement(arg0) => arg0.fmt(f),
-            Self::Expression(arg0) => arg0.fmt(f),
+            Self::Let(arg0) => arg0.fmt(f),
+            Self::Expr(arg0) => arg0.fmt(f),
         }
     }
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct LetStatement<'ast> {
+pub struct Let<'ast> {
     pub ident: Ident,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for LetStatement<'ast> {
+impl<'ast> core::fmt::Debug for Let<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LetStatement")
             .field("ident", &self.ident)
@@ -94,14 +94,14 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn statement(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<Option<&'ast Statement<'ast>>> {
+    fn statement(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<Option<&'ast Stmt<'ast>>> {
         loop {
             // First, try to pass an item
             if let Some(item) = self.try_to_parse(|parser| {
                 // formating
                 parser.item(ctx).ok()
             }) {
-                return Ok(Some(ctx.arena.alloc(Statement::Item(item))));
+                return Ok(Some(ctx.arena.alloc(Stmt::Item(item))));
             }
 
             match self.first_token_kind() {
@@ -119,7 +119,7 @@ impl<'ast> Parser<'ast> {
                         let semi = parser.expect_token(TokenKind::Semicolon).ok()?;
                         Some((expr, semi))
                     }) {
-                        return Ok(Some(ctx.arena.alloc(Statement::Expression(expr))));
+                        return Ok(Some(ctx.arena.alloc(Stmt::Expr(expr))));
                     } else {
                         return Ok(None);
                     };
@@ -129,7 +129,7 @@ impl<'ast> Parser<'ast> {
         }
     }
 
-    fn let_stmt(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Statement<'ast>> {
+    fn let_stmt(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Stmt<'ast>> {
         let r#let = self.expect_token(TokenKind::Let)?;
         let ident = self.expect_token_ident()?;
 
@@ -139,32 +139,19 @@ impl<'ast> Parser<'ast> {
                 let expr = self.expression(ctx)?;
                 let semi = self.expect_token(TokenKind::Semicolon)?;
 
-                // Ok(Token {
-                //     kind: ctx
-                //         .arena
-                //         .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
-                //             ident,
-                //             expr: Some(expr),
-                //         }))),
-                //     span: combine_src(r#let.span, semi.span),
-                // });
-                Ok(ctx
-                    .arena
-                    .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
-                        ident,
-                        expr: Some(expr),
-                        span: combine_src(r#let.span, semi.span),
-                    }))))
+                Ok(ctx.arena.alloc(Stmt::Let(ctx.arena.alloc(Let {
+                    ident,
+                    expr: Some(expr),
+                    span: combine_src(r#let.span, semi.span),
+                }))))
             }
             Some(TokenKind::Semicolon) => {
                 let semi = self.expect_token(TokenKind::Semicolon)?;
-                Ok(ctx
-                    .arena
-                    .alloc(Statement::LetStatement(ctx.arena.alloc(LetStatement {
-                        ident,
-                        expr: None,
-                        span: combine_src(r#let.span, semi.span),
-                    }))))
+                Ok(ctx.arena.alloc(Stmt::Let(ctx.arena.alloc(Let {
+                    ident,
+                    expr: None,
+                    span: combine_src(r#let.span, semi.span),
+                }))))
             }
             _ => Err(miette::miette!(
                 labels = vec![LabeledSpan::at(ident.span, "expected '=' or ';' following")],

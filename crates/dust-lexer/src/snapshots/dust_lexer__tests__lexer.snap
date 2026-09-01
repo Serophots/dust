@@ -1,0 +1,395 @@
+---
+source: crates/dust-lexer/src/lexer.rs
+expression: tokens
+---
+[
+  {
+    "kind": "Let",
+    "span": {
+      "offset": 0,
+      "length": 3
+    }
+  },
+  {
+    "kind": {
+      "Ident": 0
+    },
+    "span": {
+      "offset": 4,
+      "length": 4
+    }
+  },
+  {
+    "kind": "Equal",
+    "span": {
+      "offset": 9,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "StringLiteral": 1
+    },
+    "span": {
+      "offset": 12,
+      "length": 9
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 22,
+      "length": 1
+    }
+  },
+  {
+    "kind": "If",
+    "span": {
+      "offset": 25,
+      "length": 2
+    }
+  },
+  {
+    "kind": {
+      "Ident": 0
+    },
+    "span": {
+      "offset": 28,
+      "length": 4
+    }
+  },
+  {
+    "kind": "EqualEqual",
+    "span": {
+      "offset": 33,
+      "length": 2
+    }
+  },
+  {
+    "kind": {
+      "StringLiteral": 1
+    },
+    "span": {
+      "offset": 37,
+      "length": 9
+    }
+  },
+  {
+    "kind": "LeftBrace",
+    "span": {
+      "offset": 48,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "Ident": 2
+    },
+    "span": {
+      "offset": 54,
+      "length": 5
+    }
+  },
+  {
+    "kind": "LeftParen",
+    "span": {
+      "offset": 59,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "StringLiteral": 3
+    },
+    "span": {
+      "offset": 61,
+      "length": 9
+    }
+  },
+  {
+    "kind": "RightParen",
+    "span": {
+      "offset": 71,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 72,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Comment",
+    "span": {
+      "offset": 74,
+      "length": 22
+    }
+  },
+  {
+    "kind": "Comment",
+    "span": {
+      "offset": 101,
+      "length": 7
+    }
+  },
+  {
+    "kind": "RightBrace",
+    "span": {
+      "offset": 109,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Else",
+    "span": {
+      "offset": 111,
+      "length": 4
+    }
+  },
+  {
+    "kind": "LeftBrace",
+    "span": {
+      "offset": 116,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "NumberLiteral": 5.0
+    },
+    "span": {
+      "offset": 122,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Plus",
+    "span": {
+      "offset": 124,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Comment",
+    "span": {
+      "offset": 126,
+      "length": 23
+    }
+  },
+  {
+    "kind": {
+      "NumberLiteral": 7.0
+    },
+    "span": {
+      "offset": 150,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 151,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "Ident": 2
+    },
+    "span": {
+      "offset": 157,
+      "length": 5
+    }
+  },
+  {
+    "kind": "LeftParen",
+    "span": {
+      "offset": 162,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "StringLiteral": 4
+    },
+    "span": {
+      "offset": 164,
+      "length": 10
+    }
+  },
+  {
+    "kind": "Comma",
+    "span": {
+      "offset": 175,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "NumberLiteral": 5.0
+    },
+    "span": {
+      "offset": 177,
+      "length": 3
+    }
+  },
+  {
+    "kind": "Slash",
+    "span": {
+      "offset": 181,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "NumberLiteral": 3.0
+    },
+    "span": {
+      "offset": 183,
+      "length": 3
+    }
+  },
+  {
+    "kind": "RightParen",
+    "span": {
+      "offset": 186,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 187,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "Ident": 5
+    },
+    "span": {
+      "offset": 193,
+      "length": 7
+    }
+  },
+  {
+    "kind": "LeftParen",
+    "span": {
+      "offset": 200,
+      "length": 1
+    }
+  },
+  {
+    "kind": "RightParen",
+    "span": {
+      "offset": 201,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 202,
+      "length": 1
+    }
+  },
+  {
+    "kind": "RightBrace",
+    "span": {
+      "offset": 204,
+      "length": 1
+    }
+  },
+  {
+    "kind": "DocComment",
+    "span": {
+      "offset": 207,
+      "length": 30
+    }
+  },
+  {
+    "kind": "Function",
+    "span": {
+      "offset": 238,
+      "length": 2
+    }
+  },
+  {
+    "kind": {
+      "Ident": 5
+    },
+    "span": {
+      "offset": 241,
+      "length": 7
+    }
+  },
+  {
+    "kind": "LeftParen",
+    "span": {
+      "offset": 248,
+      "length": 1
+    }
+  },
+  {
+    "kind": "RightParen",
+    "span": {
+      "offset": 249,
+      "length": 1
+    }
+  },
+  {
+    "kind": "LeftBrace",
+    "span": {
+      "offset": 251,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "Ident": 2
+    },
+    "span": {
+      "offset": 257,
+      "length": 5
+    }
+  },
+  {
+    "kind": "LeftParen",
+    "span": {
+      "offset": 262,
+      "length": 1
+    }
+  },
+  {
+    "kind": {
+      "StringLiteral": 5
+    },
+    "span": {
+      "offset": 264,
+      "length": 7
+    }
+  },
+  {
+    "kind": "RightParen",
+    "span": {
+      "offset": 272,
+      "length": 1
+    }
+  },
+  {
+    "kind": "Semicolon",
+    "span": {
+      "offset": 273,
+      "length": 1
+    }
+  },
+  {
+    "kind": "RightBrace",
+    "span": {
+      "offset": 275,
+      "length": 1
+    }
+  }
+]

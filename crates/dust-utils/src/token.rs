@@ -4,13 +4,13 @@ use miette::SourceSpan;
 
 use crate::Symbol;
 
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone, serde::Serialize)]
 pub enum TokenKind {
     LeftParen,
     RightParen,

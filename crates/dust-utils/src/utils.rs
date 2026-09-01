@@ -1,5 +1,9 @@
 #![feature(allocator_api)]
 
+use std::{fs::File, io, path::Path};
+
+use bumpalo::Bump;
+use camino::Utf8Path;
 use miette::SourceSpan;
 
 mod r#box;

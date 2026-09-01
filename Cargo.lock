@@ -324,9 +324,10 @@ name = "dust-hir"
 version = "0.1.0"
 dependencies = [
  "camino",
- "dust-ast",
+ "derive_generic_visitor",
  "dust-utils",
  "miette",
+ "serde",
 ]
 
 [[package]]
@@ -339,6 +340,7 @@ version = "0.1.0"
 dependencies = [
  "dust-ctxt",
  "dust-utils",
+ "insta",
  "miette",
 ]
 

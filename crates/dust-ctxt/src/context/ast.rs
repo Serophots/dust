@@ -3,7 +3,10 @@ use bumpalo::Bump;
 use crate::GblCtx;
 
 #[derive(Copy, Clone)]
-pub struct AstCtx<'ast, 'gcx> {
+pub struct AstCtx<'ast, 'gcx>
+where
+    'gcx: 'ast,
+{
     pub gcx: GblCtx<'gcx>,
     pub arena: &'ast Bump,
 }

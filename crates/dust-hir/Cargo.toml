@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dust-ast.workspace = true
 utils.workspace = true
 
 miette.workspace = true
 camino.workspace = true
+
+derive_generic_visitor.workspace = true
+
+serde.workspace = true
