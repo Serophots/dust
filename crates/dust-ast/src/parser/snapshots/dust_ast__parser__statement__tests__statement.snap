@@ -1,0 +1,123 @@
+---
+source: crates/dust-ast/src/parser/statement.rs
+expression: stmts
+---
+[
+  {
+    "Let": {
+      "ident": {
+        "symbol": 0,
+        "span": {
+          "offset": 58,
+          "length": 3
+        }
+      },
+      "expr": null,
+      "span": {
+        "offset": 54,
+        "length": 8
+      }
+    }
+  },
+  {
+    "Let": {
+      "ident": {
+        "symbol": 1,
+        "span": {
+          "offset": 67,
+          "length": 3
+        }
+      },
+      "expr": {
+        "Arith": {
+          "Primitive": {
+            "prim": {
+              "Number": 2.0
+            },
+            "span": {
+              "offset": 73,
+              "length": 1
+            }
+          }
+        }
+      },
+      "span": {
+        "offset": 63,
+        "length": 12
+      }
+    }
+  },
+  {
+    "Let": {
+      "ident": {
+        "symbol": 2,
+        "span": {
+          "offset": 80,
+          "length": 3
+        }
+      },
+      "expr": {
+        "Arith": {
+          "Primitive": {
+            "prim": {
+              "Bool": true
+            },
+            "span": {
+              "offset": 86,
+              "length": 18
+            }
+          }
+        }
+      },
+      "span": {
+        "offset": 76,
+        "length": 29
+      }
+    }
+  },
+  {
+    "Expr": {
+      "Arith": {
+        "Primitive": {
+          "prim": {
+            "Number": 4.0
+          },
+          "span": {
+            "offset": 123,
+            "length": 5
+          }
+        }
+      }
+    }
+  },
+  {
+    "Expr": {
+      "Arith": {
+        "Primitive": {
+          "prim": {
+            "Bool": true
+          },
+          "span": {
+            "offset": 131,
+            "length": 18
+          }
+        }
+      }
+    }
+  },
+  {
+    "Expr": {
+      "Arith": {
+        "Primitive": {
+          "prim": {
+            "Bool": false
+          },
+          "span": {
+            "offset": 152,
+            "length": 17
+          }
+        }
+      }
+    }
+  }
+]

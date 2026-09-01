@@ -174,59 +174,13 @@ mod tests {
             let () = create_and_enter_ast_ctxt(ctx, |ctx| {
                 let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
                 let mut parser = Parser::new(test_script, ctx);
-                let mut statements = Vec::new();
+                let mut stmts = Vec::new();
 
                 while let Some(token) = parser.statement(ctx).unwrap() {
-                    statements.push(token);
+                    stmts.push(token);
                 }
 
-                panic!("pissing nora");
-
-                // assert_eq!(
-                //     statements,
-                //     vec![
-                //         Statement::LetStatement(LetStatement {
-                //             ident: Token {
-                //                 kind: Ident(ctx.symbols.get_or_intern("foo")),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             },
-                //             expr: None
-                //         }),
-                //         Statement::LetStatement(LetStatement {
-                //             ident: Token {
-                //                 kind: Ident(ctx.symbols.get_or_intern("bar")),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             },
-                //             expr: Some(Token {
-                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(
-                //                     Primitive::Number(2.0)
-                //                 )),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             })
-                //         }),
-                //         Statement::LetStatement(LetStatement {
-                //             ident: Token {
-                //                 kind: Ident(ctx.symbols.get_or_intern("far")),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             },
-                //             expr: Some(Token {
-                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(
-                //                     Primitive::Bool(true)
-                //                 )),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             })
-                //         }),
-                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                //             Primitive::Number(4.0)
-                //         ))),
-                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                //             Primitive::Bool(true)
-                //         ))),
-                //         Statement::Expression(Expression::Arithmetic(Arithmetic::Primitive(
-                //             Primitive::Bool(false)
-                //         ))),
-                //     ]
-                // );
+                insta::assert_json_snapshot!(stmts);
             });
         });
     }
@@ -243,81 +197,7 @@ mod tests {
                     blocks.push(token);
                 }
 
-                panic!("pissing nora");
-
-                // assert_eq!(
-                //     blocks,
-                //     vec![
-                //         Block {
-                //             stmts: vec![
-                //                 Token {
-                //                     kind: Statement::LetStatement(LetStatement {
-                //                         ident: Token {
-                //                             kind: Ident(ctx.symbols.get_or_intern("foo")),
-                //                             src: SourceSpan::new(SourceOffset::from(0), 0),
-                //                         },
-                //                         expr: None
-                //                     }),
-                //                     src: SourceSpan::new(SourceOffset::from(0), 0),
-                //                 },
-                //                 Token {
-                //                     kind: Statement::Expression(Expression::Arithmetic(
-                //                         Arithmetic::Primitive(Primitive::Number(15.0))
-                //                     )),
-                //                     src: SourceSpan::new(SourceOffset::from(0), 0),
-                //                 }
-                //             ]
-                //             .into_boxed_slice(),
-                //             expr: Some(Token {
-                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Bool(
-                //                     true
-                //                 ))),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             })
-                //         },
-                //         Block {
-                //             stmts: vec![Token {
-                //                 kind: Statement::LetStatement(LetStatement {
-                //                     ident: Token {
-                //                         kind: Ident(ctx.symbols.get_or_intern("foo")),
-                //                         src: SourceSpan::new(SourceOffset::from(0), 0),
-                //                     },
-                //                     expr: None
-                //                 }),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             }]
-                //             .into_boxed_slice(),
-                //             expr: Some(Token {
-                //                 kind: Expression::Arithmetic(Arithmetic::Primitive(Primitive::Number(
-                //                     2.0
-                //                 ))),
-                //                 src: SourceSpan::new(SourceOffset::from(0), 0),
-                //             })
-                //         },
-                //         Block {
-                //             stmts: vec![
-                //                 Token::kind(Statement::LetStatement(LetStatement {
-                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("foo"))),
-                //                     expr: None
-                //                 })),
-                //                 Token::kind(Statement::LetStatement(LetStatement {
-                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("bar"))),
-                //                     expr: Some(Token::kind(Expression::Arithmetic(
-                //                         Arithmetic::Primitive(Primitive::Number(2.0))
-                //                     )))
-                //                 })),
-                //                 Token::kind(Statement::LetStatement(LetStatement {
-                //                     ident: Token::kind(Ident(ctx.symbols.get_or_intern("far"))),
-                //                     expr: Some(Token::kind(Expression::Arithmetic(
-                //                         Arithmetic::Primitive(Primitive::Bool(true))
-                //                     )))
-                //                 }))
-                //             ]
-                //             .into_boxed_slice(),
-                //             expr: None
-                //         }
-                //     ]
-                // );
+                insta::assert_json_snapshot!(blocks);
             });
         });
     }
