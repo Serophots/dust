@@ -45,7 +45,7 @@ impl<'ast> core::fmt::Debug for Item<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum ItemType<'ast> {
     Module(&'ast Module<'ast>),
     Func(&'ast Func<'ast>),

@@ -26,7 +26,12 @@ where
     f(ctx)
 }
 
-pub struct AstLoweringCtx<'ast, 'hir, 'gcx> {
+#[derive(Copy, Clone)]
+pub struct AstLowCtx<'ast, 'hir, 'gcx>
+where
+    'gcx: 'ast,
+    'gcx: 'hir,
+{
     pub gcx: GblCtx<'gcx>,
     pub ast_arena: &'ast Bump,
     pub hir_arena: &'hir Bump,

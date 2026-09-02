@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 use bumpalo::Bump;
 use miette::Result;
 
-use crate::{AstCtx, AstLoweringCtx, HirCtx, SymbolInterner};
+use crate::{AstCtx, AstLowCtx, HirCtx, SymbolInterner};
 
 #[derive(Default)]
 pub struct GblCtxtInner {
@@ -36,8 +36,12 @@ where
 }
 
 pub trait CtxtRunner<'gcx> {
-    type RetAst;
-    type RetAstLw;
+    type RetAst<'ast>
+    where
+        'gcx: 'ast;
+    type RetAstLw<'hir>
+    where
+        'gcx: 'hir;
     type RetHir;
 
     fn run(&self, gcx: GblCtx<'gcx>) -> Result<()> {
@@ -51,7 +55,7 @@ pub trait CtxtRunner<'gcx> {
         let ref_ast = self.run_ast(ast_ctx)?;
 
         let hir_arena = Bump::new();
-        let ast_lw_ctx = AstLoweringCtx::<'_, '_, 'gcx> {
+        let ast_lw_ctx = AstLowCtx::<'_, '_, 'gcx> {
             gcx: gcx,
             ast_arena: &ast_arena,
             hir_arena: &hir_arena,
@@ -72,17 +76,17 @@ pub trait CtxtRunner<'gcx> {
         Ok(())
     }
 
-    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Self::RetAst>;
+    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<Self::RetAst<'ast>>;
 
     fn run_ast_lowering<'ast, 'hir>(
         &self,
-        ref_ast: &'ast Self::RetAst,
-        ctx: AstLoweringCtx<'ast, 'hir, 'gcx>,
-    ) -> Result<&'hir Self::RetAstLw>;
+        ref_ast: Self::RetAst<'ast>,
+        ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+    ) -> Result<Self::RetAstLw<'hir>>;
 
     fn run_hir<'hir>(
         &self,
-        ref_hir: &'hir Self::RetAstLw,
+        ref_hir: Self::RetAstLw<'hir>,
         ctx: HirCtx<'hir, 'gcx>,
-    ) -> Result<&'hir Self::RetHir>;
+    ) -> Result<Self::RetHir>;
 }

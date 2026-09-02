@@ -280,6 +280,7 @@ dependencies = [
  "dust-ctxt",
  "dust-hir",
  "dust-utils",
+ "miette",
 ]
 
 [[package]]

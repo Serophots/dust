@@ -35,7 +35,7 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
     }
 }
 
-#[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Stmt<'ast> {
     Semicolon,
     Item(&'ast Item<'ast>),

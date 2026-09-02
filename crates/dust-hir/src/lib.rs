@@ -46,7 +46,7 @@ impl<'ast> core::fmt::Debug for ItemType<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive, Debug)]
-pub struct Main<'ast>(pub Func<'ast>);
+pub struct Main<'ast>(pub &'ast Func<'ast>);
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Func<'ast> {

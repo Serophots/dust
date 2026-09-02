@@ -23,9 +23,12 @@ pub use parser::*;
 pub use primitive::*;
 pub use visitors::Visitor;
 
-pub struct ParsedAst<'ast> {
-    root: &'ast mut Module<'ast>,
-    sub: HashMap<Path<'ast>, &'ast mut Module<'ast>>,
+/// All of the AST-parsed modules referenced by
+/// a root module make up a "crate". The entry
+/// point is the roots' main funciton.
+pub struct Krate<'ast> {
+    pub root: &'ast mut Module<'ast>,
+    pub sub: HashMap<Path<'ast>, &'ast mut Module<'ast>>,
 }
 
 fn parse_file<'ast>(file: &Utf8Path, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mut Module<'ast>> {
@@ -40,11 +43,11 @@ fn parse_file<'ast>(file: &Utf8Path, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mu
 pub fn parse_module<'ast, 'gcx>(
     root: &Utf8Path,
     ctx: AstCtx<'ast, 'gcx>,
-) -> Result<&'ast ParsedAst<'ast>> {
+) -> Result<&'ast Krate<'ast>> {
     // Parse root
     let root = parse_file(root, ctx)?;
 
-    Ok(ctx.arena.alloc(ParsedAst {
+    Ok(ctx.arena.alloc(Krate {
         root,
         sub: HashMap::default(),
     }))
