@@ -12,8 +12,12 @@ pub trait LabelPrinter {
 
 impl<'a> LabelPrinter for &Module<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
-        if let Some(ident) = &self.ident {
-            ident.label(labels);
+        if let Some(ident_span) = self.ident_span {
+            Ident {
+                symbol: self.ident,
+                span: ident_span,
+            }
+            .label(labels);
         }
 
         for item in &self.items {
@@ -64,7 +68,6 @@ impl<'a> LabelPrinter for &Block<'a> {
 impl<'a> LabelPrinter for &Stmt<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match self {
-            Stmt::Semicolon => {}
             Stmt::Item(item) => item.label(labels),
             Stmt::Let(let_statement) => let_statement.label(labels),
             Stmt::Expr(expression) => {

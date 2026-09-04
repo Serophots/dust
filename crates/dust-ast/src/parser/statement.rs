@@ -37,7 +37,6 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Stmt<'ast> {
-    Semicolon,
     Item(&'ast Item<'ast>),
     Let(&'ast Let<'ast>),
     Expr(&'ast Expr<'ast>),
@@ -46,7 +45,6 @@ pub enum Stmt<'ast> {
 impl<'ast> core::fmt::Debug for Stmt<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Semicolon => write!(f, "Semicolon"),
             Self::Item(arg0) => arg0.fmt(f),
             Self::Let(arg0) => arg0.fmt(f),
             Self::Expr(arg0) => arg0.fmt(f),

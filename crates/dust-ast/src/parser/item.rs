@@ -8,15 +8,18 @@
 
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
-use utils::{Box, Ident, TokenKind, combine_src};
+use utils::{Box, Ident, Symbol, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Module<'ast> {
-    pub ident: Option<Ident>,
+    pub ident: Symbol,
+    pub ident_span: Option<SourceSpan>,
+
     #[serde(with = "utils::box_serialize_with")]
     pub items: Box<'ast, [&'ast Item<'ast>]>,
+
     pub span: SourceSpan,
 }
 
@@ -108,7 +111,11 @@ impl<'ast> core::fmt::Debug for Func<'ast> {
 }
 
 impl<'ast> Parser<'ast> {
-    pub fn mod_file(mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mut Module<'ast>> {
+    pub fn mod_file(
+        mut self,
+        ident: Symbol,
+        ctx: AstCtx<'ast, 'ast>,
+    ) -> Result<&'ast mut Module<'ast>> {
         let mut items = Vec::new_in(ctx.arena);
 
         loop {
@@ -125,7 +132,8 @@ impl<'ast> Parser<'ast> {
                 (Some(first), Some(last)) => combine_src(first.span, last.span),
                 _ => SourceSpan::new(SourceOffset::from(0), 0),
             },
-            ident: None,
+            ident,
+            ident_span: None,
             items: items.into_boxed_slice(),
         }))
     }

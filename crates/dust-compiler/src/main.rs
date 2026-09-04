@@ -40,7 +40,8 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
                 use dust_ast_print::LabelPrinter;
 
                 let contents = ctx.arena.alloc(input.content()?);
-                let ast = Parser::new(contents, ctx).mod_file(ctx)?;
+                let ident = ctx.gcx.symbols.get_or_intern("parse");
+                let ast = Parser::new(contents, ctx).mod_file(ident, ctx)?;
 
                 let mut labels = Vec::new();
                 ast.label(&mut labels);
@@ -51,7 +52,8 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
         Some(Command::Parse { input, tree: true }) => {
             create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
                 let contents = ctx.arena.alloc(input.content()?);
-                let ast = Parser::new(contents, ctx).mod_file(ctx)?;
+                let ident = ctx.gcx.symbols.get_or_intern("parse");
+                let ast = Parser::new(contents, ctx).mod_file(ident, ctx)?;
 
                 println!("{:#?}", ast.items);
 

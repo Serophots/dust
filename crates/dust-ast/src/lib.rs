@@ -37,7 +37,13 @@ fn parse_file<'ast>(file: &Utf8Path, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mu
     let source = std::fs::read_to_string(file).unwrap().into_boxed_str();
     let source: Box<'ast, str> = Box::clone_from_ref_in(source.as_str(), ctx.arena);
     let source: &'ast mut str = Box::leak(source);
-    Ok(Parser::<'ast>::new(source, ctx).mod_file(ctx)?)
+
+    let ident = ctx
+        .gcx
+        .symbols
+        .get_or_intern(file.file_name().unwrap_or("root"));
+
+    Ok(Parser::<'ast>::new(source, ctx).mod_file(ident, ctx)?)
 }
 
 pub fn parse_module<'ast, 'gcx>(

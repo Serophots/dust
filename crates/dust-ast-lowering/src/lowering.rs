@@ -1,55 +1,31 @@
 #![feature(allocator_api)]
 
-use bumpalo::collections::CollectIn;
+use bumpalo::Bump;
 use dust_ctxt::AstLowCtx;
-use dust_hir::{Block, Expr, Func, Item, ItemType, Let, Main, Module, Stmt};
+use dust_hir::{Block, Expr, Func, Let, Main, Stmt};
 use miette::Result;
+use utils::Ident;
+
+mod namespace;
+
+pub struct Lowering<'ast> {
+    namespace: Vec<Ident, &'ast Bump>,
+}
 
 pub fn lower_krate<'ast, 'hir, 'gcx>(
     krate: &'ast dust_ast::Krate<'ast>,
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Main<'hir>> {
+    // First, sweep the namespace:
+    // Map out every
+
     let main = krate
         .root
         .func_by_name("main", ctx.gcx)
         .ok_or_else(|| miette::miette!("Root module did not have a main function"))?;
 
-    Ok(ctx.hir_arena.alloc(Main(lower_func(main, ctx)?)))
-}
-
-fn lower_module<'ast, 'hir, 'gcx>(
-    module: &'ast dust_ast::Module<'ast>,
-    ctx: AstLowCtx<'ast, 'hir, 'gcx>,
-) -> Result<&'hir Module<'hir>> {
-    let items = {
-        let mut vec = Vec::new_in(ctx.hir_arena);
-        vec.reserve_exact(module.items.len());
-
-        for &item in module.items.iter() {
-            vec.push(lower_item(item, ctx)?);
-        }
-
-        vec.into_boxed_slice()
-    };
-
-    Ok(ctx.hir_arena.alloc(Module {
-        ident: module.ident,
-        items,
-        span: module.span,
-    }))
-}
-
-fn lower_item<'ast, 'hir, 'gcx>(
-    item: &'ast dust_ast::Item<'ast>,
-    ctx: AstLowCtx<'ast, 'hir, 'gcx>,
-) -> Result<&'hir Item<'hir>> {
-    Ok(ctx.hir_arena.alloc(Item {
-        r#type: match item.r#type {
-            dust_ast::ItemType::Module(module) => ItemType::Module(lower_module(module, ctx)?),
-            dust_ast::ItemType::Func(func) => ItemType::Func(lower_func(func, ctx)?),
-            dust_ast::ItemType::Use(_) => todo!(),
-        },
-        span: item.span,
+    Ok(ctx.hir_arena.alloc(Main {
+        main: lower_func(main, ctx)?,
     }))
 }
 
@@ -94,8 +70,10 @@ fn lower_stmt<'ast, 'hir, 'gcx>(
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Stmt<'hir>> {
     Ok(ctx.hir_arena.alloc(match *stmt {
-        dust_ast::Stmt::Semicolon => todo!(),
-        dust_ast::Stmt::Item(item) => todo!(),
+        dust_ast::Stmt::Item(item) => {
+            // Resolve references to these?
+            todo!()
+        }
         dust_ast::Stmt::Let(r#let) => Stmt::Let(lower_let(r#let, ctx)?),
         dust_ast::Stmt::Expr(expr) => Stmt::Expr(lower_expr(expr, ctx)?),
     }))

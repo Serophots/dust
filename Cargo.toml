@@ -8,7 +8,7 @@ members = [
     "crates/dust-interpretter",
     "crates/dust-lexer",
     "crates/dust-print",
-    "crates/dust-utils", "crates/dust-ast-lowering", "crates/dust-ctxt",
+    "crates/dust-utils", "crates/dust-ast-lowering", "crates/dust-ctxt", "crates/dust-byt",
 ]
 
 [workspace.dependencies]

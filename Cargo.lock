@@ -294,6 +294,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "dust-byt"
+version = "0.1.0"
+
+[[package]]
 name = "dust-compiler"
 version = "0.1.0"
 dependencies = [
@@ -314,6 +318,7 @@ dependencies = [
 name = "dust-ctxt"
 version = "0.1.0"
 dependencies = [
+ "ahash",
  "bumpalo",
  "dust-utils",
  "miette",

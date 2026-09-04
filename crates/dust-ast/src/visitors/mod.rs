@@ -51,6 +51,7 @@ pub use path::*;
 #[visit(drive(Option<Ident>))]
 #[visit(drive(Symbol))]
 #[visit(skip(string_interner::symbol::SymbolUsize))]
+#[visit(skip(Option<SourceSpan>))]
 #[visit(skip(SourceSpan))]
 struct AstVisitor<V: Visitor>(pub V);
 
