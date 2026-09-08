@@ -255,6 +255,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "dust"
+version = "0.1.0"
+dependencies = [
+ "camino",
+ "clap",
+ "dust-ast",
+ "dust-ast-lowering",
+ "dust-ast-print",
+ "dust-ctxt",
+ "dust-hir",
+ "dust-interpretter",
+ "dust-lexer",
+ "dust-utils",
+ "miette",
+]
+
+[[package]]
 name = "dust-ast"
 version = "0.1.0"
 dependencies = [
@@ -298,23 +315,6 @@ name = "dust-byt"
 version = "0.1.0"
 dependencies = [
  "num_enum",
-]
-
-[[package]]
-name = "dust-compiler"
-version = "0.1.0"
-dependencies = [
- "camino",
- "clap",
- "dust-ast",
- "dust-ast-lowering",
- "dust-ast-print",
- "dust-ctxt",
- "dust-hir",
- "dust-interpretter",
- "dust-lexer",
- "dust-utils",
- "miette",
 ]
 
 [[package]]

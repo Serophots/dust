@@ -1,4 +1,4 @@
-use dust_ctxt::{AstCtx, GblCtx};
+use dust_ctxt::GblCtx;
 
 use crate::{Func, ItemType, Module};
 

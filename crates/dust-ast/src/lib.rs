@@ -18,7 +18,6 @@ pub mod visitors;
 mod tests;
 
 pub use arithmetic::*;
-pub use module::*;
 pub use parser::*;
 pub use primitive::*;
 pub use visitors::Visitor;

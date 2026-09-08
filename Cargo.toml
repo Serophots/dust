@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
-    "crates/dust-compiler",
+    "crates/dust",
     "crates/dust-ast",
     "crates/dust-ast-print",
     "crates/dust-hir",
