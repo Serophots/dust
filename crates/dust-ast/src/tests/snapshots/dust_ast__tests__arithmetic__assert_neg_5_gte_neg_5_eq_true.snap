@@ -3,8 +3,8 @@ source: crates/dust-ast/src/tests/arithmetic.rs
 expression: parsed
 ---
 {
-  "Primitive": {
-    "prim": {
+  "Literal": {
+    "lit": {
       "Bool": true
     },
     "span": {

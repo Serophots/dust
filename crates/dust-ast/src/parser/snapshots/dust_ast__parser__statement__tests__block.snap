@@ -24,8 +24,8 @@ expression: blocks
       {
         "Expr": {
           "Arith": {
-            "Primitive": {
-              "prim": {
+            "Literal": {
+              "lit": {
                 "Number": 15.0
               },
               "span": {
@@ -39,8 +39,8 @@ expression: blocks
     ],
     "expr": {
       "Arith": {
-        "Primitive": {
-          "prim": {
+        "Literal": {
+          "lit": {
             "Bool": true
           },
           "span": {
@@ -76,8 +76,8 @@ expression: blocks
     ],
     "expr": {
       "Arith": {
-        "Primitive": {
-          "prim": {
+        "Literal": {
+          "lit": {
             "Number": 2.0
           },
           "span": {
@@ -121,8 +121,8 @@ expression: blocks
           },
           "expr": {
             "Arith": {
-              "Primitive": {
-                "prim": {
+              "Literal": {
+                "lit": {
                   "Number": 2.0
                 },
                 "span": {
@@ -149,8 +149,8 @@ expression: blocks
           },
           "expr": {
             "Arith": {
-              "Primitive": {
-                "prim": {
+              "Literal": {
+                "lit": {
                   "Bool": true
                 },
                 "span": {

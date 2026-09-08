@@ -30,8 +30,8 @@ expression: stmts
       },
       "expr": {
         "Arith": {
-          "Primitive": {
-            "prim": {
+          "Literal": {
+            "lit": {
               "Number": 2.0
             },
             "span": {
@@ -58,8 +58,8 @@ expression: stmts
       },
       "expr": {
         "Arith": {
-          "Primitive": {
-            "prim": {
+          "Literal": {
+            "lit": {
               "Bool": true
             },
             "span": {
@@ -78,8 +78,8 @@ expression: stmts
   {
     "Expr": {
       "Arith": {
-        "Primitive": {
-          "prim": {
+        "Literal": {
+          "lit": {
             "Number": 4.0
           },
           "span": {
@@ -93,8 +93,8 @@ expression: stmts
   {
     "Expr": {
       "Arith": {
-        "Primitive": {
-          "prim": {
+        "Literal": {
+          "lit": {
             "Bool": true
           },
           "span": {
@@ -108,8 +108,8 @@ expression: stmts
   {
     "Expr": {
       "Arith": {
-        "Primitive": {
-          "prim": {
+        "Literal": {
+          "lit": {
             "Bool": false
           },
           "span": {

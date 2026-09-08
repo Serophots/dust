@@ -5,8 +5,8 @@ expression: expressions
 [
   {
     "Arith": {
-      "Primitive": {
-        "prim": {
+      "Literal": {
+        "lit": {
           "Number": 4.0
         },
         "span": {
@@ -18,8 +18,8 @@ expression: expressions
   },
   {
     "Arith": {
-      "Primitive": {
-        "prim": {
+      "Literal": {
+        "lit": {
           "Bool": true
         },
         "span": {
@@ -31,8 +31,8 @@ expression: expressions
   },
   {
     "Arith": {
-      "Primitive": {
-        "prim": {
+      "Literal": {
+        "lit": {
           "Bool": false
         },
         "span": {
