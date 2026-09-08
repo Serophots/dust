@@ -3,14 +3,15 @@ source: crates/dust-ast/src/tests/item.rs
 expression: module
 ---
 {
-  "ident": null,
+  "ident": 0,
+  "ident_span": null,
   "items": [
     {
       "vis": null,
       "type": {
         "Func": {
           "ident": {
-            "symbol": 0,
+            "symbol": 1,
             "span": {
               "offset": 3,
               "length": 5
@@ -58,7 +59,7 @@ expression: module
       "type": {
         "Func": {
           "ident": {
-            "symbol": 1,
+            "symbol": 2,
             "span": {
               "offset": 37,
               "length": 6
@@ -69,7 +70,7 @@ expression: module
               {
                 "Let": {
                   "ident": {
-                    "symbol": 2,
+                    "symbol": 3,
                     "span": {
                       "offset": 56,
                       "length": 3
@@ -97,7 +98,7 @@ expression: module
               {
                 "Let": {
                   "ident": {
-                    "symbol": 3,
+                    "symbol": 4,
                     "span": {
                       "offset": 81,
                       "length": 3
@@ -114,7 +115,7 @@ expression: module
             "expr": {
               "Arith": {
                 "Ident": {
-                  "symbol": 2,
+                  "symbol": 3,
                   "span": {
                     "offset": 90,
                     "length": 3
@@ -143,7 +144,7 @@ expression: module
       "type": {
         "Func": {
           "ident": {
-            "symbol": 4,
+            "symbol": 5,
             "span": {
               "offset": 100,
               "length": 5
@@ -157,7 +158,7 @@ expression: module
                   "type": {
                     "Func": {
                       "ident": {
-                        "symbol": 5,
+                        "symbol": 6,
                         "span": {
                           "offset": 117,
                           "length": 6
