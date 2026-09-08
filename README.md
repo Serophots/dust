@@ -11,13 +11,20 @@ I'd like to do so without bringing in too many dependencies.
 - Output the AST tree `cargo run --bin dust-compiler -- parse --tree ./assets/test.dst`.
 
 ## Architecture
+
+### Parsing
 - `dust-lexer ` lexes text into a stream of basic `TokenKind`s
 - `dust-ast` parses this stream into an abstract syntax tree, `Module`
 - `dust-hir` parses the ast into a high level intermediate representation:
   - name & visibility resolution (variables, functions)
   - collate referenced dust (`.dst`) files
   - expand syntactic sugar
-- The Abstract Syntax Tree
+
+I'm writing Dust into these various representations to allow myself to experiment with various analyses in the future. I'm aware that at the minute they are premature optimisations.
+
+### Bytecode
+I'm implementing Dust with a register-based bytecode virtual machine, heavily inspired by Lua 5.0
+
 
 ## Sources:
 - [Simple but powerful pratt parsing](https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
