@@ -22,12 +22,30 @@ statement      → ";"
 
 let_stmt       → "let" ident ("=" expression )? ";"
 
-expression     →  arithmetic
-                | ident "=" expression
-                | expression "()"
-                | path
-                | todo..
-            (the block ones)
+
+expression     →  
+                      ------------------ Expression Call -------------------
+                |   logic_or "()"
+                      ------------------ Expression Or -------------------
+                |   logic_and ( "||" logic_and )*
+                      ------------------ Expression And -------------------
+                |   equality ( "&&" equality )*
+                      ------------------ Expression Equality -------------------
+                |   comparison ( ( "!=" | "==" ) comparison )*
+                      ------------------ Expression Comparison -------------------
+                |   term ( ( ">" | ">=" | "<" | "<=" ) term )*
+                      ------------------ Expression Term -------------------
+                |   factor ( ( "-" | "+" ) factor )*
+                      ------------------ Expression Factor -------------------
+                |   unary ( ( "/" | "*" ) unary )*
+                      ------------------ Expression Unarys -------------------
+                |   ( "!" | "-" ) unary | parenth
+                      ------------------ Expression Parenth -------------------
+                | "(" expression ")"
+                      ------------------ Expression Primarys -------------------
+                | path                      
+                | literal
+                | ident "=" expression        
                 | block_expr
                 | if_expr
                 | loop_expr ;
@@ -39,22 +57,5 @@ if_expr        → "if" expression block_expr
                 
 loop_expr      → "loop" block_expr ;
 
-
-arithmetic     → logic_or
-
-logic_or       → logic_and ( "||" logic_and )* ;
-logic_and      → equality ( "&&" equality )* ;
-
-equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-
-term           → factor ( ( "-" | "+" ) factor )* ;
-factor         → unary ( ( "/" | "\*" ) unary )* ;
-
-unary          → ( "!" | "-" ) unary
-               | primary ;
-primary        → NUMBER | STRING | "true" | "false" | "nil"
-              | "(" arithmetic ")"
-              | IDENTIFIER ;
-
+literal        → NUMBER | STRING | "true" | "false" | "nil" ;
 ```
