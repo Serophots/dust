@@ -142,13 +142,15 @@ impl<'ast> Parser<'ast> {
         }
     }
 
+    /// Parse atleast one ident, followed by zero or more further (`::` ident)
     pub fn path_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Path<'ast>> {
         let first = self.expect_token_ident()?;
 
         let mut cmpts = Vec::new_in(ctx.arena);
         cmpts.push(first);
 
-        while let Ok(_sep) = self.expect_token(TokenKind::PathSep) {
+        while let Some(TokenKind::PathSep) = self.first_token_kind() {
+            let _sep = self.expect_token(TokenKind::PathSep)?;
             let next = self.expect_token_ident()?;
             cmpts.push(next);
         }

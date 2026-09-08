@@ -279,7 +279,7 @@ impl<'ast> Parser<'ast> {
             Some(TokenKind::Minus) => UnaryOp::Negate,
             _ => return Ok(self.primary(ctx)?),
         };
-        let op_span = self.next_token(|f| f.span)?.unwrap();
+        let op_span = self.next_token()?.unwrap().span;
 
         let unary = self.unary(ctx)?;
         let span = combine_src(op_span, unary.span());
@@ -294,7 +294,7 @@ impl<'ast> Parser<'ast> {
     ///                | "(" arithmetic ")"
     ///                | IDENTIFIER ;
     fn primary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
-        let Some(token) = self.next_token(|token| token)? else {
+        let Some(token) = self.next_token()? else {
             let eof = self.source.chars().count();
 
             return Err(miette::miette!(
@@ -327,9 +327,7 @@ impl<'ast> Parser<'ast> {
             })),
             TokenKind::LeftParen => {
                 let equality = self.logic_or(ctx);
-                let right_paren = self
-                    .next_token(|token| matches!(token.kind, TokenKind::RightParen))?
-                    .unwrap_or(false);
+                let right_paren = self.expect_token(TokenKind::RightParen).is_ok();
 
                 if right_paren {
                     Ok(equality?)

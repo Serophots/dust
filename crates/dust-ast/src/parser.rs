@@ -33,12 +33,8 @@ impl<'ast> Parser<'ast> {
     }
 
     /// Consume the next token in the lexer
-    pub fn next_token<F, R>(&mut self, f: F) -> Result<Option<R>>
-    // TODO: Is this closure ever used to do anything interesting? I suspect not
-    where
-        F: Fn(Token) -> R,
-    {
-        Ok(self.lexer.next().transpose()?.map(f))
+    pub fn next_token(&mut self) -> Result<Option<Token>> {
+        Ok(self.lexer.next().transpose()?)
     }
 
     /// Consume the next token, erroring otherwise
@@ -47,7 +43,7 @@ impl<'ast> Parser<'ast> {
 
         match token {
             Some(Token { kind, .. }) if kind == exp_kind => {
-                self.next_token(|t| t).unwrap();
+                self.next_token().unwrap();
 
                 Ok(token.unwrap())
             }
@@ -73,7 +69,7 @@ impl<'ast> Parser<'ast> {
     where
         F: Fn(TokenKind) -> bool,
     {
-        let token = self.next_token(|t| t)?;
+        let token = self.next_token()?;
 
         Ok(match token {
             Some(Token { kind, .. }) if f(kind) => Ok(token.unwrap()),
@@ -83,7 +79,7 @@ impl<'ast> Parser<'ast> {
     }
 
     pub fn expect_token_ident(&mut self) -> Result<Ident> {
-        let token = self.next_token(|t| t)?;
+        let token = self.next_token()?;
 
         match token {
             Some(Token {
