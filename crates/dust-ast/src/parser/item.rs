@@ -139,7 +139,29 @@ impl<'ast> Parser<'ast> {
     }
 
     pub(crate) fn mod_block(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Module<'ast>> {
-        todo!()
+        let r#mod = self.expect_token(TokenKind::Mod)?;
+        let ident = self.expect_token_ident()?;
+        let _left = self.expect_token(TokenKind::LeftBrace)?;
+
+        let mut items = Vec::new_in(ctx.arena);
+
+        loop {
+            if self.first_token_kind() == Some(TokenKind::RightBrace) {
+                break;
+            }
+
+            let item = self.item(ctx)?;
+            items.push(item);
+        }
+
+        let right = self.expect_token(TokenKind::RightBrace)?;
+
+        Ok(ctx.arena.alloc(Module {
+            span: combine_src(r#mod.span, right.span),
+            ident: ident.symbol,
+            ident_span: Some(ident.span),
+            items: items.into_boxed_slice(),
+        }))
     }
 
     pub(crate) fn item(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Item<'ast>> {

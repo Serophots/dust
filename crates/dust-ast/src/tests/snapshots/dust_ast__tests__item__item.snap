@@ -21,8 +21,8 @@ expression: module
             "stmts": [],
             "expr": {
               "Arith": {
-                "Primitive": {
-                  "prim": {
+                "Literal": {
+                  "lit": {
                     "Number": 15.0
                   },
                   "span": {
@@ -78,8 +78,8 @@ expression: module
                   },
                   "expr": {
                     "Arith": {
-                      "Primitive": {
-                        "prim": {
+                      "Literal": {
+                        "lit": {
                           "Number": 15.0
                         },
                         "span": {
@@ -168,8 +168,8 @@ expression: module
                         "stmts": [],
                         "expr": {
                           "Arith": {
-                            "Primitive": {
-                              "prim": {
+                            "Literal": {
+                              "lit": {
                                 "Number": 3.0
                               },
                               "span": {
@@ -199,8 +199,8 @@ expression: module
             ],
             "expr": {
               "Arith": {
-                "Primitive": {
-                  "prim": {
+                "Literal": {
+                  "lit": {
                     "Number": 5.0
                   },
                   "span": {
@@ -225,10 +225,62 @@ expression: module
         "offset": 97,
         "length": 64
       }
+    },
+    {
+      "vis": null,
+      "type": {
+        "Module": {
+          "ident": 7,
+          "ident_span": {
+            "offset": 167,
+            "length": 4
+          },
+          "items": [
+            {
+              "vis": null,
+              "type": {
+                "Func": {
+                  "ident": {
+                    "symbol": 8,
+                    "span": {
+                      "offset": 181,
+                      "length": 5
+                    }
+                  },
+                  "block": {
+                    "stmts": [],
+                    "expr": null,
+                    "span": {
+                      "offset": 189,
+                      "length": 32
+                    }
+                  },
+                  "span": {
+                    "offset": 178,
+                    "length": 43
+                  }
+                }
+              },
+              "span": {
+                "offset": 178,
+                "length": 43
+              }
+            }
+          ],
+          "span": {
+            "offset": 163,
+            "length": 60
+          }
+        }
+      },
+      "span": {
+        "offset": 163,
+        "length": 60
+      }
     }
   ],
   "span": {
     "offset": 0,
-    "length": 161
+    "length": 223
   }
 }

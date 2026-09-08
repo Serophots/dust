@@ -15,4 +15,8 @@ fn third() {
     5.0
 }
 
-// TODO: Mod
+mod test {
+    fn fifth() {
+        // { 5.0 } * 2.0
+    }
+}
