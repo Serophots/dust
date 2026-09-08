@@ -113,30 +113,24 @@ impl Instruction {
     pub fn encode(&self) -> Instr {
         match self {
             Instruction::Abc { operation, a, b, c } => {
-                let c =
-                    ((*c as u32) << Instr::MASK_ABC_C.lowest_one().unwrap()) & Instr::MASK_ABC_C;
-                let b =
-                    ((*b as u32) << Instr::MASK_ABC_B.lowest_one().unwrap()) & Instr::MASK_ABC_B;
-                let a =
-                    ((*a as u32) << Instr::MASK_A____.lowest_one().unwrap()) & Instr::MASK_A____;
-                let op = (operation.op() as u32) & Instr::MASK_OP___;
+                let c = ((*c as u32) << Instr::LOWEST_ONE_C) & Instr::MASK_C;
+                let b = ((*b as u32) << Instr::LOWEST_ONE_B) & Instr::MASK_B;
+                let a = ((*a as u32) << Instr::LOWEST_ONE_A) & Instr::MASK_A;
+                let op = (operation.op() as u32) & Instr::MASK_OP;
 
                 Instr(op | a | b | c)
             }
             Instruction::ABx { operation, a, bx } => {
-                let bx = (*bx << Instr::MASK_ABX_B.lowest_one().unwrap()) & Instr::MASK_ABX_B;
-                let a =
-                    ((*a as u32) << Instr::MASK_A____.lowest_one().unwrap()) & Instr::MASK_A____;
-                let op = (operation.op() as u32) & Instr::MASK_OP___;
+                let bx = (*bx << Instr::LOWEST_ONE_BX) & Instr::MASK_BX;
+                let a = ((*a as u32) << Instr::LOWEST_ONE_A) & Instr::MASK_A;
+                let op = (operation.op() as u32) & Instr::MASK_OP;
 
                 Instr(op | a | bx)
             }
             Instruction::AsBx { operation, a, sbx } => {
-                let sbx =
-                    ((*sbx as u32) << Instr::MASK_ABX_B.lowest_one().unwrap()) & Instr::MASK_ABX_B;
-                let a =
-                    ((*a as u32) << Instr::MASK_A____.lowest_one().unwrap()) & Instr::MASK_A____;
-                let op = (operation.op() as u32) & Instr::MASK_OP___;
+                let sbx = ((*sbx as u32) << Instr::LOWEST_ONE_BX) & Instr::MASK_BX;
+                let a = ((*a as u32) << Instr::LOWEST_ONE_A) & Instr::MASK_A;
+                let op = (operation.op() as u32) & Instr::MASK_OP;
 
                 Instr(op | a | sbx)
             }
@@ -151,14 +145,20 @@ impl From<Instruction> for Instr {
 }
 
 /// A compact bytecode instruction, encoded in 32 bits
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Instr(u32);
 
 impl Instr {
-    const MASK_OP___: u32 = 0b0000_0000_0000_0000_0000_0000_0011_1111;
-    const MASK_A____: u32 = 0b0000_0000_0000_0000_0011_1111_1100_0000;
-    const MASK_ABC_B: u32 = 0b0000_0000_0111_1111_1100_0000_0000_0000;
-    const MASK_ABC_C: u32 = 0b1111_1111_1000_0000_0000_0000_0000_0000;
-    const MASK_ABX_B: u32 = Self::MASK_ABC_B | Self::MASK_ABC_C;
+    const MASK_OP: u32 = 0b0000_0000_0000_0000_0000_0000_0011_1111;
+    const MASK_A: u32 = 0b0000_0000_0000_0000_0011_1111_1100_0000;
+    const MASK_B: u32 = 0b0000_0000_0111_1111_1100_0000_0000_0000;
+    const MASK_C: u32 = 0b1111_1111_1000_0000_0000_0000_0000_0000;
+    const MASK_BX: u32 = Self::MASK_B | Self::MASK_C;
+
+    const LOWEST_ONE_A: u32 = Self::MASK_A.lowest_one().unwrap();
+    const LOWEST_ONE_B: u32 = Self::MASK_B.lowest_one().unwrap();
+    const LOWEST_ONE_C: u32 = Self::MASK_C.lowest_one().unwrap();
+    const LOWEST_ONE_BX: u32 = Self::MASK_BX.lowest_one().unwrap();
 
     pub fn decode(&self) -> Instruction {
         match self.op() {
@@ -185,30 +185,39 @@ impl Instr {
     // First 6 bits
     #[inline(always)]
     fn op(&self) -> u8 {
-        (self.0 & Self::MASK_OP___) as u8
+        (self.0 & Self::MASK_OP) as u8
     }
 
+    #[inline(always)]
     fn a(&self) -> u8 {
-        ((self.0 & Self::MASK_A____) >> Self::MASK_A____.lowest_one().unwrap()) as u8
+        ((self.0 & Self::MASK_A) >> Self::LOWEST_ONE_A) as u8
     }
 
+    #[inline(always)]
     fn b(&self) -> u16 {
-        ((self.0 & Self::MASK_ABC_B) >> Self::MASK_ABC_B.lowest_one().unwrap()) as u16
+        ((self.0 & Self::MASK_B) >> Self::LOWEST_ONE_B) as u16
     }
 
+    #[inline(always)]
     fn c(&self) -> u16 {
-        ((self.0 & Self::MASK_ABC_C) >> Self::MASK_ABC_C.lowest_one().unwrap()) as u16
+        ((self.0 & Self::MASK_C) >> Self::LOWEST_ONE_C) as u16
     }
 
+    #[inline(always)]
     fn bx(&self) -> u32 {
-        ((self.0 & Self::MASK_ABX_B) >> Self::MASK_ABX_B.lowest_one().unwrap()) as u32
+        ((self.0 & Self::MASK_BX) >> Self::LOWEST_ONE_BX) as u32
     }
 
+    #[inline(always)]
     fn sbx(&self) -> i32 {
-        let raw =
-            (((self.0 & Self::MASK_ABX_B) >> Self::MASK_ABX_B.lowest_one().unwrap()) as u32) as i32;
-        ((raw << Self::MASK_ABX_B.lowest_one().unwrap()) as i32)
-            >> Self::MASK_ABX_B.lowest_one().unwrap()
+        let raw = (((self.0 & Self::MASK_BX) >> Self::LOWEST_ONE_BX) as u32) as i32;
+        ((raw << Self::LOWEST_ONE_BX) as i32) >> Self::LOWEST_ONE_BX
+    }
+}
+
+impl core::fmt::Debug for Instr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.decode().fmt(f)
     }
 }
 
