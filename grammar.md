@@ -1,5 +1,5 @@
 ## Grammar
-
+```
 module         → item* EOF | mod ident "{" item* "}";
 item           → visibility? (
                   module | function | "use" path ";"
