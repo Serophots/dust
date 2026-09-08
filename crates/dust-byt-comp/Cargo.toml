@@ -1,10 +1,11 @@
 [package]
-name = "dust-ast-print"
+name = "dust-byt-comp"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-dust-ast.workspace = true
-utils.workspace = true
+[lib]
+path = "src/comp.rs"
 
-miette.workspace = true
+[dependencies]
+dust-hir.workspace = true
+utils.workspace = true

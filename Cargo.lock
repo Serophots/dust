@@ -265,7 +265,6 @@ dependencies = [
  "dust-ast-print",
  "dust-ctxt",
  "dust-hir",
- "dust-interpretter",
  "dust-lexer",
  "dust-utils",
  "miette",
@@ -305,7 +304,6 @@ name = "dust-ast-print"
 version = "0.1.0"
 dependencies = [
  "dust-ast",
- "dust-print",
  "dust-utils",
  "miette",
 ]
@@ -316,6 +314,18 @@ version = "0.1.0"
 dependencies = [
  "num_enum",
 ]
+
+[[package]]
+name = "dust-byt-comp"
+version = "0.1.0"
+dependencies = [
+ "dust-hir",
+ "dust-utils",
+]
+
+[[package]]
+name = "dust-byt-interpret"
+version = "0.1.0"
 
 [[package]]
 name = "dust-ctxt"
@@ -352,10 +362,6 @@ dependencies = [
  "insta",
  "miette",
 ]
-
-[[package]]
-name = "dust-print"
-version = "0.1.0"
 
 [[package]]
 name = "dust-utils"

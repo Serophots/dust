@@ -7,11 +7,12 @@ members = [
     "crates/dust-hir",
     "crates/dust-interpretter",
     "crates/dust-lexer",
-    "crates/dust-print",
     "crates/dust-utils",
     "crates/dust-ast-lowering",
     "crates/dust-ctxt",
     "crates/dust-byt",
+    "crates/dust-byt-comp",
+    "crates/dust-byt-interpret",
 ]
 
 [workspace.dependencies]
@@ -19,9 +20,10 @@ dust-lexer = { path = "crates/dust-lexer" }
 dust-ast = { path = "crates/dust-ast" }
 dust-ast-lowering = {path = "crates/dust-ast-lowering/"}
 dust-ast-print = { path = "crates/dust-ast-print" }
-dust-print = { path = "crates/dust-print" }
 dust-hir = { path = "crates/dust-hir" }
-dust-interpretter = { path = "crates/dust-interpretter/" }
+dust-byt = { path = "crates/dust-byt" }
+dust-byt-comp = { path = "crates/dust-byt-comp" }
+dust-byt-interpret = { path = "crates/dust-byt-interpret" }
 dust-ctxt = { path = "crates/dust-ctxt/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 

@@ -1,6 +1,9 @@
 [package]
-name = "dust-print"
+name = "dust-byt-interpret"
 version = "0.1.0"
 edition = "2024"
+
+[lib]
+path = "src/vm.rs"
 
 [dependencies]
