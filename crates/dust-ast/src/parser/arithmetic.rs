@@ -16,9 +16,9 @@
 //!
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result};
-use utils::{Ident, TokenKind, combine_src};
+use utils::{BinaryOp, Ident, Literal, TokenKind, UnaryOp, combine_src};
 
-use crate::{Arith, BinaryOperation, Primitive, parser::Parser};
+use crate::{Arith, parser::Parser};
 
 impl<'ast> Parser<'ast> {
     pub fn arithmetic(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
@@ -52,7 +52,7 @@ impl<'ast> Parser<'ast> {
                     lhs,
                     rhs,
                     op: match operator {
-                        EqualityOperator::Or => BinaryOperation::Or,
+                        EqualityOperator::Or => BinaryOp::Or,
                     },
                     span,
                 }
@@ -90,7 +90,7 @@ impl<'ast> Parser<'ast> {
                     lhs,
                     rhs,
                     op: match operator {
-                        EqualityOperator::And => BinaryOperation::And,
+                        EqualityOperator::And => BinaryOp::And,
                     },
                     span,
                 }
@@ -130,8 +130,8 @@ impl<'ast> Parser<'ast> {
                     lhs: lhs,
                     rhs: rhs,
                     op: match operator {
-                        EqualityOperator::Equal => BinaryOperation::Equal,
-                        EqualityOperator::NotEqual => BinaryOperation::NotEqual,
+                        EqualityOperator::Equal => BinaryOp::Equal,
+                        EqualityOperator::NotEqual => BinaryOp::NotEqual,
                     },
                     span,
                 }
@@ -175,10 +175,10 @@ impl<'ast> Parser<'ast> {
                     lhs,
                     rhs,
                     op: match operator {
-                        ComparisonOperator::Greater => BinaryOperation::Greater,
-                        ComparisonOperator::GreaterEqual => BinaryOperation::GreaterEqual,
-                        ComparisonOperator::Lesser => BinaryOperation::Lesser,
-                        ComparisonOperator::LesserEqual => BinaryOperation::LesserEqual,
+                        ComparisonOperator::Greater => BinaryOp::Greater,
+                        ComparisonOperator::GreaterEqual => BinaryOp::GreaterEqual,
+                        ComparisonOperator::Lesser => BinaryOp::Lesser,
+                        ComparisonOperator::LesserEqual => BinaryOp::LesserEqual,
                     },
                     span,
                 }
@@ -218,8 +218,8 @@ impl<'ast> Parser<'ast> {
                     lhs,
                     rhs,
                     op: match operator {
-                        TermOperator::Add => BinaryOperation::Add,
-                        TermOperator::Sub => BinaryOperation::Sub,
+                        TermOperator::Add => BinaryOp::Add,
+                        TermOperator::Sub => BinaryOp::Sub,
                     },
                     span,
                 }
@@ -259,8 +259,8 @@ impl<'ast> Parser<'ast> {
                     lhs,
                     rhs,
                     op: match operator {
-                        FactorOperator::Mul => BinaryOperation::Mul,
-                        FactorOperator::Div => BinaryOperation::Div,
+                        FactorOperator::Mul => BinaryOp::Mul,
+                        FactorOperator::Div => BinaryOp::Div,
                     },
                     span,
                 }
@@ -274,22 +274,19 @@ impl<'ast> Parser<'ast> {
     /// Read a negated unary or a primary
     ///  unary          → ( "!" | "-" ) unary | primary
     fn unary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Arith<'ast>> {
-        let unary = matches!(
-            self.first_token_kind(),
-            Some(TokenKind::Bang) | Some(TokenKind::Minus)
-        );
+        let op = match self.first_token_kind() {
+            Some(TokenKind::Bang) => UnaryOp::Not,
+            Some(TokenKind::Minus) => UnaryOp::Negate,
+            _ => return Ok(self.primary(ctx)?),
+        };
+        let op_span = self.next_token(|f| f.span)?.unwrap();
 
-        if unary {
-            let op = self.next_token(|f| f.span)?.unwrap();
-            let unary = self.unary(ctx)?;
-            let span = combine_src(op, unary.span());
+        let unary = self.unary(ctx)?;
+        let span = combine_src(op_span, unary.span());
 
-            Ok(ctx
-                .arena
-                .alloc(Arith::Unary { unary, span }.simplify(&self.source)?))
-        } else {
-            Ok(self.primary(ctx)?)
-        }
+        Ok(ctx
+            .arena
+            .alloc(Arith::Unary { unary, op, span }.simplify(&self.source)?))
     }
 
     /// Read a terminal token or a grouped expression
@@ -308,24 +305,24 @@ impl<'ast> Parser<'ast> {
         };
 
         match token.kind {
-            TokenKind::True => Ok(ctx.arena.alloc(Arith::Primitive {
-                prim: Primitive::Bool(true),
+            TokenKind::True => Ok(ctx.arena.alloc(Arith::Literal {
+                lit: Literal::Bool(true),
                 span: token.span,
             })),
-            TokenKind::False => Ok(ctx.arena.alloc(Arith::Primitive {
-                prim: Primitive::Bool(false),
+            TokenKind::False => Ok(ctx.arena.alloc(Arith::Literal {
+                lit: Literal::Bool(false),
                 span: token.span,
             })),
-            TokenKind::Nil => Ok(ctx.arena.alloc(Arith::Primitive {
-                prim: Primitive::Nil,
+            TokenKind::Nil => Ok(ctx.arena.alloc(Arith::Literal {
+                lit: Literal::Nil,
                 span: token.span,
             })),
-            TokenKind::StringLiteral(str) => Ok(ctx.arena.alloc(Arith::Primitive {
-                prim: Primitive::String(str),
+            TokenKind::StringLiteral(str) => Ok(ctx.arena.alloc(Arith::Literal {
+                lit: Literal::String(str),
                 span: token.span,
             })),
-            TokenKind::NumberLiteral(n) => Ok(ctx.arena.alloc(Arith::Primitive {
-                prim: Primitive::Number(n),
+            TokenKind::NumberLiteral(n) => Ok(ctx.arena.alloc(Arith::Literal {
+                lit: Literal::Number(n),
                 span: token.span,
             })),
             TokenKind::LeftParen => {

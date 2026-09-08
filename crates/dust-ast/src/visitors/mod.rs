@@ -1,10 +1,10 @@
 use derive_generic_visitor::Visit;
 use miette::SourceSpan;
-use utils::{Box, Ident, Symbol};
+use utils::{BinaryOp, Box, Ident, Literal, Symbol, UnaryOp};
 
 use crate::{
-    Arith, BinaryOperation, Block, Call, Expr, Func, Item, ItemType, Let, Module, Path, Primitive,
-    Stmt, Use, Visibility, VisibilityType,
+    Arith, Block, Call, Expr, Func, Item, ItemType, Let, Module, Path, Stmt, Use, Visibility,
+    VisibilityType,
 };
 
 mod path;
@@ -30,8 +30,9 @@ pub use path::*;
 #[visit(enter(for<'ast> Call<'ast>))]
 #[visit(drive(for<'ast> &'ast Arith<'ast>))]
 #[visit(enter(for<'ast> Arith<'ast>))]
-#[visit(enter(for<'ast> Primitive))]
-#[visit(drive(for<'ast> BinaryOperation))]
+#[visit(enter(Literal))]
+#[visit(drive(BinaryOp))]
+#[visit(drive(UnaryOp))]
 #[visit(drive(for<'ast> Box<'ast, [&'ast Stmt<'ast>]>))]
 #[visit(drive(for<'ast> [&'ast Stmt<'ast>]))]
 #[visit(drive(for<'ast> &'ast Stmt<'ast>))]
@@ -93,8 +94,8 @@ impl<V: Visitor> AstVisitor<V> {
     fn enter_arith<'ast>(&mut self, p: &'ast Arith<'ast>) {
         self.0.enter_arith(p)
     }
-    fn enter_primitive<'ast>(&mut self, p: &'ast Primitive) {
-        self.0.enter_primitive(p)
+    fn enter_literal<'ast>(&mut self, p: &'ast Literal) {
+        self.0.enter_literal(p)
     }
     fn enter_path<'ast>(&mut self, p: &Path<'ast>) {
         self.0.enter_path(p)
@@ -113,6 +114,6 @@ pub trait Visitor {
     fn enter_item<'ast>(&mut self, _: &'ast Item<'ast>) {}
     fn enter_let<'ast>(&mut self, _: &'ast Let<'ast>) {}
     fn enter_arith<'ast>(&mut self, _: &'ast Arith<'ast>) {}
-    fn enter_primitive<'ast>(&mut self, _: &'ast Primitive) {}
+    fn enter_literal<'ast>(&mut self, _: &'ast Literal) {}
     fn enter_path<'ast>(&mut self, _: &Path<'ast>) {}
 }

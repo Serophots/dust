@@ -29,8 +29,8 @@ pub enum Expr<'ast> {
     Call(&'ast Call<'ast>),
     Path(&'ast Path<'ast>),
     Block(&'ast Block<'ast>),
-    IfExpr,
-    LoopExpr,
+    If,
+    Loop,
 }
 
 impl<'ast> core::fmt::Debug for Expr<'ast> {
@@ -41,8 +41,8 @@ impl<'ast> core::fmt::Debug for Expr<'ast> {
             Self::Call(arg0) => arg0.fmt(f),
             Self::Path(arg0) => arg0.fmt(f),
             Self::Block(arg0) => arg0.fmt(f),
-            Self::IfExpr => todo!(),
-            Self::LoopExpr => todo!(),
+            Self::If => todo!(),
+            Self::Loop => todo!(),
         }
     }
 }
@@ -55,8 +55,8 @@ impl<'ast> Expr<'ast> {
             Expr::Call(call_expr) => call_expr.span,
             Expr::Path(path) => path.span,
             Expr::Block(block) => block.span,
-            Expr::IfExpr => todo!(),
-            Expr::LoopExpr => todo!(),
+            Expr::If => todo!(),
+            Expr::Loop => todo!(),
         }
     }
 }

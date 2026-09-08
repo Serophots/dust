@@ -97,8 +97,8 @@ impl<'a> LabelPrinter for &Expr<'a> {
             Expr::Call(call_expression) => call_expression.label(labels),
             Expr::Path(path) => path.label(labels),
             Expr::Block(block) => block.label(labels),
-            Expr::IfExpr => todo!(),
-            Expr::LoopExpr => todo!(),
+            Expr::If => todo!(),
+            Expr::Loop => todo!(),
         }
     }
 }

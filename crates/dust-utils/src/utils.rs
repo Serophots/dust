@@ -7,11 +7,13 @@ use camino::Utf8Path;
 use miette::SourceSpan;
 
 mod r#box;
+mod literal;
 mod source;
 mod symbol;
 mod token;
 
 pub use r#box::*;
+pub use literal::*;
 pub use source::*;
 pub use symbol::*;
 pub use token::*;

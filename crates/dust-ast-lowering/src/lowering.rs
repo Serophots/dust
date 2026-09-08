@@ -103,7 +103,22 @@ fn lower_expr<'ast, 'hir, 'gcx>(
         dust_ast::Expr::Call(call) => todo!(),
         dust_ast::Expr::Path(path) => todo!(),
         dust_ast::Expr::Block(block) => todo!(),
-        dust_ast::Expr::IfExpr => todo!(),
-        dust_ast::Expr::LoopExpr => todo!(),
+        dust_ast::Expr::If => todo!(),
+        dust_ast::Expr::Loop => todo!(),
     }))
 }
+
+// fn lower_arith<'ast, 'hir, 'gcx>(
+//     arith: &'ast dust_ast::Arith<'ast>,
+//     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+// ) -> Result<&'hir Arith<'hir>> {
+//     Ok(ctx.hir_arena.alloc(match *arith {
+//         dust_ast::Expr::Arith(arith) => todo!(),
+//         dust_ast::Expr::Assign => todo!(),
+//         dust_ast::Expr::Call(call) => todo!(),
+//         dust_ast::Expr::Path(path) => todo!(),
+//         dust_ast::Expr::Block(block) => todo!(),
+//         dust_ast::Expr::If => todo!(),
+//         dust_ast::Expr::Loop => todo!(),
+//     }))
+// }

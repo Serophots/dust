@@ -1,5 +1,5 @@
 use miette::SourceSpan;
-use utils::{Box, Ident};
+use utils::{BinaryOp, Box, Ident, Literal};
 
 // A module exists in the AST only for scoping
 
@@ -90,8 +90,8 @@ impl<'hir> core::fmt::Debug for Expr<'hir> {
         // match self {
         //     Self::Arith(arg0) => arg0.fmt(f),
         //     Self::Assign => todo!(),
-        //     Self::Call(arg0) => arg0.fmt(f),
-        //     Self::Path(arg0) => arg0.fmt(f),
+        // Self::Call(arg0) => arg0.fmt(f),
+        // Self::Path(arg0) => arg0.fmt(f),
         //     Self::Block(arg0) => arg0.fmt(f),
         //     Self::IfExpr => todo!(),
         //     Self::LoopExpr => todo!(),
@@ -101,6 +101,12 @@ impl<'hir> core::fmt::Debug for Expr<'hir> {
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Call<'hir> {
-    pub func: &'hir Expr<'hir>,
+    pub expr: &'hir Expr<'hir>,
     pub span: SourceSpan,
+}
+
+impl<'ast> core::fmt::Debug for Call<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("CallExpr").field(&self.expr).finish()
+    }
 }

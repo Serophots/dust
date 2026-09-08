@@ -263,6 +263,8 @@ dependencies = [
  "dust-ast",
  "dust-ast-lowering",
  "dust-ast-print",
+ "dust-byt",
+ "dust-byt-comp",
  "dust-ctxt",
  "dust-hir",
  "dust-lexer",
@@ -312,7 +314,10 @@ dependencies = [
 name = "dust-byt"
 version = "0.1.0"
 dependencies = [
+ "derive_generic_visitor",
+ "dust-utils",
  "num_enum",
+ "serde",
 ]
 
 [[package]]
@@ -321,6 +326,7 @@ version = "0.1.0"
 dependencies = [
  "dust-hir",
  "dust-utils",
+ "miette",
 ]
 
 [[package]]

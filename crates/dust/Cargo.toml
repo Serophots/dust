@@ -10,6 +10,8 @@ dust-ast.workspace = true
 dust-ast-lowering.workspace = true
 dust-ast-print.workspace = true
 dust-hir.workspace = true
+dust-byt.workspace = true
+dust-byt-comp.workspace = true
 dust-ctxt.workspace = true
 utils.workspace = true
 

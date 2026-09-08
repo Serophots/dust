@@ -31,9 +31,11 @@ impl<'gcx> CtxtRunner<'gcx> for Compiler {
 
     fn run_hir<'hir>(
         &self,
-        hir: &'hir dust_hir::Main<'hir>,
+        main: &'hir dust_hir::Main<'hir>,
         ctx: HirCtx<'hir, 'gcx>,
-    ) -> Result<Self::RetHir> {
-        todo!()
+    ) -> Result<()> {
+        dust_byt_comp::comp_main(main)?;
+
+        Ok(())
     }
 }

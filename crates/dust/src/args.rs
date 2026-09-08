@@ -5,7 +5,7 @@ use utils::{ByteSource, TextSource};
 #[command(author, version, about)]
 pub struct Args {
     #[command(subcommand)]
-    pub cmd: Option<Command>,
+    pub cmd: Command,
 }
 
 #[derive(clap::Subcommand)]

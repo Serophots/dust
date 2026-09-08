@@ -9,3 +9,5 @@ path = "src/comp.rs"
 [dependencies]
 dust-hir.workspace = true
 utils.workspace = true
+
+miette.workspace = true

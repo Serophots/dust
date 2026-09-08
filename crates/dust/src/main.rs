@@ -7,8 +7,6 @@ use crate::args::{Args, Command};
 
 mod args;
 mod compiler;
-mod lexer;
-mod parser;
 
 fn main() -> miette::Result<()> {
     create_and_enter_global_ctxt(|ctx| main_in_gbl_ctx(ctx))
@@ -18,7 +16,7 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
     let args = <Args as clap::Parser>::parse();
 
     match args.cmd {
-        Some(Command::Lex { input }) => {
+        Command::Lex { input } => {
             create_and_enter_ast_ctxt(ctx, |ctx| {
                 let contents = ctx.arena.alloc(input.content()?);
                 let lexer = Lexer::new(contents, ctx);
@@ -35,7 +33,7 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
                 .with_source_code(contents.clone()))
             })?;
         }
-        Some(Command::Parse { input, tree: false }) => {
+        Command::Parse { input, tree: false } => {
             create_and_enter_ast_ctxt(ctx, |ctx| {
                 use dust_ast_print::LabelPrinter;
 
@@ -49,7 +47,7 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
                 Err(miette::miette!(labels = labels, "debug").with_source_code(contents.clone()))
             })?;
         }
-        Some(Command::Parse { input, tree: true }) => {
+        Command::Parse { input, tree: true } => {
             create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
                 let contents = ctx.arena.alloc(input.content()?);
                 let ident = ctx.gcx.symbols.get_or_intern("parse");
@@ -60,7 +58,7 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
                 Ok(())
             })?;
         }
-        Some(Command::Calculate { input }) => {
+        Command::Calculate { input } => {
             create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
                 let contents = ctx.arena.alloc(input.content()?);
 
@@ -71,14 +69,14 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
             })?;
         }
 
-        Some(Command::Compile { input }) => {
+        Command::Compile { input } => {
             compiler::Compiler { root_module: input }.run(ctx)?;
         }
-        Some(Command::Run { input }) => {
+        Command::Run { input } => {
             compiler::Compiler { root_module: input }.run(ctx)?;
         }
 
-        _ => todo!(),
+        Command::Interpret { input } => todo!(),
     }
 
     Ok(())

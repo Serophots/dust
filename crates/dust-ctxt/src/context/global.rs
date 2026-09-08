@@ -71,7 +71,7 @@ pub trait CtxtRunner<'gcx> {
         };
 
         // Run hir
-        let ref_hir = self.run_hir(ref_hir, hir_ctx);
+        let ref_hir = self.run_hir(ref_hir, hir_ctx)?;
 
         Ok(())
     }

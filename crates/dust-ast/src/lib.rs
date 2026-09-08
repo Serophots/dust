@@ -10,16 +10,16 @@ use utils::Box;
 
 mod arithmetic;
 mod module;
+mod operation;
 mod parser;
-mod primitive;
 pub mod visitors;
 
 #[cfg(test)]
 mod tests;
 
 pub use arithmetic::*;
+pub use operation::*;
 pub use parser::*;
-pub use primitive::*;
 pub use visitors::Visitor;
 
 /// All of the AST-parsed modules referenced by
