@@ -20,6 +20,9 @@ I'd like to do so without bringing in too many dependencies.
 - The Abstract Syntax Tree
 
 ## Sources:
-- https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+- [Simple but powerful pratt parsing](https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
+- [Rust Reference: Items](https://doc.rust-lang.org/reference/items.html)
+- [Crafting Interpreters](https://craftinginterpreters.com/chunks-of-bytecode.html)
+- https://rustc-dev-guide.rust-lang.org/appendix/background.html#cfg
+- Lua 5.0 https://www.lua.org/doc/jucs05.pdf
 - https://sdiehl.github.io/typechecker-zoo
-- https://doc.rust-lang.org/reference/items.html

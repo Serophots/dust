@@ -7,3 +7,4 @@ edition = "2024"
 path = "src/byt.rs"
 
 [dependencies]
+num_enum.workspace = true

@@ -9,5 +9,6 @@ fn main() {
 
     // std::print();
 
-
+    let x = 2;
+    4 * x;
 }
