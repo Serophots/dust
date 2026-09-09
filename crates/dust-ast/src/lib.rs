@@ -8,17 +8,14 @@ use dust_ctxt::AstCtx;
 use miette::Result;
 use utils::Box;
 
-mod arithmetic;
 mod module;
-mod operation;
 mod parser;
+mod simplify;
 pub mod visitors;
 
 #[cfg(test)]
 mod tests;
 
-pub use arithmetic::*;
-pub use operation::*;
 pub use parser::*;
 pub use visitors::Visitor;
 

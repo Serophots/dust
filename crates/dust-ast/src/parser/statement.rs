@@ -78,7 +78,7 @@ impl<'ast> Parser<'ast> {
         }
 
         let expr = if !matches!(self.first_token_kind(), Some(TokenKind::RightBrace)) {
-            Some(self.expression(ctx)?)
+            Some(self.expr(ctx)?)
         } else {
             None
         };
@@ -113,7 +113,7 @@ impl<'ast> Parser<'ast> {
                     // Expression
 
                     if let Some((expr, _semi)) = self.try_to_parse(|parser| {
-                        let expr = parser.expression(ctx).ok()?;
+                        let expr = parser.expr(ctx).ok()?;
                         let semi = parser.expect_token(TokenKind::Semicolon).ok()?;
                         Some((expr, semi))
                     }) {
@@ -134,7 +134,7 @@ impl<'ast> Parser<'ast> {
         match self.first_token_kind() {
             Some(TokenKind::Equal) => {
                 self.expect_token(TokenKind::Equal)?;
-                let expr = self.expression(ctx)?;
+                let expr = self.expr(ctx)?;
                 let semi = self.expect_token(TokenKind::Semicolon)?;
 
                 Ok(ctx.arena.alloc(Stmt::Let(ctx.arena.alloc(Let {

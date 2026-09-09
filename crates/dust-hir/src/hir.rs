@@ -1,5 +1,5 @@
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Literal};
+use utils::{BinaryOp, Box, Ident, Lit};
 
 // A module exists in the AST only for scoping
 

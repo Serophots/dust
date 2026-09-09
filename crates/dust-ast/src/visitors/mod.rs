@@ -1,10 +1,10 @@
 use derive_generic_visitor::Visit;
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Literal, Symbol, UnaryOp};
+use utils::{BinaryOp, Box, Ident, Lit, Symbol, UnaryOp};
 
 use crate::{
-    Arith, Block, Call, Expr, Func, Item, ItemType, Let, Module, Path, Stmt, Use, Visibility,
-    VisibilityType,
+    Binary, Block, Call, Expr, Func, Item, ItemType, Let, Literal, Module, Path, Stmt, Unary, Use,
+    Visibility, VisibilityType,
 };
 
 mod path;
@@ -28,9 +28,13 @@ pub use path::*;
 #[visit(enter(for<'ast> Expr<'ast>))]
 #[visit(drive(for<'ast> &'ast Call<'ast>))]
 #[visit(enter(for<'ast> Call<'ast>))]
-#[visit(drive(for<'ast> &'ast Arith<'ast>))]
-#[visit(enter(for<'ast> Arith<'ast>))]
-#[visit(enter(Literal))]
+#[visit(drive(for<'ast> &'ast Binary<'ast>))]
+#[visit(enter(for<'ast> Binary<'ast>))]
+#[visit(drive(for<'ast> &'ast Unary<'ast>))]
+#[visit(enter(for<'ast> Unary<'ast>))]
+#[visit(drive(for<'ast> &'ast Literal<'ast>))]
+#[visit(enter(for<'ast> Literal<'ast>))]
+#[visit(skip(for<'ast> &'ast Lit))]
 #[visit(drive(BinaryOp))]
 #[visit(drive(UnaryOp))]
 #[visit(drive(for<'ast> Box<'ast, [&'ast Stmt<'ast>]>))]
@@ -54,6 +58,8 @@ pub use path::*;
 #[visit(skip(string_interner::symbol::SymbolUsize))]
 #[visit(skip(Option<SourceSpan>))]
 #[visit(skip(SourceSpan))]
+#[visit(skip(f64))]
+#[visit(skip(bool))]
 struct AstVisitor<V: Visitor>(pub V);
 
 impl<V: Visitor> AstVisitor<V> {
@@ -91,14 +97,17 @@ impl<V: Visitor> AstVisitor<V> {
     fn enter_let<'ast>(&mut self, p: &'ast Let<'ast>) {
         self.0.enter_let(p)
     }
-    fn enter_arith<'ast>(&mut self, p: &'ast Arith<'ast>) {
-        self.0.enter_arith(p)
-    }
-    fn enter_literal<'ast>(&mut self, p: &'ast Literal) {
+    fn enter_literal<'ast>(&mut self, p: &'ast Literal<'ast>) {
         self.0.enter_literal(p)
     }
     fn enter_path<'ast>(&mut self, p: &Path<'ast>) {
         self.0.enter_path(p)
+    }
+    fn enter_binary<'ast>(&mut self, p: &Binary<'ast>) {
+        self.0.enter_binary(p);
+    }
+    fn enter_unary<'ast>(&mut self, p: &Unary<'ast>) {
+        self.0.enter_unary(p);
     }
 }
 
@@ -113,7 +122,8 @@ pub trait Visitor {
     fn enter_ident<'ast>(&mut self, _: &'ast Ident) {}
     fn enter_item<'ast>(&mut self, _: &'ast Item<'ast>) {}
     fn enter_let<'ast>(&mut self, _: &'ast Let<'ast>) {}
-    fn enter_arith<'ast>(&mut self, _: &'ast Arith<'ast>) {}
     fn enter_literal<'ast>(&mut self, _: &'ast Literal) {}
     fn enter_path<'ast>(&mut self, _: &Path<'ast>) {}
+    fn enter_binary<'ast>(&mut self, _: &Binary<'ast>) {}
+    fn enter_unary<'ast>(&mut self, _: &Unary<'ast>) {}
 }

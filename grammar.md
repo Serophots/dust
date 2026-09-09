@@ -22,6 +22,9 @@ statement      → ";"
 
 let_stmt       → "let" ident ("=" expression )? ";"
 
+```
+An expression is parsed in a heirarchy of layers:
+```
 
 expression     →  
                       ------------------ Expression Call -------------------
@@ -41,11 +44,11 @@ expression     →
                       ------------------ Expression Unarys -------------------
                 |   ( "!" | "-" ) unary | parenth
                       ------------------ Expression Parenth -------------------
-                | "(" expression ")"
+                | "(" expression ")" | primary
                       ------------------ Expression Primarys -------------------
-                | path                      
+                | path
                 | literal
-                | ident "=" expression        
+                | ident "=" expression
                 | block_expr
                 | if_expr
                 | loop_expr ;

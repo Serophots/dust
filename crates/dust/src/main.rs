@@ -63,7 +63,7 @@ fn main_in_gbl_ctx<'gcx>(ctx: GblCtx<'gcx>) -> miette::Result<()> {
                 let contents = ctx.arena.alloc(input.content()?);
 
                 let mut parser = Parser::new(&contents, ctx);
-                println!("{:?}", parser.arithmetic(ctx));
+                println!("{:?}", parser.expr(ctx));
 
                 Ok(())
             })?;

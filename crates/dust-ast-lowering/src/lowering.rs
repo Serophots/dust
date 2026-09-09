@@ -98,10 +98,12 @@ fn lower_expr<'ast, 'hir, 'gcx>(
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Expr<'hir>> {
     Ok(ctx.hir_arena.alloc(match *expr {
-        dust_ast::Expr::Arith(arith) => todo!(),
-        dust_ast::Expr::Assign => todo!(),
         dust_ast::Expr::Call(call) => todo!(),
+        dust_ast::Expr::Binary(binary) => todo!(),
+        dust_ast::Expr::Unary(unary) => todo!(),
         dust_ast::Expr::Path(path) => todo!(),
+        dust_ast::Expr::Literal(literal) => todo!(),
+        dust_ast::Expr::Assign => todo!(),
         dust_ast::Expr::Block(block) => todo!(),
         dust_ast::Expr::If => todo!(),
         dust_ast::Expr::Loop => todo!(),

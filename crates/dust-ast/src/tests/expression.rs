@@ -10,7 +10,7 @@ fn test_lexer() {
             let mut parser = Parser::new(test_script, ctx);
             let mut expressions = Vec::new();
 
-            while let Ok(token) = parser.expression(ctx) {
+            while let Ok(token) = parser.expr(ctx) {
                 expressions.push(token);
             }
 

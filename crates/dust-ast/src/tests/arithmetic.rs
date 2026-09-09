@@ -9,7 +9,7 @@ macro_rules! expand {
                 fn $name() {
                     let () = create_and_enter_global_ctxt(|ctx| {
                         let () = create_and_enter_ast_ctxt(ctx, |ctx| {
-                            let parsed = Parser::new($lit, ctx).arithmetic(ctx).unwrap();
+                            let parsed = Parser::new($lit, ctx).expr(ctx).unwrap();
                             insta::assert_json_snapshot!(parsed);
                         });
                     });

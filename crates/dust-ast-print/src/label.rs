@@ -89,16 +89,16 @@ impl<'a> LabelPrinter for &Let<'a> {
 
 impl<'a> LabelPrinter for &Expr<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
-        match self {
-            Expr::Arith(arith) => {
-                labels.push(LabeledSpan::at(arith.span(), "arithmetic"));
-            }
+        match *self {
             Expr::Assign => todo!(),
             Expr::Call(call_expression) => call_expression.label(labels),
             Expr::Path(path) => path.label(labels),
             Expr::Block(block) => block.label(labels),
             Expr::If => todo!(),
             Expr::Loop => todo!(),
+            Expr::Binary(_) => {}
+            Expr::Unary(_) => {}
+            Expr::Literal(_) => {}
         }
     }
 }

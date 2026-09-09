@@ -5,7 +5,7 @@ I'm hopeful to dig into adding a type system of sorts.
 I'd like to do so without bringing in too many dependencies.
 
 ## Progress:
-- A basic arithmetic calculator / logic machine, handling equality, inequality, add/sub, mul/div, not, numbers, strings, bools, nil, obeying order of operations, parenthesis. Try `cargo run --bin dust-compiler -- calculate "1 - 2 * 3 >= -5 == true"`.
+- A basic arithmetic calculator / logic machine, handling equality, inequality, add/sub, mul/div, not, numbers, strings, bools, nil, obeying order of operations, parenthesis. Try `cargo run --bin dust -- calculate "1 - 2 * 3 >= -5 == true"`.
 - Label your `.dst` input with lexer-level labelling `cargo run --bin dust -- lex ./assets/test.dst`.
 - Label your `.dst` input with ast-level labelling `cargo run --bin dust -- parse ./assets/test.dst`.
 - Output the AST tree `cargo run --bin dust -- parse --tree ./assets/test.dst`.

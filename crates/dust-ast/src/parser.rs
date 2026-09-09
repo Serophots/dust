@@ -5,9 +5,9 @@ use dust_lexer::Lexer;
 use miette::{LabeledSpan, Result, SourceSpan};
 use utils::{Ident, Token, TokenKind};
 
-mod arithmetic;
 mod expression;
 mod item;
+mod literal;
 mod statement;
 
 pub use expression::*;

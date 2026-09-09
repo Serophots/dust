@@ -29,15 +29,13 @@ expression: stmts
         }
       },
       "expr": {
-        "Arith": {
-          "Literal": {
-            "lit": {
-              "Number": 2.0
-            },
-            "span": {
-              "offset": 73,
-              "length": 1
-            }
+        "Literal": {
+          "lit": {
+            "Number": 2.0
+          },
+          "span": {
+            "offset": 73,
+            "length": 1
           }
         }
       },
@@ -57,15 +55,13 @@ expression: stmts
         }
       },
       "expr": {
-        "Arith": {
-          "Literal": {
-            "lit": {
-              "Bool": true
-            },
-            "span": {
-              "offset": 86,
-              "length": 18
-            }
+        "Literal": {
+          "lit": {
+            "Bool": true
+          },
+          "span": {
+            "offset": 86,
+            "length": 18
           }
         }
       },
@@ -77,45 +73,39 @@ expression: stmts
   },
   {
     "Expr": {
-      "Arith": {
-        "Literal": {
-          "lit": {
-            "Number": 4.0
-          },
-          "span": {
-            "offset": 123,
-            "length": 5
-          }
+      "Literal": {
+        "lit": {
+          "Number": 4.0
+        },
+        "span": {
+          "offset": 123,
+          "length": 5
         }
       }
     }
   },
   {
     "Expr": {
-      "Arith": {
-        "Literal": {
-          "lit": {
-            "Bool": true
-          },
-          "span": {
-            "offset": 131,
-            "length": 18
-          }
+      "Literal": {
+        "lit": {
+          "Bool": true
+        },
+        "span": {
+          "offset": 131,
+          "length": 18
         }
       }
     }
   },
   {
     "Expr": {
-      "Arith": {
-        "Literal": {
-          "lit": {
-            "Bool": false
-          },
-          "span": {
-            "offset": 152,
-            "length": 17
-          }
+      "Literal": {
+        "lit": {
+          "Bool": false
+        },
+        "span": {
+          "offset": 152,
+          "length": 17
         }
       }
     }

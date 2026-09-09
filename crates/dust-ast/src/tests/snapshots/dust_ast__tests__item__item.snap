@@ -20,15 +20,13 @@ expression: module
           "block": {
             "stmts": [],
             "expr": {
-              "Arith": {
-                "Literal": {
-                  "lit": {
-                    "Number": 15.0
-                  },
-                  "span": {
-                    "offset": 17,
-                    "length": 9
-                  }
+              "Literal": {
+                "lit": {
+                  "Number": 15.0
+                },
+                "span": {
+                  "offset": 17,
+                  "length": 9
                 }
               }
             },
@@ -77,15 +75,13 @@ expression: module
                     }
                   },
                   "expr": {
-                    "Arith": {
-                      "Literal": {
-                        "lit": {
-                          "Number": 15.0
-                        },
-                        "span": {
-                          "offset": 62,
-                          "length": 9
-                        }
+                    "Literal": {
+                      "lit": {
+                        "Number": 15.0
+                      },
+                      "span": {
+                        "offset": 62,
+                        "length": 9
                       }
                     }
                   },
@@ -113,13 +109,19 @@ expression: module
               }
             ],
             "expr": {
-              "Arith": {
-                "Ident": {
-                  "symbol": 3,
-                  "span": {
-                    "offset": 90,
-                    "length": 3
+              "Path": {
+                "cmpts": [
+                  {
+                    "symbol": 3,
+                    "span": {
+                      "offset": 90,
+                      "length": 3
+                    }
                   }
+                ],
+                "span": {
+                  "offset": 90,
+                  "length": 3
                 }
               }
             },
@@ -167,15 +169,13 @@ expression: module
                       "block": {
                         "stmts": [],
                         "expr": {
-                          "Arith": {
-                            "Literal": {
-                              "lit": {
-                                "Number": 3.0
-                              },
-                              "span": {
-                                "offset": 136,
-                                "length": 9
-                              }
+                          "Literal": {
+                            "lit": {
+                              "Number": 3.0
+                            },
+                            "span": {
+                              "offset": 136,
+                              "length": 9
                             }
                           }
                         },
@@ -198,15 +198,13 @@ expression: module
               }
             ],
             "expr": {
-              "Arith": {
-                "Literal": {
-                  "lit": {
-                    "Number": 5.0
-                  },
-                  "span": {
-                    "offset": 156,
-                    "length": 3
-                  }
+              "Literal": {
+                "lit": {
+                  "Number": 5.0
+                },
+                "span": {
+                  "offset": 156,
+                  "length": 3
                 }
               }
             },
@@ -249,38 +247,77 @@ expression: module
                   },
                   "block": {
                     "stmts": [],
-                    "expr": null,
+                    "expr": {
+                      "Binary": {
+                        "lhs": {
+                          "Block": {
+                            "stmts": [],
+                            "expr": {
+                              "Literal": {
+                                "lit": {
+                                  "Number": 5.0
+                                },
+                                "span": {
+                                  "offset": 201,
+                                  "length": 3
+                                }
+                              }
+                            },
+                            "span": {
+                              "offset": 199,
+                              "length": 7
+                            }
+                          }
+                        },
+                        "rhs": {
+                          "Literal": {
+                            "lit": {
+                              "Number": 2.0
+                            },
+                            "span": {
+                              "offset": 209,
+                              "length": 3
+                            }
+                          }
+                        },
+                        "op": "Mul",
+                        "span": {
+                          "offset": 199,
+                          "length": 13
+                        }
+                      }
+                    },
                     "span": {
                       "offset": 189,
-                      "length": 32
+                      "length": 29
                     }
                   },
                   "span": {
                     "offset": 178,
-                    "length": 43
+                    "length": 40
                   }
                 }
               },
               "span": {
                 "offset": 178,
-                "length": 43
+                "length": 40
               }
             }
           ],
           "span": {
             "offset": 163,
-            "length": 60
+            "length": 57
           }
         }
       },
       "span": {
         "offset": 163,
-        "length": 60
+        "length": 57
       }
     }
   ],
   "span": {
     "offset": 0,
-    "length": 223
+    "length": 220
   }
 }
