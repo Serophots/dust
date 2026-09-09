@@ -246,7 +246,72 @@ expression: module
                     }
                   },
                   "block": {
-                    "stmts": [],
+                    "stmts": [
+                      {
+                        "Item": {
+                          "vis": null,
+                          "type": {
+                            "Module": {
+                              "ident": 4,
+                              "ident_span": {
+                                "offset": 203,
+                                "length": 3
+                              },
+                              "items": [
+                                {
+                                  "vis": null,
+                                  "type": {
+                                    "Func": {
+                                      "ident": {
+                                        "symbol": 9,
+                                        "span": {
+                                          "offset": 224,
+                                          "length": 5
+                                        }
+                                      },
+                                      "block": {
+                                        "stmts": [],
+                                        "expr": {
+                                          "Literal": {
+                                            "lit": {
+                                              "Number": 25.0
+                                            },
+                                            "span": {
+                                              "offset": 251,
+                                              "length": 16
+                                            }
+                                          }
+                                        },
+                                        "span": {
+                                          "offset": 232,
+                                          "length": 49
+                                        }
+                                      },
+                                      "span": {
+                                        "offset": 221,
+                                        "length": 60
+                                      }
+                                    }
+                                  },
+                                  "span": {
+                                    "offset": 221,
+                                    "length": 60
+                                  }
+                                }
+                              ],
+                              "span": {
+                                "offset": 199,
+                                "length": 92
+                              }
+                            }
+                          },
+                          "span": {
+                            "offset": 199,
+                            "length": 92
+                          }
+                        }
+                      }
+                    ],
                     "expr": {
                       "Binary": {
                         "lhs": {
@@ -258,13 +323,13 @@ expression: module
                                   "Number": 5.0
                                 },
                                 "span": {
-                                  "offset": 201,
+                                  "offset": 303,
                                   "length": 3
                                 }
                               }
                             },
                             "span": {
-                              "offset": 199,
+                              "offset": 301,
                               "length": 7
                             }
                           }
@@ -275,49 +340,49 @@ expression: module
                               "Number": 2.0
                             },
                             "span": {
-                              "offset": 209,
+                              "offset": 311,
                               "length": 3
                             }
                           }
                         },
                         "op": "Mul",
                         "span": {
-                          "offset": 199,
+                          "offset": 301,
                           "length": 13
                         }
                       }
                     },
                     "span": {
                       "offset": 189,
-                      "length": 29
+                      "length": 131
                     }
                   },
                   "span": {
                     "offset": 178,
-                    "length": 40
+                    "length": 142
                   }
                 }
               },
               "span": {
                 "offset": 178,
-                "length": 40
+                "length": 142
               }
             }
           ],
           "span": {
             "offset": 163,
-            "length": 57
+            "length": 159
           }
         }
       },
       "span": {
         "offset": 163,
-        "length": 57
+        "length": 159
       }
     }
   ],
   "span": {
     "offset": 0,
-    "length": 220
+    "length": 322
   }
 }
