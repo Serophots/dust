@@ -2,7 +2,7 @@
 
 use bumpalo::Bump;
 use dust_ctxt::AstLowCtx;
-use dust_hir::{Block, Expr, Func, Let, Main, Stmt};
+use dust_hir::{Binary, Block, Expr, Func, Let, Literal, Main, Stmt, Unary};
 use miette::Result;
 use utils::Ident;
 
@@ -98,29 +98,50 @@ fn lower_expr<'ast, 'hir, 'gcx>(
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Expr<'hir>> {
     Ok(ctx.hir_arena.alloc(match *expr {
+        dust_ast::Expr::Path(path) => {
+            dbg!(path);
+            todo!()
+        }
+        dust_ast::Expr::Binary(binary) => Expr::Binary(lower_binary(binary, ctx)?),
+        dust_ast::Expr::Unary(unary) => Expr::Unary(lower_unary(unary, ctx)?),
+        dust_ast::Expr::Literal(literal) => Expr::Literal(lower_literal(literal, ctx)?),
+        dust_ast::Expr::Block(block) => Expr::Block(lower_block(block, ctx)?),
         dust_ast::Expr::Call(call) => todo!(),
-        dust_ast::Expr::Binary(binary) => todo!(),
-        dust_ast::Expr::Unary(unary) => todo!(),
-        dust_ast::Expr::Path(path) => todo!(),
-        dust_ast::Expr::Literal(literal) => todo!(),
         dust_ast::Expr::Assign => todo!(),
-        dust_ast::Expr::Block(block) => todo!(),
         dust_ast::Expr::If => todo!(),
         dust_ast::Expr::Loop => todo!(),
     }))
 }
 
-// fn lower_arith<'ast, 'hir, 'gcx>(
-//     arith: &'ast dust_ast::Arith<'ast>,
-//     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
-// ) -> Result<&'hir Arith<'hir>> {
-//     Ok(ctx.hir_arena.alloc(match *arith {
-//         dust_ast::Expr::Arith(arith) => todo!(),
-//         dust_ast::Expr::Assign => todo!(),
-//         dust_ast::Expr::Call(call) => todo!(),
-//         dust_ast::Expr::Path(path) => todo!(),
-//         dust_ast::Expr::Block(block) => todo!(),
-//         dust_ast::Expr::If => todo!(),
-//         dust_ast::Expr::Loop => todo!(),
-//     }))
-// }
+fn lower_literal<'ast, 'hir, 'gcx>(
+    literal: &'ast dust_ast::Literal<'ast>,
+    ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+) -> Result<&'hir Literal<'hir>> {
+    Ok(ctx.hir_arena.alloc(Literal {
+        lit: ctx.hir_arena.alloc(*literal.lit),
+        span: literal.span,
+    }))
+}
+
+fn lower_binary<'ast, 'hir, 'gcx>(
+    binary: &'ast dust_ast::Binary<'ast>,
+    ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+) -> Result<&'hir Binary<'hir>> {
+    Ok(ctx.hir_arena.alloc(Binary {
+        lhs: lower_expr(binary.lhs, ctx)?,
+        rhs: lower_expr(binary.rhs, ctx)?,
+        op: binary.op,
+        span: binary.span,
+    }))
+}
+
+fn lower_unary<'ast, 'hir, 'gcx>(
+    unary: &'ast dust_ast::Unary<'ast>,
+    ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+) -> Result<&'hir Unary<'hir>> {
+    Ok(ctx.hir_arena.alloc(Unary {
+        expr: lower_expr(unary.expr, ctx)?,
+        op: unary.op,
+        span: unary.span,
+    }))
+}

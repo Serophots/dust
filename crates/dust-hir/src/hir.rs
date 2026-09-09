@@ -1,5 +1,5 @@
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Lit};
+use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 
 // A module exists in the AST only for scoping
 
@@ -76,10 +76,12 @@ impl<'hir> core::fmt::Debug for Let<'hir> {
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Expr<'hir> {
-    Arith,
-    Assign,
     Call(&'hir Call<'hir>),
-    Block,
+    Binary(&'hir Binary<'hir>),
+    Unary(&'hir Unary<'hir>),
+    Literal(&'hir Literal<'hir>),
+    Assign,
+    Block(&'hir Block<'hir>),
     If,
     Loop,
 }
@@ -87,15 +89,6 @@ pub enum Expr<'hir> {
 impl<'hir> core::fmt::Debug for Expr<'hir> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
-        // match self {
-        //     Self::Arith(arg0) => arg0.fmt(f),
-        //     Self::Assign => todo!(),
-        // Self::Call(arg0) => arg0.fmt(f),
-        // Self::Path(arg0) => arg0.fmt(f),
-        //     Self::Block(arg0) => arg0.fmt(f),
-        //     Self::IfExpr => todo!(),
-        //     Self::LoopExpr => todo!(),
-        // }
     }
 }
 
@@ -108,5 +101,51 @@ pub struct Call<'hir> {
 impl<'ast> core::fmt::Debug for Call<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("CallExpr").field(&self.expr).finish()
+    }
+}
+
+#[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub struct Literal<'hir> {
+    pub lit: &'hir Lit,
+    pub span: SourceSpan,
+}
+
+impl<'hir> core::fmt::Debug for Literal<'hir> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.lit.fmt(f)
+    }
+}
+
+#[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub struct Binary<'hir> {
+    pub lhs: &'hir Expr<'hir>,
+    pub rhs: &'hir Expr<'hir>,
+    pub op: BinaryOp,
+    pub span: SourceSpan,
+}
+
+impl<'ast> core::fmt::Debug for Binary<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Binary")
+            .field("op", &self.op)
+            .field("lhs", self.lhs)
+            .field("rhs", self.rhs)
+            .finish()
+    }
+}
+
+#[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub struct Unary<'hir> {
+    pub expr: &'hir Expr<'hir>,
+    pub op: UnaryOp,
+    pub span: SourceSpan,
+}
+
+impl<'hir> core::fmt::Debug for Unary<'hir> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Unary")
+            .field("op", &self.op)
+            .field("expr", self.expr)
+            .finish()
     }
 }
