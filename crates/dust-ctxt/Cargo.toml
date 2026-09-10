@@ -5,11 +5,12 @@ edition = "2024"
 
 
 [dependencies]
+dust-resolve.workspace = true
 utils.workspace = true
 
 string-interner.workspace = true
 bumpalo.workspace = true
 
 ahash.workspace = true
-
+camino.workspace = true
 miette.workspace = true

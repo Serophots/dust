@@ -13,6 +13,7 @@ members = [
     "crates/dust-byt",
     "crates/dust-byt-comp",
     "crates/dust-byt-interpret",
+    "crates/dust-resolve",
 ]
 
 [workspace.dependencies]
@@ -25,6 +26,7 @@ dust-byt = { path = "crates/dust-byt" }
 dust-byt-comp = { path = "crates/dust-byt-comp" }
 dust-byt-interpret = { path = "crates/dust-byt-interpret" }
 dust-ctxt = { path = "crates/dust-ctxt/" }
+dust-resolve = { path = "crates/dust-resolve/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
 
 bumpalo = {version = "3.20", features = ["allocator_api", "serde", "boxed", "collections"]}

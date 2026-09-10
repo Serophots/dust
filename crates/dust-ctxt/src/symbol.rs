@@ -19,4 +19,11 @@ impl SymbolInterner {
     pub fn get_or_intern<T: AsRef<str>>(&self, string: T) -> Symbol {
         self.interner.borrow_mut().get_or_intern(string)
     }
+
+    pub fn resolve(&self, symbol: Symbol) -> Option<String> {
+        self.interner
+            .borrow()
+            .resolve(symbol)
+            .map(ToOwned::to_owned) // TODO: This cloning sucks a lot
+    }
 }

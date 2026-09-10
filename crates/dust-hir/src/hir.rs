@@ -26,7 +26,7 @@ impl<'hir> core::fmt::Debug for Func<'hir> {
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Block<'hir> {
-    #[serde(with = "utils::box_serialize_with")]
+    #[serde(with = "utils::boxed_slice_serialize_with")]
     pub stmts: Box<'hir, [&'hir Stmt<'hir>]>,
     pub expr: Option<&'hir Expr<'hir>>,
     pub span: SourceSpan,
@@ -60,7 +60,7 @@ impl<'hir> core::fmt::Debug for Stmt<'hir> {
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Let<'hir> {
-    pub ident: Ident,
+    // pub ident: Ident,
     pub expr: Option<&'hir Expr<'hir>>,
     pub span: SourceSpan,
 }
@@ -68,7 +68,7 @@ pub struct Let<'hir> {
 impl<'hir> core::fmt::Debug for Let<'hir> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LetStatement")
-            .field("ident", &self.ident)
+            // .field("ident", &self.ident) TODO
             .field("expr", &self.expr)
             .finish()
     }

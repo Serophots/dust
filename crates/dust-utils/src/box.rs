@@ -8,7 +8,7 @@ use bumpalo::Bump;
 
 pub type Box<'a, T> = std::boxed::Box<T, &'a Bump>;
 
-pub mod box_serialize_with {
+pub mod boxed_slice_serialize_with {
     use serde::Serialize as _;
 
     use super::Box;

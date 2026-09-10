@@ -60,8 +60,10 @@ pub use path::*;
 #[visit(skip(SourceSpan))]
 #[visit(skip(f64))]
 #[visit(skip(bool))]
+#[allow(dead_code)] // TODO
 struct AstVisitor<V: Visitor>(pub V);
 
+#[allow(dead_code)] // TODO
 impl<V: Visitor> AstVisitor<V> {
     pub fn visit<'ast>(self, module: &'ast Module<'ast>) {
         self.visit_by_val_infallible(module);

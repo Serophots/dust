@@ -98,7 +98,7 @@ impl<'ast> core::fmt::Debug for Unary<'ast> {
 
 #[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Path<'ast> {
-    #[serde(with = "utils::box_serialize_with")]
+    #[serde(with = "utils::boxed_slice_serialize_with")]
     pub cmpts: Box<'ast, [Ident]>,
     pub span: SourceSpan,
 }

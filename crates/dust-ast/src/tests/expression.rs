@@ -7,7 +7,11 @@ fn test_lexer() {
     let () = create_and_enter_global_ctxt(|ctx| {
         let () = create_and_enter_ast_ctxt(ctx, |ctx| {
             let test_script = include_str!("../../../../assets/tests/ast-parser/expression.dst");
-            let mut parser = Parser::new(test_script, ctx);
+            let mut parser = Parser::new(
+                test_script,
+                vec![ctx.gcx.symbols.get_or_intern("expression")],
+                ctx,
+            );
             let mut expressions = Vec::new();
 
             while let Ok(token) = parser.expr(ctx) {

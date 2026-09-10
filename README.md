@@ -38,6 +38,7 @@ I'm implementing Dust with a register-based bytecode virtual machine, heavily in
 ## Sources:
 - [Simple but powerful pratt parsing](https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html)
 - [Rust Reference: Items](https://doc.rust-lang.org/reference/items.html)
+- [Rust Reference: Namespaces](https://doc.rust-lang.org/reference/names/scopes.html#item-scopes)
 - [Crafting Interpreters](https://craftinginterpreters.com/chunks-of-bytecode.html)
 - [Lua 5.0](https://www.lua.org/doc/jucs05.pdf)
 - [Typechecker zoo](https://sdiehl.github.io/typechecker-zoo)

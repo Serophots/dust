@@ -20,7 +20,7 @@ use crate::{Item, Parser, parser::Expr};
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Block<'ast> {
-    #[serde(with = "utils::box_serialize_with")]
+    #[serde(with = "utils::boxed_slice_serialize_with")]
     pub stmts: Box<'ast, [&'ast Stmt<'ast>]>,
     pub expr: Option<&'ast Expr<'ast>>,
     pub span: SourceSpan,
@@ -171,7 +171,11 @@ mod tests {
         let () = create_and_enter_global_ctxt(|ctx| {
             let () = create_and_enter_ast_ctxt(ctx, |ctx| {
                 let test_script = include_str!("../../../../assets/tests/ast-parser/statement.dst");
-                let mut parser = Parser::new(test_script, ctx);
+                let mut parser = Parser::new(
+                    test_script,
+                    vec![ctx.gcx.symbols.get_or_intern("statement")],
+                    ctx,
+                );
                 let mut stmts = Vec::new();
 
                 while let Some(token) = parser.statement(ctx).unwrap() {
@@ -188,7 +192,11 @@ mod tests {
         let () = create_and_enter_global_ctxt(|ctx| {
             let () = create_and_enter_ast_ctxt(ctx, |ctx| {
                 let test_script = include_str!("../../../../assets/tests/ast-parser/block.dst");
-                let mut parser = Parser::new(test_script, ctx);
+                let mut parser = Parser::new(
+                    test_script,
+                    vec![ctx.gcx.symbols.get_or_intern("block")],
+                    ctx,
+                );
                 let mut blocks = Vec::new();
 
                 while let Ok(token) = parser.block(ctx) {

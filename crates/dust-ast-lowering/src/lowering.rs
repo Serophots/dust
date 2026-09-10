@@ -6,8 +6,6 @@ use dust_hir::{Binary, Block, Expr, Func, Let, Literal, Main, Stmt, Unary};
 use miette::Result;
 use utils::Ident;
 
-mod namespace;
-
 pub struct Lowering<'ast> {
     namespace: Vec<Ident, &'ast Bump>,
 }
@@ -84,7 +82,7 @@ fn lower_let<'ast, 'hir, 'gcx>(
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Let<'hir>> {
     Ok(ctx.hir_arena.alloc(Let {
-        ident: r#let.ident,
+        // ident: todo!(),
         expr: r#let
             .expr
             .map(|let_expr| lower_expr(let_expr, ctx))

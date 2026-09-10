@@ -1,6 +1,8 @@
-use std::sync::OnceLock;
+use std::{ops::ControlFlow, sync::OnceLock};
 
 use bumpalo::Bump;
+use camino::Utf8Path;
+use dust_resolve::ResolverCtx;
 use miette::Result;
 
 use crate::{AstCtx, AstLowCtx, HirCtx, SymbolInterner};
@@ -35,7 +37,10 @@ where
     f(GblCtx { gcx })
 }
 
-pub trait CtxtRunner<'gcx> {
+/// Instantiates the various contexts, calling into
+/// methods for each of the stages of compilation,
+/// with the correct instantiated contexts.
+pub trait WithContexts<'gcx> {
     type RetAst<'ast>
     where
         'gcx: 'ast;
@@ -44,26 +49,36 @@ pub trait CtxtRunner<'gcx> {
         'gcx: 'hir;
     type RetHir;
 
-    fn run(&self, gcx: GblCtx<'gcx>) -> Result<()> {
+    fn run(&self, root: &Utf8Path, gcx: GblCtx<'gcx>) -> Result<()> {
         let ast_arena = Bump::new();
+        let root = ast_arena.alloc(root.canonicalize_utf8().unwrap());
+        let root_ident = gcx.symbols.get_or_intern(root.file_stem().unwrap());
         let ast_ctx = AstCtx::<'_, 'gcx> {
             gcx: gcx,
             arena: &ast_arena,
+            root: Some((root_ident, root)),
         };
 
         // Run ast
-        let ref_ast = self.run_ast(ast_ctx)?;
+        let ast = self.run_ast(ast_ctx)?;
+        if self.hook_ast(&ast).is_break() {
+            return Ok(());
+        };
 
         let hir_arena = Bump::new();
         let ast_lw_ctx = AstLowCtx::<'_, '_, 'gcx> {
             gcx: gcx,
             ast_arena: &ast_arena,
             hir_arena: &hir_arena,
+            resolver: ast_arena.alloc(ResolverCtx::default()),
         };
 
         // Run ast lowering
-        let ref_hir = self.run_ast_lowering(ref_ast, ast_lw_ctx)?;
+        let ast_lw = self.run_ast_lowering(ast, ast_lw_ctx)?;
         drop(ast_arena);
+        if self.hook_ast_lw(&ast_lw).is_break() {
+            return Ok(());
+        }
 
         let hir_ctx = HirCtx::<'_, 'gcx> {
             gcx: gcx,
@@ -71,18 +86,26 @@ pub trait CtxtRunner<'gcx> {
         };
 
         // Run hir
-        let ref_hir = self.run_hir(ref_hir, hir_ctx)?;
+        let hir = self.run_hir(ast_lw, hir_ctx)?;
 
         Ok(())
     }
 
     fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<Self::RetAst<'ast>>;
 
+    fn hook_ast<'ast, 'a>(&'a self, _ast: &'a Self::RetAst<'ast>) -> ControlFlow<()>
+    where
+        'gcx: 'ast;
+
     fn run_ast_lowering<'ast, 'hir>(
         &self,
         ref_ast: Self::RetAst<'ast>,
         ctx: AstLowCtx<'ast, 'hir, 'gcx>,
     ) -> Result<Self::RetAstLw<'hir>>;
+
+    fn hook_ast_lw<'hir, 'a>(&'a self, _ast: &'a Self::RetAstLw<'hir>) -> ControlFlow<()>
+    where
+        'gcx: 'hir;
 
     fn run_hir<'hir>(
         &self,

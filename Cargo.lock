@@ -269,6 +269,7 @@ dependencies = [
  "dust-hir",
  "dust-lexer",
  "dust-utils",
+ "insta",
  "miette",
 ]
 
@@ -339,6 +340,8 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "bumpalo",
+ "camino",
+ "dust-resolve",
  "dust-utils",
  "miette",
  "string-interner",
@@ -367,6 +370,15 @@ dependencies = [
  "dust-utils",
  "insta",
  "miette",
+]
+
+[[package]]
+name = "dust-resolve"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "bumpalo",
+ "dust-utils",
 ]
 
 [[package]]

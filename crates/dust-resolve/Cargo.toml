@@ -1,0 +1,13 @@
+[package]
+name = "dust-resolve"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "src/resolve.rs"
+
+[dependencies]
+utils.workspace = true
+
+ahash.workspace = true
+bumpalo.workspace = true

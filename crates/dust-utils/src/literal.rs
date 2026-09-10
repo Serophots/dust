@@ -1,7 +1,14 @@
 use crate::Symbol;
 
 #[derive(
-    Debug, Copy, Clone, PartialEq, PartialOrd, serde::Serialize, derive_generic_visitor::Drive,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    // NOT EQ  but &Lit can be :>
+    PartialOrd,
+    serde::Serialize,
+    derive_generic_visitor::Drive,
 )]
 pub enum Lit {
     Number(f64),

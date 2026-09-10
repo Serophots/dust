@@ -3,7 +3,7 @@ use std::iter::Filter;
 use dust_ctxt::AstCtx;
 use dust_lexer::Lexer;
 use miette::{LabeledSpan, Result, SourceSpan};
-use utils::{Ident, Token, TokenKind};
+use utils::{Ident, Symbol, Token, TokenKind};
 
 mod expression;
 mod item;
@@ -17,11 +17,12 @@ pub use statement::*;
 #[derive(Clone)]
 pub struct Parser<'ast> {
     pub source: &'ast str,
+    pub path: Vec<Symbol>,
     lexer: Filter<Lexer<'ast>, fn(&Result<Token>) -> bool>,
 }
 
 impl<'ast> Parser<'ast> {
-    pub fn new(source: &'ast str, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
+    pub fn new(source: &'ast str, path: Vec<Symbol>, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
         fn predicate<'a, 'b>(token: &'a Result<Token>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }
@@ -29,7 +30,11 @@ impl<'ast> Parser<'ast> {
         let predicate: fn(&Result<Token>) -> bool = predicate;
         let lexer = Lexer::new(source, ctx).filter(predicate);
 
-        Parser { source, lexer }
+        Parser {
+            source,
+            path,
+            lexer,
+        }
     }
 
     /// Consume the next token in the lexer

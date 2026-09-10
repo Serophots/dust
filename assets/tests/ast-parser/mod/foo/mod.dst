@@ -1,0 +1,5 @@
+fn never_not_me() {
+    // this should not land up in the AST
+    // prefer mod/foo.dst to mod/foo/mod.dst
+    2.0
+}

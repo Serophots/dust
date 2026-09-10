@@ -6,7 +6,7 @@ expression: stmts
   {
     "Let": {
       "ident": {
-        "symbol": 0,
+        "symbol": 1,
         "span": {
           "offset": 58,
           "length": 3
@@ -22,7 +22,7 @@ expression: stmts
   {
     "Let": {
       "ident": {
-        "symbol": 1,
+        "symbol": 2,
         "span": {
           "offset": 67,
           "length": 3
@@ -48,7 +48,7 @@ expression: stmts
   {
     "Let": {
       "ident": {
-        "symbol": 2,
+        "symbol": 3,
         "span": {
           "offset": 80,
           "length": 3

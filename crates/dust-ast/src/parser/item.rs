@@ -12,12 +12,15 @@ use utils::{Box, Ident, Symbol, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
+/// mod ident { items }
+/// or
+/// the root "module" created for each file
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Module<'ast> {
     pub ident: Symbol,
     pub ident_span: Option<SourceSpan>,
 
-    #[serde(with = "utils::box_serialize_with")]
+    #[serde(with = "utils::boxed_slice_serialize_with")]
     pub items: Box<'ast, [&'ast Item<'ast>]>,
 
     pub span: SourceSpan,
@@ -111,11 +114,7 @@ impl<'ast> core::fmt::Debug for Func<'ast> {
 }
 
 impl<'ast> Parser<'ast> {
-    pub fn mod_file(
-        mut self,
-        ident: Symbol,
-        ctx: AstCtx<'ast, 'ast>,
-    ) -> Result<&'ast mut Module<'ast>> {
+    pub fn parse(mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mut Module<'ast>> {
         let mut items = Vec::new_in(ctx.arena);
 
         loop {
@@ -132,36 +131,62 @@ impl<'ast> Parser<'ast> {
                 (Some(first), Some(last)) => combine_src(first.span, last.span),
                 _ => SourceSpan::new(SourceOffset::from(0), 0),
             },
-            ident,
+            ident: *self.path.last().unwrap(),
             ident_span: None,
             items: items.into_boxed_slice(),
         }))
     }
 
-    pub(crate) fn mod_block(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Module<'ast>> {
+    /// mod ident { ..items }
+    /// or
+    /// mod ident;
+    pub(crate) fn r#mod(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Module<'ast>> {
         let r#mod = self.expect_token(TokenKind::Mod)?;
         let ident = self.expect_token_ident()?;
-        let _left = self.expect_token(TokenKind::LeftBrace)?;
 
-        let mut items = Vec::new_in(ctx.arena);
+        match self.first_token_kind() {
+            Some(TokenKind::LeftBrace) => {
+                let _left = self.expect_token(TokenKind::LeftBrace)?;
 
-        loop {
-            if self.first_token_kind() == Some(TokenKind::RightBrace) {
-                break;
+                let mut items = Vec::new_in(ctx.arena);
+
+                loop {
+                    if self.first_token_kind() == Some(TokenKind::RightBrace) {
+                        break;
+                    }
+
+                    let item = self.item(ctx)?;
+                    items.push(item);
+                }
+
+                let right = self.expect_token(TokenKind::RightBrace)?;
+
+                Ok(ctx.arena.alloc(Module {
+                    span: combine_src(r#mod.span, right.span),
+                    ident: ident.symbol,
+                    ident_span: Some(ident.span),
+                    items: items.into_boxed_slice(),
+                }))
             }
+            Some(TokenKind::Semicolon) => {
+                let _semi = self.expect_token(TokenKind::Semicolon)?;
 
-            let item = self.item(ctx)?;
-            items.push(item);
+                // We need to load this module from a file
+                let mut path = self.path.clone();
+                path.push(ident.symbol);
+
+                let module = crate::parse_sub_module(&path, ctx)?;
+
+                Ok(module)
+            }
+            _ => {
+                return Err(miette::miette!(
+                    labels = vec![LabeledSpan::at(combine_src(r#mod.span, ident.span), "mod")],
+                    "expected a block \"{{}}\" or \";\""
+                )
+                .with_source_code(self.source.to_owned()));
+            }
         }
-
-        let right = self.expect_token(TokenKind::RightBrace)?;
-
-        Ok(ctx.arena.alloc(Module {
-            span: combine_src(r#mod.span, right.span),
-            ident: ident.symbol,
-            ident_span: Some(ident.span),
-            items: items.into_boxed_slice(),
-        }))
     }
 
     pub(crate) fn item(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Item<'ast>> {
@@ -183,7 +208,7 @@ impl<'ast> Parser<'ast> {
                 (ItemType::Func(function), function.span)
             }
             Some(TokenKind::Mod) => {
-                let r#mod = self.mod_block(ctx)?;
+                let r#mod = self.r#mod(ctx)?;
                 (ItemType::Module(r#mod), r#mod.span)
             }
             Some(TokenKind::Use) => {
