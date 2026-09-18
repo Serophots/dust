@@ -1,4 +1,4 @@
-use dust_ctxt::AstCtx;
+use dust_ctxt::{AstCtx, GblCtxt, SymbolDebug};
 use miette::{LabeledSpan, Result, SourceSpan};
 use utils::{BinaryOp, Box, Ident, Lit, TokenKind, UnaryOp, combine_src};
 
@@ -101,6 +101,24 @@ pub struct Path<'ast> {
     #[serde(with = "utils::boxed_slice_serialize_with")]
     pub cmpts: Box<'ast, [Ident]>,
     pub span: SourceSpan,
+}
+
+impl<'ast> SymbolDebug for Path<'ast> {
+    fn dbg<'gcx>(&self, ctx: GblCtxt<'gcx>) -> String {
+        let dbg =
+            self.cmpts
+                .iter()
+                .map(|ident| ident.dbg(ctx))
+                .fold(String::new(), |mut acc, item| {
+                    if !acc.is_empty() {
+                        acc.push_str("::");
+                    }
+                    acc.push_str(&*item);
+                    acc
+                });
+
+        dbg
+    }
 }
 
 impl<'ast> core::fmt::Debug for Path<'ast> {

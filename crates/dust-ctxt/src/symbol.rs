@@ -1,7 +1,9 @@
 use std::cell::RefCell;
 
 use string_interner::{StringInterner, backend::StringBackend};
-use utils::Symbol;
+use utils::{Ident, Symbol};
+
+use crate::GblCtxt;
 
 pub struct SymbolInterner {
     interner: RefCell<StringInterner<StringBackend<Symbol>>>,
@@ -25,5 +27,29 @@ impl SymbolInterner {
             .borrow()
             .resolve(symbol)
             .map(ToOwned::to_owned) // TODO: This cloning sucks a lot
+    }
+}
+
+pub trait SymbolDebug {
+    fn dbg<'gcx>(&self, ctx: GblCtxt<'gcx>) -> String;
+}
+
+impl SymbolDebug for Symbol {
+    fn dbg<'gcx>(&self, ctx: GblCtxt<'gcx>) -> String {
+        let Some(resolved) = ctx.symbols.resolve(self.clone()) else {
+            return format!("{:?}", self);
+        };
+
+        resolved
+    }
+}
+
+impl SymbolDebug for Ident {
+    fn dbg<'gcx>(&self, ctx: GblCtxt<'gcx>) -> String {
+        let Some(resolved) = ctx.symbols.resolve(self.symbol) else {
+            return format!("{:?}", self);
+        };
+
+        resolved
     }
 }

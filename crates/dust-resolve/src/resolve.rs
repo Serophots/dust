@@ -57,3 +57,7 @@ pub enum RibKind {}
 pub struct ResolverCtx {
     ribs: ForNamespaces<Vec<Rib>>,
 }
+
+impl ResolverCtx {
+    pub fn with_rib(&mut self) {}
+}

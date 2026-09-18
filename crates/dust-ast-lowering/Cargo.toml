@@ -10,6 +10,7 @@ path = "src/lowering.rs"
 dust-ast.workspace = true
 dust-hir.workspace = true
 dust-ctxt.workspace = true
+dust-resolve.workspace = true
 utils.workspace = true
 
 miette.workspace = true

@@ -298,6 +298,7 @@ dependencies = [
  "dust-ast",
  "dust-ctxt",
  "dust-hir",
+ "dust-resolve",
  "dust-utils",
  "miette",
 ]
@@ -353,6 +354,7 @@ version = "0.1.0"
 dependencies = [
  "camino",
  "derive_generic_visitor",
+ "dust-ctxt",
  "dust-utils",
  "miette",
  "serde",

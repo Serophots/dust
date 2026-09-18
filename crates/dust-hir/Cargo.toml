@@ -8,6 +8,7 @@ path = "src/hir.rs"
 
 [dependencies]
 utils.workspace = true
+dust-ctxt.workspace = true
 
 miette.workspace = true
 camino.workspace = true

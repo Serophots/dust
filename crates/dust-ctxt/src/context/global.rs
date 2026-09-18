@@ -2,7 +2,6 @@ use std::{ops::ControlFlow, sync::OnceLock};
 
 use bumpalo::Bump;
 use camino::Utf8Path;
-use dust_resolve::ResolverCtx;
 use miette::Result;
 
 use crate::{AstCtx, AstLowCtx, HirCtx, SymbolInterner};
@@ -13,11 +12,11 @@ pub struct GblCtxtInner {
 }
 
 #[derive(Copy, Clone)]
-pub struct GblCtx<'gcx> {
+pub struct GblCtxt<'gcx> {
     gcx: &'gcx GblCtxtInner,
 }
 
-impl<'gcx> core::ops::Deref for GblCtx<'gcx> {
+impl<'gcx> core::ops::Deref for GblCtxt<'gcx> {
     type Target = &'gcx GblCtxtInner;
 
     #[inline(always)]
@@ -29,12 +28,12 @@ impl<'gcx> core::ops::Deref for GblCtx<'gcx> {
 #[must_use]
 pub fn create_and_enter_global_ctxt<T, F>(f: F) -> T
 where
-    F: for<'gcx> FnOnce(GblCtx<'gcx>) -> T,
+    F: for<'gcx> FnOnce(GblCtxt<'gcx>) -> T,
 {
     let gcx_cell = OnceLock::new();
     let gcx = gcx_cell.get_or_init(|| GblCtxtInner::default());
 
-    f(GblCtx { gcx })
+    f(GblCtxt { gcx })
 }
 
 /// Instantiates the various contexts, calling into
@@ -49,7 +48,7 @@ pub trait WithContexts<'gcx> {
         'gcx: 'hir;
     type RetHir;
 
-    fn run(&self, root: &Utf8Path, gcx: GblCtx<'gcx>) -> Result<()> {
+    fn run(&self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<()> {
         let ast_arena = Bump::new();
         let root = ast_arena.alloc(root.canonicalize_utf8().unwrap());
         let root_ident = gcx.symbols.get_or_intern(root.file_stem().unwrap());
@@ -70,7 +69,6 @@ pub trait WithContexts<'gcx> {
             gcx: gcx,
             ast_arena: &ast_arena,
             hir_arena: &hir_arena,
-            resolver: ast_arena.alloc(ResolverCtx::default()),
         };
 
         // Run ast lowering

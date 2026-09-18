@@ -4,7 +4,7 @@ use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 // A module exists in the AST only for scoping
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive, Debug)]
-pub struct Main<'hir> {
+pub struct Krate<'hir> {
     pub main: &'hir Func<'hir>,
 }
 

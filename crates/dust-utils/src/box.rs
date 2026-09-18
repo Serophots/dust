@@ -1,9 +1,3 @@
-use std::{
-    fs::File,
-    io::{self, Read as _},
-    path::Path,
-};
-
 use bumpalo::Bump;
 
 pub type Box<'a, T> = std::boxed::Box<T, &'a Bump>;

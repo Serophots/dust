@@ -1,13 +1,13 @@
 use std::{marker::PhantomData, ops::ControlFlow};
 
 use camino::Utf8Path;
-use dust_ctxt::{AstCtx, AstLowCtx, GblCtx, HirCtx, WithContexts};
+use dust_ctxt::{AstCtx, AstLowCtx, GblCtxt, HirCtx, WithContexts};
 use miette::Result;
 
 /// Any trait which implements this `Compiler`
 /// trait can drive the compilation process.
 pub trait Compiler<'gcx>: Sized {
-    fn run(self, root: &Utf8Path, gcx: GblCtx<'gcx>) -> Result<()> {
+    fn run(self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<()> {
         CompilerWrapper(self, PhantomData).run(root, gcx)
     }
 
@@ -42,7 +42,7 @@ where
     }
 
     type RetAstLw<'hir>
-        = &'hir dust_hir::Main<'hir>
+        = &'hir dust_hir::Krate<'hir>
     where
         'gcx: 'hir;
 
@@ -50,7 +50,7 @@ where
         &self,
         krate: &'ast dust_ast::Krate<'ast>,
         ctx: AstLowCtx<'ast, 'hir, 'gcx>,
-    ) -> Result<&'hir dust_hir::Main<'hir>> {
+    ) -> Result<&'hir dust_hir::Krate<'hir>> {
         Ok(dust_ast_lowering::lower_krate(krate, ctx)?)
     }
 
@@ -65,7 +65,7 @@ where
 
     fn run_hir<'hir>(
         &self,
-        main: &'hir dust_hir::Main<'hir>,
+        main: &'hir dust_hir::Krate<'hir>,
         ctx: HirCtx<'hir, 'gcx>,
     ) -> Result<()> {
         dust_byt_comp::comp_main(main)?;

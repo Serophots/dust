@@ -1,5 +1,5 @@
 use dust_ast::Parser;
-use dust_ctxt::{GblCtx, create_and_enter_ast_ctxt};
+use dust_ctxt::{GblCtxt, create_and_enter_ast_ctxt};
 use dust_lexer::Lexer;
 use miette::LabeledSpan;
 
@@ -14,7 +14,7 @@ pub struct Compiler;
 
 impl<'gcx> crate::compiler::Compiler<'gcx> for Compiler {}
 
-pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtx<'gcx>) -> miette::Result<()> {
+pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<()> {
     match args.cmd {
         Command::Lex { input } => {
             create_and_enter_ast_ctxt(ctx, |ctx| {

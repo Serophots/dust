@@ -1,16 +1,15 @@
 use bumpalo::Bump;
 use camino::Utf8Path;
-use dust_resolve::ResolverCtx;
 use utils::Symbol;
 
-use crate::GblCtx;
+use crate::GblCtxt;
 
 #[derive(Copy, Clone)]
 pub struct AstCtx<'ast, 'gcx>
 where
     'gcx: 'ast,
 {
-    pub gcx: GblCtx<'gcx>,
+    pub gcx: GblCtxt<'gcx>,
     pub arena: &'ast Bump,
     /// None opts out of module resolution on the file system
     pub root: Option<(Symbol, &'ast Utf8Path)>,
@@ -29,7 +28,7 @@ where
 
 /// Prefer the CtxtRunner trait
 #[must_use]
-pub fn create_and_enter_ast_ctxt<'gcx, T, F>(ctx: GblCtx<'gcx>, f: F) -> T
+pub fn create_and_enter_ast_ctxt<'gcx, T, F>(ctx: GblCtxt<'gcx>, f: F) -> T
 where
     F: for<'ast> FnOnce(AstCtx<'ast, 'gcx>) -> T,
 {
@@ -49,8 +48,7 @@ where
     'gcx: 'ast,
     'gcx: 'hir,
 {
-    pub gcx: GblCtx<'gcx>,
+    pub gcx: GblCtxt<'gcx>,
     pub ast_arena: &'ast Bump,
     pub hir_arena: &'hir Bump,
-    pub resolver: &'ast ResolverCtx,
 }
