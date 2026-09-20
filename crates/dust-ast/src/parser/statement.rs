@@ -14,20 +14,19 @@
 
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceSpan};
-use tracing::instrument;
 use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Item, Parser, parser::Expr};
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Block<'ast> {
+pub struct Block<'gcx, 'ast> {
     #[serde(with = "utils::boxed_slice_serialize_with")]
-    pub stmts: Box<'ast, [&'ast Stmt<'ast>]>,
-    pub expr: Option<&'ast Expr<'ast>>,
+    pub stmts: Box<'ast, [&'ast Stmt<'gcx, 'ast>]>,
+    pub expr: Option<&'ast Expr<'gcx, 'ast>>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Block<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Block<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Block")
             .field("expr", &self.expr)
@@ -37,13 +36,13 @@ impl<'ast> core::fmt::Debug for Block<'ast> {
 }
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum Stmt<'ast> {
-    Item(&'ast Item<'ast>),
-    Let(&'ast Let<'ast>),
-    Expr(&'ast Expr<'ast>),
+pub enum Stmt<'gcx, 'ast> {
+    Item(&'ast Item<'gcx, 'ast>),
+    Let(&'ast Let<'gcx, 'ast>),
+    Expr(&'ast Expr<'gcx, 'ast>),
 }
 
-impl<'ast> core::fmt::Debug for Stmt<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Stmt<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Item(arg0) => arg0.fmt(f),
@@ -54,13 +53,13 @@ impl<'ast> core::fmt::Debug for Stmt<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Let<'ast> {
+pub struct Let<'gcx, 'ast> {
     pub ident: Ident,
-    pub expr: Option<&'ast Expr<'ast>>,
+    pub expr: Option<&'ast Expr<'gcx, 'ast>>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Let<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Let<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LetStatement")
             .field("ident", &self.ident)
@@ -69,8 +68,8 @@ impl<'ast> core::fmt::Debug for Let<'ast> {
     }
 }
 
-impl<'ast> Parser<'ast> {
-    pub(crate) fn block(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Block<'ast>> {
+impl<'gcx, 'ast> Parser<'gcx, 'ast> {
+    pub(crate) fn block(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Block<'gcx, 'ast>> {
         let left_brace = self.expect_token(TokenKind::LeftBrace)?;
 
         let mut stmts = Vec::new_in(ctx.arena);
@@ -92,7 +91,7 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn statement(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<Option<&'ast Stmt<'ast>>> {
+    fn statement(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<Option<&'ast Stmt<'gcx, 'ast>>> {
         loop {
             // First, try to pass an item
             if let Some(item) = self.try_to_parse(|parser| {
@@ -142,7 +141,7 @@ impl<'ast> Parser<'ast> {
         }
     }
 
-    fn let_stmt(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Stmt<'ast>> {
+    fn let_stmt(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Stmt<'gcx, 'ast>> {
         let r#let = self.expect_token(TokenKind::Let)?;
         let ident = self.expect_token_ident()?;
 

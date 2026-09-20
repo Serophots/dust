@@ -15,20 +15,27 @@ pub use item::*;
 pub use statement::*;
 
 #[derive(Clone)]
-pub struct Parser<'ast> {
-    pub source: &'ast str,
+pub struct Parser<'gcx, 'ast> {
+    pub source: &'gcx str,
     pub path: Vec<Symbol>,
-    lexer: Filter<Lexer<'ast>, fn(&Result<Token>) -> bool>,
+    lexer: Filter<Lexer<'gcx, 'ast>, fn(&Result<Token>) -> bool>,
 }
 
-impl<'ast> core::fmt::Debug for Parser<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Parser<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Parser").field("path", &self.path).finish()
     }
 }
 
-impl<'ast> Parser<'ast> {
-    pub fn new(source: &'ast str, path: Vec<Symbol>, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
+impl<'gcx, 'ast> Parser<'gcx, 'ast>
+where
+    'gcx: 'ast,
+{
+    pub fn new(
+        source: &'gcx str,
+        path: Vec<Symbol>,
+        ctx: AstCtx<'ast, 'gcx>,
+    ) -> Parser<'gcx, 'ast> {
         fn predicate<'a, 'b>(token: &'a Result<Token>) -> bool {
             !matches!(token.as_ref().map(|t| t.kind), Ok(TokenKind::Comment))
         }
@@ -137,7 +144,7 @@ impl<'ast> Parser<'ast> {
     /// upon returning Some, retains its' state.
     pub fn try_to_parse<F, T>(&mut self, f: F) -> Option<T>
     where
-        F: Fn(&mut Parser<'ast>) -> Option<T>,
+        F: Fn(&mut Parser<'gcx, 'ast>) -> Option<T>,
     {
         let mut new = self.clone();
         let ret = f(&mut new);

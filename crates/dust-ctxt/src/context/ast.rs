@@ -15,6 +15,12 @@ where
     pub root: Option<(Symbol, &'ast Utf8Path)>,
 }
 
+impl<'ast, 'gcx> core::fmt::Debug for AstCtx<'ast, 'gcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AstCtx").finish()
+    }
+}
+
 impl<'ast, 'gcx> AstCtx<'ast, 'gcx>
 where
     'gcx: 'ast,

@@ -8,6 +8,7 @@ use crate::{AstCtx, AstLowCtx, HirCtx, SymbolInterner};
 
 #[derive(Default)]
 pub struct GblCtxtInner {
+    pub arena: Bump,
     pub symbols: SymbolInterner,
 }
 

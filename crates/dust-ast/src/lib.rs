@@ -22,25 +22,25 @@ pub use visitors::Visitor;
 /// Many files are parsed into one large AST tree
 /// which constitutes a Krate.
 #[derive(PartialEq, serde::Serialize)]
-pub struct Krate<'ast> {
-    pub root: &'ast mut Module<'ast>,
+pub struct Krate<'gcx, 'ast> {
+    pub root: &'ast mut Module<'gcx, 'ast>,
 }
 
-fn read_to_string<'ast, 'gcx>(path: &Utf8Path, ctx: AstCtx<'ast, 'gcx>) -> &'ast mut str {
+fn read_to_string<'ast, 'gcx>(path: &Utf8Path, ctx: AstCtx<'ast, 'gcx>) -> &'gcx mut str {
     // TODO: When these nightly features land and some ergonomic work is done on the api,
     // maybe this can be both more efficient and ergonomic. For now, this works.
     let source = std::fs::read_to_string(path).unwrap().into_boxed_str();
-    let source: Box<'ast, str> = Box::clone_from_ref_in(source.as_str(), ctx.arena);
-    let source: &'ast mut str = Box::leak(source);
+    let source: Box<'gcx, str> = Box::clone_from_ref_in(source.as_str(), &ctx.gcx.arena);
+    let source: &'gcx mut str = Box::leak(source);
 
     source
 }
 
-pub fn parse_root<'ast, 'gcx>(ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Krate<'ast>> {
+pub fn parse_root<'ast, 'gcx>(ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Krate<'gcx, 'ast>> {
     let (root_ident, root_path) = ctx.expect_root();
 
     let source = read_to_string(root_path, ctx);
-    let root = Parser::<'ast>::new(source, vec![*root_ident], ctx).parse(ctx)?;
+    let root = Parser::<'gcx, 'ast>::new(source, vec![*root_ident], ctx).parse(ctx)?;
 
     Ok(ctx.arena.alloc(Krate { root }))
 }
@@ -49,7 +49,7 @@ pub fn parse_root<'ast, 'gcx>(ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Krate<'as
 fn parse_sub_module<'ast, 'gcx>(
     path: &[Symbol],
     ctx: AstCtx<'ast, 'gcx>,
-) -> Result<&'ast Module<'ast>> {
+) -> Result<&'ast Module<'gcx, 'ast>> {
     let filepath = parse_sub_path(path, ctx).ok_or_else(|| {
         miette::miette!(
             "Could not resolve the module {:?} into a valid dust file",
@@ -57,9 +57,9 @@ fn parse_sub_module<'ast, 'gcx>(
         )
     })?;
 
-    let source = read_to_string(filepath, ctx);
+    let source: &'gcx str = read_to_string(filepath, ctx);
 
-    Ok(Parser::<'ast>::new(source, Vec::from(path), ctx).parse(ctx)?)
+    Ok(Parser::<'gcx, 'ast>::new(source, Vec::from(path), ctx).parse(ctx)?)
 }
 
 /// Resolve a module (`&[Symbol]`) into its file path

@@ -1,7 +1,8 @@
 use miette::SourceSpan;
 use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 
-// A module exists in the AST only for scoping
+// A module exists in the AST only for namespace scoping
+// so we don't need to include it in the HIR.
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive, Debug)]
 pub struct Krate<'hir> {
@@ -60,7 +61,7 @@ impl<'hir> core::fmt::Debug for Stmt<'hir> {
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Let<'hir> {
-    // pub ident: Ident,
+    pub ident: Ident,
     pub expr: Option<&'hir Expr<'hir>>,
     pub span: SourceSpan,
 }
@@ -81,6 +82,8 @@ pub enum Expr<'hir> {
     Unary(&'hir Unary<'hir>),
     Literal(&'hir Literal<'hir>),
     Assign,
+    /// A namespace resolution
+    Res(&'hir dust_resolve::Res),
     Block(&'hir Block<'hir>),
     If,
     Loop,

@@ -6,6 +6,8 @@
 //!
 //! function       → "fn" ident "()" block_expr ;
 
+use std::hash::{Hash as _, Hasher};
+
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
 use utils::{Box, Ident, Symbol, TokenKind, combine_src};
@@ -16,33 +18,41 @@ use crate::{Block, Parser, Path};
 /// or
 /// the root "module" created for each file
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Module<'ast> {
+pub struct Module<'gcx, 'ast> {
     pub ident: Symbol,
     pub ident_span: Option<SourceSpan>,
 
     #[serde(with = "utils::boxed_slice_serialize_with")]
-    pub items: Box<'ast, [&'ast Item<'ast>]>,
+    pub items: Box<'ast, [&'ast Item<'gcx, 'ast>]>,
 
+    pub source: &'gcx str,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Module<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Module<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let source_hash = {
+            let mut hasher = std::hash::DefaultHasher::new();
+            self.source.hash(&mut hasher);
+            hasher.finish()
+        };
+
         f.debug_struct("Module")
             .field("ident", &self.ident)
             .field("items", &self.items)
+            .field("source", &source_hash)
             .finish()
     }
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Item<'ast> {
+pub struct Item<'gcx, 'ast> {
     pub vis: Option<Visibility>,
-    pub r#type: ItemType<'ast>,
+    pub r#type: ItemType<'gcx, 'ast>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Item<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Item<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Item")
             .field("vis", &self.vis)
@@ -52,13 +62,13 @@ impl<'ast> core::fmt::Debug for Item<'ast> {
 }
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum ItemType<'ast> {
-    Module(&'ast Module<'ast>),
-    Func(&'ast Func<'ast>),
+pub enum ItemType<'gcx, 'ast> {
+    Module(&'ast Module<'gcx, 'ast>),
+    Func(&'ast Func<'gcx, 'ast>),
     Use(&'ast Use<'ast>),
 }
 
-impl<'ast> core::fmt::Debug for ItemType<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for ItemType<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Module(arg0) => arg0.fmt(f),
@@ -98,13 +108,13 @@ impl<'ast> core::fmt::Debug for Use<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Func<'ast> {
+pub struct Func<'gcx, 'ast> {
     pub ident: Ident,
-    pub block: &'ast Block<'ast>,
+    pub block: &'ast Block<'gcx, 'ast>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Func<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Func<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Function")
             .field("ident", &self.ident)
@@ -113,8 +123,11 @@ impl<'ast> core::fmt::Debug for Func<'ast> {
     }
 }
 
-impl<'ast> Parser<'ast> {
-    pub fn parse(mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast mut Module<'ast>> {
+impl<'gcx, 'ast> Parser<'gcx, 'ast>
+where
+    'gcx: 'ast,
+{
+    pub fn parse(mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast mut Module<'gcx, 'ast>> {
         let mut items = Vec::new_in(ctx.arena);
 
         loop {
@@ -133,6 +146,7 @@ impl<'ast> Parser<'ast> {
             },
             ident: *self.path.last().unwrap(),
             ident_span: None,
+            source: self.source,
             items: items.into_boxed_slice(),
         }))
     }
@@ -140,7 +154,7 @@ impl<'ast> Parser<'ast> {
     /// mod ident { ..items }
     /// or
     /// mod ident;
-    pub(crate) fn r#mod(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Module<'ast>> {
+    pub(crate) fn r#mod(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Module<'gcx, 'ast>> {
         let r#mod = self.expect_token(TokenKind::Mod)?;
         let ident = self.expect_token_ident()?;
 
@@ -162,6 +176,7 @@ impl<'ast> Parser<'ast> {
                 let right = self.expect_token(TokenKind::RightBrace)?;
 
                 Ok(ctx.arena.alloc(Module {
+                    source: self.source,
                     span: combine_src(r#mod.span, right.span),
                     ident: ident.symbol,
                     ident_span: Some(ident.span),
@@ -175,8 +190,7 @@ impl<'ast> Parser<'ast> {
                 let mut path = self.path.clone();
                 path.push(ident.symbol);
 
-                let module = crate::parse_sub_module(&path, ctx)?;
-
+                let module: &'ast Module<'gcx, 'ast> = crate::parse_sub_module(&path, ctx)?;
                 Ok(module)
             }
             _ => {
@@ -189,7 +203,7 @@ impl<'ast> Parser<'ast> {
         }
     }
 
-    pub(crate) fn item(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Item<'ast>> {
+    pub(crate) fn item(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Item<'gcx, 'ast>> {
         let vis = match self.first_token_kind() {
             Some(TokenKind::Pub) => {
                 let token = self.expect_token(TokenKind::Pub)?;
@@ -243,7 +257,7 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn use_decl(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Use<'ast>> {
+    fn use_decl(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Use<'ast>> {
         let r#use = self.expect_token(TokenKind::Use)?;
         let path = self.path_expr(ctx)?;
         let semi = self.expect_token(TokenKind::Semicolon)?;
@@ -254,7 +268,7 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn function(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Func<'ast>> {
+    fn function(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Func<'gcx, 'ast>> {
         let r#fn = self.expect_token(TokenKind::Function)?;
         let ident = self.expect_token_ident()?;
         self.expect_token(TokenKind::LeftParen)?;

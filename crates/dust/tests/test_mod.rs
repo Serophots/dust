@@ -20,7 +20,10 @@ pub fn workspace_dir() -> Utf8PathBuf {
 pub struct Compiler;
 
 impl<'gcx> dust::compiler::Compiler<'gcx> for Compiler {
-    fn hook_ast<'ast, 'a>(&'a self, ast: &'ast dust_ast::Krate<'ast>) -> std::ops::ControlFlow<()> {
+    fn hook_ast<'ast, 'a>(
+        &'a self,
+        ast: &'ast dust_ast::Krate<'gcx, 'ast>,
+    ) -> std::ops::ControlFlow<()> {
         insta::assert_json_snapshot!(ast);
 
         std::ops::ControlFlow::Break(())

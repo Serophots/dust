@@ -7,8 +7,8 @@ edition = "2024"
 path = "src/hir.rs"
 
 [dependencies]
+dust-resolve.workspace = true
 utils.workspace = true
-dust-ctxt.workspace = true
 
 miette.workspace = true
 camino.workspace = true

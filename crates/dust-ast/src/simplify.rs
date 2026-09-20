@@ -4,7 +4,7 @@ use utils::{BinaryOp, Lit, UnaryOp};
 
 use crate::{Binary, Expr, Literal, Unary};
 
-impl<'ast> Expr<'ast> {
+impl<'gcx, 'ast> Expr<'gcx, 'ast> {
     /// Try to eagerly simplify the tree where possible;
     /// i.e. a Primitive::Number(a) + Primitive::Number(b)
     /// can be reduced to Primitive::Number(a+b) at
@@ -13,7 +13,7 @@ impl<'ast> Expr<'ast> {
     /// The tree is simplified leafs-up so that this function
     /// needn't recurse; it can assume that any leafs dangling
     /// from this expression have been simplified fully already.
-    pub fn simplify(self, source: &'ast str, ctx: AstCtx<'ast, 'ast>) -> Result<Expr<'ast>> {
+    pub fn simplify(self, source: &'ast str, ctx: AstCtx<'ast, 'gcx>) -> Result<Expr<'gcx, 'ast>> {
         if !cfg!(feature = "no-simplify") {
             match self {
                 Expr::Unary(&Unary { expr, op, span }) => match expr {

@@ -33,3 +33,16 @@ impl<'a, T, E> TransposeRef<'a, T, E> for Option<&'a Result<T, E>> {
         }
     }
 }
+
+pub fn init_logging() {
+    use tracing_subscriber::layer::SubscriberExt as _;
+
+    let stdout_layer = tracing_subscriber::fmt::Layer::new()
+        .pretty()
+        .with_target(false)
+        .with_thread_names(true);
+
+    let subscriber = tracing_subscriber::Registry::default().with(stdout_layer);
+
+    tracing::subscriber::set_global_default(subscriber).expect("failed to set tracing subscriber");
+}

@@ -4,9 +4,12 @@ use utils::{Lit, TokenKind};
 
 use crate::{Literal, parser::Parser};
 
-impl<'ast> Parser<'ast> {
+impl<'gcx, 'ast> Parser<'gcx, 'ast>
+where
+    'gcx: 'ast,
+{
     ///  literal        → NUMBER | STRING | "true" | "false" | "nil" ;
-    pub fn expr_literal(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Literal<'ast>> {
+    pub fn expr_literal(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Literal<'ast>> {
         let Some(token) = self.next_token()? else {
             let eof = self.source.chars().count();
 

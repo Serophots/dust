@@ -6,19 +6,19 @@ use crate::{Block, Parser};
 
 /// Expression
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum Expr<'ast> {
-    Call(&'ast Call<'ast>),
-    Binary(&'ast Binary<'ast>),
-    Unary(&'ast Unary<'ast>),
+pub enum Expr<'gcx, 'ast> {
+    Call(&'ast Call<'gcx, 'ast>),
+    Binary(&'ast Binary<'gcx, 'ast>),
+    Unary(&'ast Unary<'gcx, 'ast>),
     Path(&'ast Path<'ast>),
     Literal(&'ast Literal<'ast>),
     Assign,
-    Block(&'ast Block<'ast>),
+    Block(&'ast Block<'gcx, 'ast>),
     If,
     Loop,
 }
 
-impl<'ast> core::fmt::Debug for Expr<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Expr<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             Self::Call(arg0) => arg0.fmt(f),
@@ -34,7 +34,7 @@ impl<'ast> core::fmt::Debug for Expr<'ast> {
     }
 }
 
-impl<'ast> Expr<'ast> {
+impl<'gcx, 'ast> Expr<'gcx, 'ast> {
     pub fn span(self) -> SourceSpan {
         match self {
             Expr::Assign => todo!(),
@@ -63,14 +63,14 @@ impl<'ast> core::fmt::Debug for Literal<'ast> {
 }
 
 #[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Binary<'ast> {
-    pub lhs: &'ast Expr<'ast>,
-    pub rhs: &'ast Expr<'ast>,
+pub struct Binary<'gcx, 'ast> {
+    pub lhs: &'ast Expr<'gcx, 'ast>,
+    pub rhs: &'ast Expr<'gcx, 'ast>,
     pub op: BinaryOp,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Binary<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Binary<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Binary")
             .field("op", &self.op)
@@ -81,13 +81,13 @@ impl<'ast> core::fmt::Debug for Binary<'ast> {
 }
 
 #[derive(PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Unary<'ast> {
-    pub expr: &'ast Expr<'ast>,
+pub struct Unary<'gcx, 'ast> {
+    pub expr: &'ast Expr<'gcx, 'ast>,
     pub op: UnaryOp,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Unary<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Unary<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Unary")
             .field("op", &self.op)
@@ -101,6 +101,26 @@ pub struct Path<'ast> {
     #[serde(with = "utils::boxed_slice_serialize_with")]
     pub cmpts: Box<'ast, [Ident]>,
     pub span: SourceSpan,
+}
+
+impl<'ast> Path<'ast> {
+    pub fn len(&self) -> usize {
+        self.cmpts.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cmpts.is_empty()
+    }
+
+    /// Try to parse the Path as a single Ident
+    /// if the Path has only one component.
+    pub fn try_into_ident(&self) -> Option<Ident> {
+        if self.len() == 1 {
+            self.cmpts.first().copied()
+        } else {
+            None
+        }
+    }
 }
 
 impl<'ast> SymbolDebug for Path<'ast> {
@@ -128,24 +148,27 @@ impl<'ast> core::fmt::Debug for Path<'ast> {
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct Call<'ast> {
-    pub expr: &'ast Expr<'ast>,
+pub struct Call<'gcx, 'ast> {
+    pub expr: &'ast Expr<'gcx, 'ast>,
     pub span: SourceSpan,
 }
 
-impl<'ast> core::fmt::Debug for Call<'ast> {
+impl<'gcx, 'ast> core::fmt::Debug for Call<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("CallExpr").field(&self.expr).finish()
     }
 }
 
-impl<'ast> Parser<'ast> {
-    pub fn expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+impl<'gcx, 'ast> Parser<'gcx, 'ast>
+where
+    'gcx: 'ast,
+{
+    pub fn expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         self.expr_call(ctx)
     }
 
     /// Parse atleast one ident, followed by zero or more further (`::` ident)
-    pub fn path_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Path<'ast>> {
+    pub fn path_expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Path<'ast>> {
         let first = self.expect_token_ident()?;
 
         let mut cmpts = Vec::new_in(ctx.arena);
@@ -166,20 +189,20 @@ impl<'ast> Parser<'ast> {
         }))
     }
 
-    fn if_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn if_expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         todo!()
     }
 
-    fn loop_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn loop_expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         todo!()
     }
 
-    fn assign_expr(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn assign_expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         todo!()
     }
 
     /// logic_or "()"
-    fn expr_call(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_call(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let expr = self.expr_or(ctx)?;
 
         match self.first_token_kind() {
@@ -198,7 +221,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  logic_or       → logic_and ( "||" logic_and )* ;
-    fn expr_or(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_or(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_and(ctx)?;
 
         loop {
@@ -235,7 +258,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  logic_and      → equality ( "&&" equality )* ;
-    fn expr_and(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_and(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_eq(ctx)?;
 
         loop {
@@ -272,7 +295,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-    fn expr_eq(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_eq(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_compar(ctx)?;
 
         loop {
@@ -312,7 +335,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-    fn expr_compar(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_compar(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_term(ctx)?;
 
         loop {
@@ -358,7 +381,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  term           → factor ( ( "-" | "+" ) factor )* ;
-    fn expr_term(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_term(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_factor(ctx)?;
 
         loop {
@@ -398,7 +421,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  factor         → unary ( ( "/" | "*" ) unary )* ;
-    fn expr_factor(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_factor(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let mut lhs = self.expr_unary(ctx)?;
 
         loop {
@@ -438,7 +461,7 @@ impl<'ast> Parser<'ast> {
     }
 
     ///  unary          → ( "!" | "-" ) unary | parenth
-    fn expr_unary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_unary(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let op = match self.first_token_kind() {
             Some(TokenKind::Bang) => UnaryOp::Not,
             Some(TokenKind::Minus) => UnaryOp::Negate,
@@ -459,7 +482,7 @@ impl<'ast> Parser<'ast> {
     }
 
     /// "(" expression ")" | primary
-    fn expr_parenth(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_parenth(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         if let Ok(left_parenth) = self.expect_token(TokenKind::LeftParen) {
             let expr = self.expr(ctx);
             let right_parenth = self.expect_token(TokenKind::RightParen);
@@ -483,7 +506,7 @@ impl<'ast> Parser<'ast> {
     }
 
     /// Path, literal / ident, assign, block, if block, loop block
-    fn expr_primary(&mut self, ctx: AstCtx<'ast, 'ast>) -> Result<&'ast Expr<'ast>> {
+    fn expr_primary(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         match self.first_token_kind() {
             Some(TokenKind::If) => Ok(self.if_expr(ctx)?),
             Some(TokenKind::Loop) => Ok(self.loop_expr(ctx)?),

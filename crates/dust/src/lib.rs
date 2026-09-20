@@ -1,4 +1,3 @@
-use dust_ast::Parser;
 use dust_ctxt::{GblCtxt, create_and_enter_ast_ctxt};
 use dust_lexer::Lexer;
 use miette::LabeledSpan;
@@ -9,6 +8,39 @@ mod args;
 pub mod compiler;
 
 pub use args::*;
+
+/// An implementation of the compiler parses
+/// the AST then stops and prints it.
+pub struct Parser {
+    tree: bool,
+}
+
+impl<'gcx> crate::compiler::Compiler<'gcx> for Parser {
+    fn hook_ast<'ast, 'a>(
+        &'a self,
+        ast: &'ast dust_ast::Krate<'gcx, 'ast>,
+    ) -> std::ops::ControlFlow<()> {
+        use dust_ast_print::LabelPrinter;
+
+        match self.tree {
+            false => {
+                let mut labels = Vec::new();
+                ast.root.label(&mut labels);
+
+                println!(
+                    "{:?}",
+                    miette::miette!(labels = labels, "debug")
+                        .with_source_code(ast.root.source.to_owned())
+                );
+            }
+            true => {
+                println!("{:#?}", ast.root.items);
+            }
+        }
+
+        std::ops::ControlFlow::Break(())
+    }
+}
 
 pub struct Compiler;
 
@@ -33,37 +65,18 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
                 .with_source_code(contents.clone()))
             })?;
         }
-        Command::Parse { input, tree: false } => {
-            create_and_enter_ast_ctxt(ctx, |ctx| {
-                use dust_ast_print::LabelPrinter;
-
-                let contents = ctx.arena.alloc(input.content()?);
-                let ident = ctx.gcx.symbols.get_or_intern("parse");
-                let ast = Parser::new(contents, vec![ident], ctx).parse(ctx)?;
-
-                let mut labels = Vec::new();
-                ast.label(&mut labels);
-
-                Err(miette::miette!(labels = labels, "debug").with_source_code(contents.clone()))
-            })?;
-        }
-        Command::Parse { input, tree: true } => {
-            create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
-                let contents = ctx.arena.alloc(input.content()?);
-                let ident = ctx.gcx.symbols.get_or_intern("parse");
-                let ast = Parser::new(contents, vec![ident], ctx).parse(ctx)?;
-
-                println!("{:#?}", ast.items);
-
-                Ok(())
-            })?;
+        Command::Parse { input, tree } => {
+            Parser { tree }.run(&input, ctx)?;
         }
         Command::Calculate { input } => {
             create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
                 let contents = ctx.arena.alloc(input.content()?);
 
-                let mut parser =
-                    Parser::new(&contents, vec![ctx.gcx.symbols.get_or_intern("calc")], ctx);
+                let mut parser = dust_ast::Parser::new(
+                    &contents,
+                    vec![ctx.gcx.symbols.get_or_intern("calc")],
+                    ctx,
+                );
                 println!("{:?}", parser.expr(ctx));
 
                 Ok(())

@@ -11,7 +11,7 @@ pub trait Compiler<'gcx>: Sized {
         CompilerWrapper(self, PhantomData).run(root, gcx)
     }
 
-    fn hook_ast<'ast, 'a>(&'a self, _ast: &'ast dust_ast::Krate<'ast>) -> ControlFlow<()> {
+    fn hook_ast<'ast, 'a>(&'a self, _ast: &'ast dust_ast::Krate<'gcx, 'ast>) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 }
@@ -26,11 +26,11 @@ where
     T: Compiler<'gcx>,
 {
     type RetAst<'ast>
-        = &'ast dust_ast::Krate<'ast>
+        = &'ast dust_ast::Krate<'gcx, 'ast>
     where
         'gcx: 'ast;
 
-    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast dust_ast::Krate<'ast>> {
+    fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast dust_ast::Krate<'gcx, 'ast>> {
         Ok(dust_ast::parse_root(ctx)?)
     }
 
@@ -48,7 +48,7 @@ where
 
     fn run_ast_lowering<'ast, 'hir>(
         &self,
-        krate: &'ast dust_ast::Krate<'ast>,
+        krate: &'ast dust_ast::Krate<'gcx, 'ast>,
         ctx: AstLowCtx<'ast, 'hir, 'gcx>,
     ) -> Result<&'hir dust_hir::Krate<'hir>> {
         Ok(dust_ast_lowering::lower_krate(krate, ctx)?)

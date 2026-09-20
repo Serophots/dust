@@ -14,7 +14,7 @@ pub enum Command {
     Lex { input: TextSource },
     /// Parse a source file into Abstract Syntax Tree
     Parse {
-        input: TextSource,
+        input: Utf8PathBuf,
         #[arg(long)]
         tree: bool,
     },

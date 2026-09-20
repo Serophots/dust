@@ -9,13 +9,13 @@ use utils::TokenKind;
 /// Transforms utf8 text input into an iterator of `TokenKind`
 /// `impl Iterator<Item = Result<Token<TokenKind<'a>>>>`
 #[derive(Clone)]
-pub struct Lexer<'ast> {
+pub struct Lexer<'gcx, 'ast> {
     source: &'ast str,
     remaining: Chars<'ast>,
     byte: usize,
     rest: &'ast str,
     started: Started,
-    ctx: AstCtx<'ast, 'ast>,
+    ctx: AstCtx<'ast, 'gcx>,
 }
 
 #[derive(Clone, Debug)]
@@ -39,8 +39,8 @@ enum Started {
     Identifier(usize),
 }
 
-impl<'ast> Lexer<'ast> {
-    pub fn new(source: &'ast str, ctx: AstCtx<'ast, 'ast>) -> Self {
+impl<'gcx, 'ast> Lexer<'gcx, 'ast> {
+    pub fn new(source: &'ast str, ctx: AstCtx<'ast, 'gcx>) -> Self {
         Lexer {
             source: source,
             remaining: source.chars(),
@@ -348,7 +348,7 @@ impl<'ast> Lexer<'ast> {
     }
 }
 
-impl<'a> Iterator for Lexer<'a> {
+impl<'gcx, 'ast> Iterator for Lexer<'gcx, 'ast> {
     type Item = Result<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {

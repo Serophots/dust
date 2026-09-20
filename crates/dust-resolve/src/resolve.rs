@@ -1,4 +1,5 @@
 use ahash::HashMap;
+use utils::{Ident, Symbol};
 
 #[derive(Copy, Clone)]
 pub enum Namespace {
@@ -34,7 +35,16 @@ impl<T> core::ops::IndexMut<Namespace> for ForNamespaces<T> {
     }
 }
 
-pub struct Res {}
+/// A namespace resolution
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub enum Res {
+    /// Local variable or function parameter.
+    /// The ident span must point to the defining site
+    /// for this local variable for proper equality.
+    ///
+    /// **Value namespace**
+    Local(Ident),
+}
 
 /// Each namespace has a stack of ribs. Each rib
 /// represents a region of the code for which these
@@ -46,18 +56,50 @@ pub struct Res {}
 /// A new rib is introduced every time the accessible
 /// bindings change. I.e. a let statement, any sort
 /// of block.
-pub struct Rib {
-    bindings: HashMap<(), Res>,
-    kind: RibKind,
+pub struct Rib<'hir> {
+    pub bindings: HashMap<Symbol, &'hir Res>,
+    pub kind: RibKind,
 }
 
-pub enum RibKind {}
+pub enum RibKind {
+    Normal,
+
+    Block,
+
+    Fn,
+
+    Module,
+}
 
 #[derive(Default)]
-pub struct ResolverCtx {
-    ribs: ForNamespaces<Vec<Rib>>,
+pub struct ResolverCtx<'hir> {
+    pub ribs: ForNamespaces<Vec<Rib<'hir>>>,
 }
 
-impl ResolverCtx {
-    pub fn with_rib(&mut self) {}
+impl<'ast, 'hir, 'gcx> ResolverCtx<'hir> {
+    pub fn push_rib<F>(&mut self, namespace: Namespace, kind: RibKind, f: F)
+    where
+        F: FnOnce(&mut Rib<'hir>),
+    {
+        let mut rib = Rib {
+            bindings: Default::default(),
+            kind,
+        };
+
+        f(&mut rib);
+
+        self.ribs[namespace].push(rib);
+    }
+
+    pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<&'hir Res> {
+        let ribs = self.ribs[namespace].iter().rev();
+
+        for rib in ribs {
+            if let Some(res) = rib.bindings.get(&ident.symbol) {
+                return Some(*res);
+            }
+        }
+
+        None
+    }
 }

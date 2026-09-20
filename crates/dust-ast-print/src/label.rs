@@ -10,7 +10,7 @@ pub trait LabelPrinter {
     fn label(self, labels: &mut Vec<LabeledSpan>);
 }
 
-impl<'a> LabelPrinter for &Module<'a> {
+impl<'a, 'b> LabelPrinter for &Module<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         if let Some(ident_span) = self.ident_span {
             Ident {
@@ -26,7 +26,7 @@ impl<'a> LabelPrinter for &Module<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Item<'a> {
+impl<'a, 'b> LabelPrinter for &Item<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         if let Some(vis) = &self.vis {
             vis.label(labels);
@@ -46,14 +46,14 @@ impl<'a> LabelPrinter for &Use<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Func<'a> {
+impl<'a, 'b> LabelPrinter for &Func<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
         self.block.label(labels);
     }
 }
 
-impl<'a> LabelPrinter for &Block<'a> {
+impl<'a, 'b> LabelPrinter for &Block<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         for stmt in &self.stmts {
             stmt.label(labels);
@@ -65,7 +65,7 @@ impl<'a> LabelPrinter for &Block<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Stmt<'a> {
+impl<'a, 'b> LabelPrinter for &Stmt<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match self {
             Stmt::Item(item) => item.label(labels),
@@ -77,7 +77,7 @@ impl<'a> LabelPrinter for &Stmt<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Let<'a> {
+impl<'a, 'b> LabelPrinter for &Let<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
 
@@ -87,7 +87,7 @@ impl<'a> LabelPrinter for &Let<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Expr<'a> {
+impl<'a, 'b> LabelPrinter for &Expr<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match *self {
             Expr::Assign => todo!(),
@@ -103,7 +103,7 @@ impl<'a> LabelPrinter for &Expr<'a> {
     }
 }
 
-impl<'a> LabelPrinter for &Call<'a> {
+impl<'a, 'b> LabelPrinter for &Call<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.expr.span(), "call"));
     }
