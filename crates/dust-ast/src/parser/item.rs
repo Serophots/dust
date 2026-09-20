@@ -25,6 +25,7 @@ pub struct Module<'gcx, 'ast> {
     #[serde(with = "utils::boxed_slice_serialize_with")]
     pub items: Box<'ast, [&'ast Item<'gcx, 'ast>]>,
 
+    #[serde(skip)]
     pub source: &'gcx str,
     pub span: SourceSpan,
 }
