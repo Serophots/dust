@@ -9,13 +9,6 @@
 // std::print();
 
 fn main() {
-    let h = 0;
-    {
-        let y = 5;
-    }
-
     let x = 2;
     4 * x;
-    let y = 3;
-    4 * y;
 }

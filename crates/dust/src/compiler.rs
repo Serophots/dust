@@ -14,6 +14,10 @@ pub trait Compiler<'gcx>: Sized {
     fn hook_ast<'ast, 'a>(&'a self, _ast: &'ast dust_ast::Krate<'gcx, 'ast>) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
+
+    fn hook_ast_lw<'hir, 'a>(&'a self, _ast: &'hir dust_hir::Krate<'hir>) -> ControlFlow<()> {
+        ControlFlow::Continue(())
+    }
 }
 
 /// Any implementor of
@@ -54,11 +58,11 @@ where
         Ok(dust_ast_lowering::lower_krate(krate, ctx)?)
     }
 
-    fn hook_ast_lw<'hir, 'a>(&'a self, _ast: &'a Self::RetAstLw<'hir>) -> ControlFlow<()>
+    fn hook_ast_lw<'hir, 'a>(&'a self, ast: &'a Self::RetAstLw<'hir>) -> ControlFlow<()>
     where
         'gcx: 'hir,
     {
-        todo!()
+        self.0.hook_ast_lw(ast)
     }
 
     type RetHir = ();

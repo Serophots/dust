@@ -46,6 +46,14 @@ pub enum Res {
     Local(Ident),
 }
 
+impl core::fmt::Debug for Res {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),
+        }
+    }
+}
+
 /// Each namespace has a stack of ribs. Each rib
 /// represents a region of the code for which these
 /// bindings apply. To resolve a binding, the stack

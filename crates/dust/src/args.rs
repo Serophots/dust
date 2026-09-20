@@ -11,12 +11,17 @@ pub struct Args {
 #[derive(clap::Subcommand)]
 pub enum Command {
     /// Tokenize a source file
-    Lex { input: TextSource },
+    Lex {
+        input: TextSource,
+    },
     /// Parse a source file into Abstract Syntax Tree
-    Parse {
+    PrintAst {
         input: Utf8PathBuf,
         #[arg(long)]
         tree: bool,
+    },
+    PrintHir {
+        input: Utf8PathBuf,
     },
     /// Use dusts' parser as a comp-time calculator
     /// to evaluate static expressions from a text
@@ -24,16 +29,24 @@ pub enum Command {
     /// `1 + 1 == 2` -> TRUE
     /// `1 + 1 < 2` -> FALSE
     /// `1 + 1 == 2 == false` -> FALSE
-    Calculate { input: TextSource },
+    Calculate {
+        input: TextSource,
+    },
 
     /// Compile a source file into bytecode
-    Compile { input: Utf8PathBuf },
+    Compile {
+        input: Utf8PathBuf,
+    },
     /// Compile a source file to bytecode, then immediately interpret it
-    Run { input: Utf8PathBuf },
+    Run {
+        input: Utf8PathBuf,
+    },
     /// Interpret pre-compiled bytecode
     ///
     /// Note: You also use the dedicated, thinner
     /// `dust-interpretter` for interpretting pre-
     /// compiled bytecode files.
-    Interpret { input: ByteSource },
+    Interpret {
+        input: ByteSource,
+    },
 }

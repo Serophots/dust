@@ -5,10 +5,7 @@ use dust_ast::{
 use miette::LabeledSpan;
 use utils::Ident;
 
-/// Recurse a data structure, labelling each part as you go
-pub trait LabelPrinter {
-    fn label(self, labels: &mut Vec<LabeledSpan>);
-}
+use crate::LabelPrinter;
 
 impl<'a, 'b> LabelPrinter for &Module<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {

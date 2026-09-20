@@ -124,8 +124,20 @@ impl<'gcx, 'ast> Parser<'gcx, 'ast> {
                                 // Expect a semicolon
                                 let _semi = parser.expect_token(TokenKind::Semicolon).ok()?;
                             }
-                            Expr::Block(..) | Expr::If | Expr::Loop => {
-                                // Semicolon not necessary?
+                            Expr::Block(block) => {
+                                match block.expr {
+                                    Some(_) => {
+                                        // Expect a semicolon
+                                        let _semi =
+                                            parser.expect_token(TokenKind::Semicolon).ok()?;
+                                    }
+                                    None => {
+                                        // Semicolon not necessary
+                                    }
+                                }
+                            }
+                            Expr::If | Expr::Loop => {
+                                // Semicolon not necessary? ish
                             }
                         }
 

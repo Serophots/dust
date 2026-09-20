@@ -1,10 +1,11 @@
 [package]
-name = "dust-ast-print"
+name = "dust-print"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 dust-ast.workspace = true
+dust-hir.workspace = true
 utils.workspace = true
 
 miette.workspace = true

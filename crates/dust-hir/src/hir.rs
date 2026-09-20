@@ -1,3 +1,5 @@
+use std::fmt::Pointer;
+
 use miette::SourceSpan;
 use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 
@@ -69,7 +71,7 @@ pub struct Let<'hir> {
 impl<'hir> core::fmt::Debug for Let<'hir> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LetStatement")
-            // .field("ident", &self.ident) TODO
+            .field("ident", &self.ident)
             .field("expr", &self.expr)
             .finish()
     }
@@ -91,7 +93,17 @@ pub enum Expr<'hir> {
 
 impl<'hir> core::fmt::Debug for Expr<'hir> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match *self {
+            Expr::Call(arg0) => arg0.fmt(f),
+            Expr::Binary(arg0) => arg0.fmt(f),
+            Expr::Unary(arg0) => arg0.fmt(f),
+            Expr::Literal(arg0) => arg0.fmt(f),
+            Expr::Assign => todo!(),
+            Expr::Res(arg0) => arg0.fmt(f),
+            Expr::Block(arg0) => arg0.fmt(f),
+            Expr::If => todo!(),
+            Expr::Loop => todo!(),
+        }
     }
 }
 
@@ -131,8 +143,8 @@ impl<'ast> core::fmt::Debug for Binary<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Binary")
             .field("op", &self.op)
-            .field("lhs", self.lhs)
-            .field("rhs", self.rhs)
+            .field("lhs", &self.lhs)
+            .field("rhs", &self.rhs)
             .finish()
     }
 }
