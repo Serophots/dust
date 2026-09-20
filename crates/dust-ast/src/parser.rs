@@ -21,6 +21,12 @@ pub struct Parser<'ast> {
     lexer: Filter<Lexer<'ast>, fn(&Result<Token>) -> bool>,
 }
 
+impl<'ast> core::fmt::Debug for Parser<'ast> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Parser").field("path", &self.path).finish()
+    }
+}
+
 impl<'ast> Parser<'ast> {
     pub fn new(source: &'ast str, path: Vec<Symbol>, ctx: AstCtx<'ast, 'ast>) -> Parser<'ast> {
         fn predicate<'a, 'b>(token: &'a Result<Token>) -> bool {

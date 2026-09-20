@@ -17,6 +17,7 @@ ahash.workspace = true
 
 miette.workspace = true
 camino.workspace = true
+tracing.workspace = true
 
 derive_generic_visitor.workspace = true
 

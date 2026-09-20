@@ -14,6 +14,7 @@
 
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceSpan};
+use tracing::instrument;
 use utils::{Box, Ident, TokenKind, combine_src};
 
 use crate::{Item, Parser, parser::Expr};
@@ -77,10 +78,9 @@ impl<'ast> Parser<'ast> {
             stmts.push(statement);
         }
 
-        let expr = if !matches!(self.first_token_kind(), Some(TokenKind::RightBrace)) {
-            Some(self.expr(ctx)?)
-        } else {
-            None
+        let expr = match self.first_token_kind() {
+            Some(TokenKind::RightBrace) => None,
+            _ => Some(self.expr(ctx)?),
         };
 
         let right_brace = self.expect_token(TokenKind::RightBrace)?;
@@ -112,10 +112,25 @@ impl<'ast> Parser<'ast> {
                 Some(_) => {
                     // Expression
 
-                    if let Some((expr, _semi)) = self.try_to_parse(|parser| {
+                    if let Some(expr) = self.try_to_parse(|parser| {
                         let expr = parser.expr(ctx).ok()?;
-                        let semi = parser.expect_token(TokenKind::Semicolon).ok()?;
-                        Some((expr, semi))
+
+                        match expr {
+                            Expr::Call(..)
+                            | Expr::Binary(..)
+                            | Expr::Unary(..)
+                            | Expr::Path(..)
+                            | Expr::Literal(..)
+                            | Expr::Assign => {
+                                // Expect a semicolon
+                                let _semi = parser.expect_token(TokenKind::Semicolon).ok()?;
+                            }
+                            Expr::Block(..) | Expr::If | Expr::Loop => {
+                                // Semicolon not necessary?
+                            }
+                        }
+
+                        Some(expr)
                     }) {
                         return Ok(Some(ctx.arena.alloc(Stmt::Expr(expr))));
                     } else {
