@@ -285,6 +285,7 @@ dependencies = [
  "dust-ast-lowering",
  "dust-byt",
  "dust-byt-comp",
+ "dust-byt-interpret",
  "dust-ctxt",
  "dust-hir",
  "dust-lexer",
@@ -330,6 +331,7 @@ name = "dust-byt"
 version = "0.1.0"
 dependencies = [
  "derive_generic_visitor",
+ "dust-utils",
  "num_enum",
  "serde",
 ]
@@ -338,7 +340,10 @@ dependencies = [
 name = "dust-byt-comp"
 version = "0.1.0"
 dependencies = [
+ "ahash",
+ "dust-byt",
  "dust-hir",
+ "dust-resolve",
  "dust-utils",
  "miette",
 ]
@@ -346,6 +351,10 @@ dependencies = [
 [[package]]
 name = "dust-byt-interpret"
 version = "0.1.0"
+dependencies = [
+ "dust-byt",
+ "dust-utils",
+]
 
 [[package]]
 name = "dust-ctxt"

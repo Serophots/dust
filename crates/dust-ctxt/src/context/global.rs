@@ -49,7 +49,7 @@ pub trait WithContexts<'gcx> {
         'gcx: 'hir;
     type RetHir;
 
-    fn run(&self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<()> {
+    fn run(&self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<Option<Self::RetHir>> {
         let ast_arena = Bump::new();
         let root = ast_arena.alloc(root.canonicalize_utf8().unwrap());
         let root_ident = gcx.symbols.get_or_intern(root.file_stem().unwrap());
@@ -62,7 +62,7 @@ pub trait WithContexts<'gcx> {
         // Run ast
         let ast = self.run_ast(ast_ctx)?;
         if self.hook_ast(&ast).is_break() {
-            return Ok(());
+            return Ok(None);
         };
 
         let hir_arena = Bump::new();
@@ -76,7 +76,7 @@ pub trait WithContexts<'gcx> {
         let ast_lw = self.run_ast_lowering(ast, ast_lw_ctx)?;
         drop(ast_arena);
         if self.hook_ast_lw(&ast_lw).is_break() {
-            return Ok(());
+            return Ok(None);
         }
 
         let hir_ctx = HirCtx::<'_, 'gcx> {
@@ -87,7 +87,7 @@ pub trait WithContexts<'gcx> {
         // Run hir
         let hir = self.run_hir(ast_lw, hir_ctx)?;
 
-        Ok(())
+        Ok(Some(hir))
     }
 
     fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<Self::RetAst<'ast>>;

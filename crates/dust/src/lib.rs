@@ -1,3 +1,4 @@
+use dust_byt_interpret::VirtualMachine;
 use dust_ctxt::{GblCtxt, create_and_enter_ast_ctxt};
 use dust_lexer::Lexer;
 use miette::LabeledSpan;
@@ -84,9 +85,15 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
                 .with_source_code(contents.clone()))
             })?;
         }
-        Command::PrintAst { input, tree: true } => Printer::AstTree.run(&input, ctx)?,
-        Command::PrintAst { input, tree: false } => Printer::AstLabel.run(&input, ctx)?,
-        Command::PrintHir { input } => Printer::HirTree.run(&input, ctx)?,
+        Command::PrintAst { input, tree: true } => {
+            Printer::AstTree.run(&input, ctx)?;
+        }
+        Command::PrintAst { input, tree: false } => {
+            Printer::AstLabel.run(&input, ctx)?;
+        }
+        Command::PrintHir { input } => {
+            Printer::HirTree.run(&input, ctx)?;
+        }
         Command::Calculate { input } => {
             create_and_enter_ast_ctxt(ctx, |ctx| -> Result<_, miette::Report> {
                 let contents = ctx.arena.alloc(input.content()?);
@@ -103,7 +110,14 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
         }
 
         Command::Compile { input } => {
-            Compiler.run(&input, ctx)?;
+            let chunk = Compiler.run(&input, ctx)?.unwrap();
+
+            println!("---- interpretting!");
+
+            let mut vm = VirtualMachine::new(&chunk);
+            vm.exec_chunk(&chunk);
+
+            dbg!(&vm.stack);
         }
         Command::Run { input } => {
             Compiler.run(&input, ctx)?;

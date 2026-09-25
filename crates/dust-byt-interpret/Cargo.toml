@@ -7,3 +7,5 @@ edition = "2024"
 path = "src/vm.rs"
 
 [dependencies]
+dust-byt.workspace = true
+utils.workspace = true

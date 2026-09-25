@@ -36,7 +36,8 @@ impl Op for OpAbc {
 )]
 #[repr(u8)]
 pub enum OpABx {
-    TestABx = OP_ABX.start,
+    /// R[A] := K[Bx]
+    LoadK = OP_ABX.start,
 }
 
 impl Op for OpABx {
@@ -50,7 +51,7 @@ impl Op for OpABx {
 )]
 #[repr(u8)]
 pub enum OpAsBx {
-    TestAsBx = OP_ASBX.start,
+    LoadF64 = OP_ASBX.start,
 }
 
 impl Op for OpAsBx {
@@ -59,7 +60,7 @@ impl Op for OpAsBx {
     }
 }
 
-/// An expanded bytecode instruction
+/// A (deserialized) bytecode instruction
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Instruction {
     /// Arguments: A, plus two 8 bit fields B and C
@@ -141,6 +142,12 @@ impl Instruction {
 impl From<Instruction> for Instr {
     fn from(value: Instruction) -> Self {
         value.encode()
+    }
+}
+
+impl From<Instr> for Instruction {
+    fn from(value: Instr) -> Self {
+        value.decode()
     }
 }
 
@@ -237,7 +244,7 @@ mod tests {
         assert_eq!(abc, abc.encode().decode());
 
         let abx = Instruction::ABx {
-            operation: OpABx::TestABx,
+            operation: OpABx::LoadK,
             a: 44,
             bx: 555,
         };
@@ -245,7 +252,7 @@ mod tests {
         assert_eq!(abx, abx.encode().decode());
 
         let asbx = Instruction::AsBx {
-            operation: OpAsBx::TestAsBx,
+            operation: OpAsBx::LoadF64,
             a: 44,
             sbx: -555,
         };

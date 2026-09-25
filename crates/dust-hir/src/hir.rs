@@ -1,5 +1,3 @@
-use std::fmt::Pointer;
-
 use miette::SourceSpan;
 use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 
@@ -46,7 +44,6 @@ impl<'hir> core::fmt::Debug for Block<'hir> {
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub enum Stmt<'hir> {
-    Func(&'hir Func<'hir>),
     Let(&'hir Let<'hir>),
     Expr(&'hir Expr<'hir>),
 }
@@ -54,7 +51,6 @@ pub enum Stmt<'hir> {
 impl<'hir> core::fmt::Debug for Stmt<'hir> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            Self::Func(arg0) => arg0.fmt(f),
             Self::Let(arg0) => arg0.fmt(f),
             Self::Expr(arg0) => arg0.fmt(f),
         }

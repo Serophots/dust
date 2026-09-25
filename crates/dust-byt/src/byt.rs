@@ -8,3 +8,10 @@
 mod instr;
 
 pub use instr::*;
+use utils::Lit;
+
+/// A chunk of bytecode which can be interpretted
+pub struct Chunk {
+    pub instrs: Box<[Instr]>,
+    pub consts: Box<[Lit]>,
+}

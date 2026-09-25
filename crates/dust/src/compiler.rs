@@ -1,13 +1,14 @@
 use std::{marker::PhantomData, ops::ControlFlow};
 
 use camino::Utf8Path;
+use dust_byt::Chunk;
 use dust_ctxt::{AstCtx, AstLowCtx, GblCtxt, HirCtx, WithContexts};
 use miette::Result;
 
 /// Any trait which implements this `Compiler`
 /// trait can drive the compilation process.
 pub trait Compiler<'gcx>: Sized {
-    fn run(self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<()> {
+    fn run(self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<Option<Chunk>> {
         CompilerWrapper(self, PhantomData).run(root, gcx)
     }
 
@@ -65,15 +66,15 @@ where
         self.0.hook_ast_lw(ast)
     }
 
-    type RetHir = ();
+    type RetHir = dust_byt::Chunk;
 
     fn run_hir<'hir>(
         &self,
         main: &'hir dust_hir::Krate<'hir>,
-        ctx: HirCtx<'hir, 'gcx>,
-    ) -> Result<()> {
-        dust_byt_comp::comp_main(main)?;
+        _ctx: HirCtx<'hir, 'gcx>,
+    ) -> Result<dust_byt::Chunk> {
+        let chunk = dust_byt_comp::comp_main(main)?;
 
-        Ok(())
+        Ok(chunk)
     }
 }
