@@ -3,7 +3,7 @@ resolver = "3"
 members = [
     "crates/dust",
     "crates/dust-ast",
-    "crates/dust-print",
+    "crates/dust-ir-print",
     "crates/dust-hir",
     "crates/dust-interpretter",
     "crates/dust-lexer",
@@ -20,7 +20,7 @@ members = [
 dust-lexer = { path = "crates/dust-lexer" }
 dust-ast = { path = "crates/dust-ast" }
 dust-ast-lowering = {path = "crates/dust-ast-lowering/"}
-dust-print = { path = "crates/dust-print" }
+dust-ir-print = { path = "crates/dust-ir-print" }
 dust-hir = { path = "crates/dust-hir" }
 dust-byt = { path = "crates/dust-byt" }
 dust-byt-comp = { path = "crates/dust-byt-comp" }

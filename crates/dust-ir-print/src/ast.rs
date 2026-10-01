@@ -5,9 +5,9 @@ use dust_ast::{
 use miette::LabeledSpan;
 use utils::Ident;
 
-use crate::LabelPrinter;
+use crate::SourceLabeller;
 
-impl<'a, 'b> LabelPrinter for &Module<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Module<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         if let Some(ident_span) = self.ident_span {
             Ident {
@@ -23,7 +23,7 @@ impl<'a, 'b> LabelPrinter for &Module<'a, 'b> {
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Item<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Item<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         if let Some(vis) = &self.vis {
             vis.label(labels);
@@ -37,20 +37,20 @@ impl<'a, 'b> LabelPrinter for &Item<'a, 'b> {
     }
 }
 
-impl<'a> LabelPrinter for &Use<'a> {
+impl<'a> SourceLabeller for &Use<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.path.label(labels);
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Func<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Func<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
         self.block.label(labels);
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Block<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Block<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         for stmt in &self.stmts {
             stmt.label(labels);
@@ -62,7 +62,7 @@ impl<'a, 'b> LabelPrinter for &Block<'a, 'b> {
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Stmt<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Stmt<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match self {
             Stmt::Item(item) => item.label(labels),
@@ -74,7 +74,7 @@ impl<'a, 'b> LabelPrinter for &Stmt<'a, 'b> {
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Let<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Let<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         self.ident.label(labels);
 
@@ -84,7 +84,7 @@ impl<'a, 'b> LabelPrinter for &Let<'a, 'b> {
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Expr<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Expr<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         match *self {
             Expr::Assign => todo!(),
@@ -100,19 +100,19 @@ impl<'a, 'b> LabelPrinter for &Expr<'a, 'b> {
     }
 }
 
-impl<'a, 'b> LabelPrinter for &Call<'a, 'b> {
+impl<'a, 'b> SourceLabeller for &Call<'a, 'b> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.expr.span(), "call"));
     }
 }
 
-impl<'a> LabelPrinter for &Path<'a> {
+impl<'a> SourceLabeller for &Path<'a> {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.span, "path"));
     }
 }
 
-impl LabelPrinter for &Visibility {
+impl SourceLabeller for &Visibility {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(
             self.span,
@@ -123,7 +123,7 @@ impl LabelPrinter for &Visibility {
     }
 }
 
-impl LabelPrinter for &Ident {
+impl SourceLabeller for &Ident {
     fn label(self, labels: &mut Vec<LabeledSpan>) {
         labels.push(LabeledSpan::at(self.span, "ident"));
     }

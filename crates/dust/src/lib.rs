@@ -21,7 +21,7 @@ impl<'gcx> crate::compiler::Compiler<'gcx> for Printer {
         &'a self,
         ast: &'ast dust_ast::Krate<'gcx, 'ast>,
     ) -> std::ops::ControlFlow<()> {
-        use dust_print::LabelPrinter;
+        use dust_print::SourceLabeller;
 
         match self {
             Self::AstTree => {

@@ -288,8 +288,8 @@ dependencies = [
  "dust-byt-interpret",
  "dust-ctxt",
  "dust-hir",
+ "dust-ir-print",
  "dust-lexer",
- "dust-print",
  "dust-utils",
  "insta",
  "miette",
@@ -385,22 +385,22 @@ name = "dust-interpretter"
 version = "0.1.0"
 
 [[package]]
+name = "dust-ir-print"
+version = "0.1.0"
+dependencies = [
+ "dust-ast",
+ "dust-hir",
+ "dust-utils",
+ "miette",
+]
+
+[[package]]
 name = "dust-lexer"
 version = "0.1.0"
 dependencies = [
  "dust-ctxt",
  "dust-utils",
  "insta",
- "miette",
-]
-
-[[package]]
-name = "dust-print"
-version = "0.1.0"
-dependencies = [
- "dust-ast",
- "dust-hir",
- "dust-utils",
  "miette",
 ]
 

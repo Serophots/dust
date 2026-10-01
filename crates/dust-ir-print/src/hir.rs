@@ -1,8 +1,8 @@
 use dust_hir::Func;
 
-use crate::LabelPrinter;
+use crate::SourceLabeller;
 
-impl<'hir> LabelPrinter for &Func<'hir> {
+impl<'hir> SourceLabeller for &Func<'hir> {
     fn label(self, labels: &mut Vec<miette::LabeledSpan>) {
         todo!()
     }
