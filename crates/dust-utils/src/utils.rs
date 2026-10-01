@@ -1,5 +1,3 @@
-#![feature(allocator_api)]
-
 use miette::SourceSpan;
 
 mod r#box;

@@ -1,4 +1,3 @@
-#![feature(allocator_api)]
 #![feature(clone_from_ref)]
 #![feature(str_as_str)]
 

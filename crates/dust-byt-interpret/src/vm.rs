@@ -2,7 +2,7 @@ use dust_byt::{Chunk, Instruction, OpABx, OpAbc};
 use utils::Lit;
 
 struct Stack {
-    s: [Lit; ]
+    // s: [Lit; ]
 }
 
 /// State which can be used to execute chunks

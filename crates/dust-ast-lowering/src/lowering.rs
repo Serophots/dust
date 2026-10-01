@@ -1,5 +1,3 @@
-#![feature(allocator_api)]
-
 use dust_ctxt::AstLowCtx;
 use dust_hir::{Binary, Block, Expr, Func, Krate, Let, Literal, Stmt, Unary};
 use dust_resolve::{
