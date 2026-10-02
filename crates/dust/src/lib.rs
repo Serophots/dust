@@ -1,3 +1,4 @@
+use dust_byt::Chunk;
 use dust_byt_interpret::VirtualMachine;
 use dust_ctxt::{GblCtxt, create_and_enter_ast_ctxt};
 use dust_lexer::Lexer;
@@ -21,7 +22,7 @@ impl<'gcx> crate::compiler::Compiler<'gcx> for Printer {
         &'a self,
         ast: &'ast dust_ast::Krate<'gcx, 'ast>,
     ) -> std::ops::ControlFlow<()> {
-        use dust_print::SourceLabeller;
+        use dust_ir_print::SourceLabeller;
 
         match self {
             Self::AstTree => {
@@ -111,6 +112,8 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
 
         Command::Compile { input } => {
             let chunk = Compiler.run(&input, ctx)?.unwrap();
+            dust_byt_print::print_chunk(&chunk, ctx);
+            let chunk = Chunk::from(&chunk);
 
             println!("---- interpretting!");
 

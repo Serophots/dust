@@ -12,6 +12,7 @@ dust-ir-print.workspace = true
 dust-hir.workspace = true
 dust-byt.workspace = true
 dust-byt-comp.workspace = true
+dust-byt-print.workspace = true
 dust-byt-interpret.workspace = true
 dust-ctxt.workspace = true
 utils.workspace = true

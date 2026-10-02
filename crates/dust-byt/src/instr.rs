@@ -95,6 +95,24 @@ pub enum Instruction {
 }
 
 impl Instruction {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Instruction::Abc { operation, .. } => match operation {
+                OpAbc::Move => "MOVE",
+                OpAbc::Add => "ADD",
+                OpAbc::Sub => "SUB",
+                OpAbc::Mul => "MUL",
+                OpAbc::Div => "DIV",
+            },
+            Instruction::ABx { operation, .. } => match operation {
+                OpABx::LoadK => "LOADK",
+            },
+            Instruction::AsBx { operation, .. } => match operation {
+                OpAsBx::LoadF64 => "LOADF64",
+            },
+        }
+    }
+
     pub fn op(&self) -> u8 {
         match self {
             Instruction::Abc { operation, .. } => (*operation).op(),

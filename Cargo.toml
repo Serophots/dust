@@ -14,6 +14,7 @@ members = [
     "crates/dust-byt-comp",
     "crates/dust-byt-interpret",
     "crates/dust-resolve",
+    "crates/dust-byt-print",
 ]
 
 [workspace.dependencies]
@@ -25,6 +26,7 @@ dust-hir = { path = "crates/dust-hir" }
 dust-byt = { path = "crates/dust-byt" }
 dust-byt-comp = { path = "crates/dust-byt-comp" }
 dust-byt-interpret = { path = "crates/dust-byt-interpret" }
+dust-byt-print = { path = "crates/dust-byt-print" }
 dust-ctxt = { path = "crates/dust-ctxt/" }
 dust-resolve = { path = "crates/dust-resolve/" }
 utils = { package = "dust-utils", path = "crates/dust-utils" }
@@ -34,6 +36,7 @@ string-interner = "0.20"
 ahash = "0.8"
 
 miette = { version = "7.6", features = ["fancy", "serde"] }
+colored = "3.1"
 camino = "1.2"
 
 tracing = "0.1"

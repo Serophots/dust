@@ -1,20 +1,54 @@
+use std::ops::{Index, IndexMut};
+
 use dust_byt::{Chunk, Instruction, OpABx, OpAbc};
 use utils::Lit;
 
-struct Stack {
-    // s: [Lit; ]
+pub struct Stack {
+    s: Vec<Lit>,
+}
+
+impl Stack {
+    pub fn new() -> Self {
+        Stack {
+            s: Vec::with_capacity(u8::MAX as usize),
+        }
+    }
+}
+
+impl Index<usize> for Stack {
+    type Output = Lit;
+
+    fn index(&self, i: usize) -> &Self::Output {
+        match self.s.get(i as usize) {
+            Some(l) => l,
+            None => &Lit::Nil,
+        }
+    }
+}
+
+impl IndexMut<usize> for Stack {
+    fn index_mut(&mut self, i: usize) -> &mut Self::Output {
+        self.s.resize(i + 1, Lit::Nil);
+        &mut self.s[i as usize]
+    }
+}
+
+impl core::fmt::Debug for Stack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.s.fmt(f)
+    }
 }
 
 /// State which can be used to execute chunks
 pub struct VirtualMachine<'a> {
-    pub stack: Vec<Lit>,
+    pub stack: Stack,
     chunk: &'a Chunk,
 }
 
 impl<'a> VirtualMachine<'a> {
     pub fn new(chunk: &'a Chunk) -> Self {
         VirtualMachine {
-            stack: Vec::with_capacity(u8::MAX as usize),
+            stack: Stack::new(),
             chunk,
         }
     }

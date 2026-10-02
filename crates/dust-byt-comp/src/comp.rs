@@ -6,17 +6,16 @@ use utils::{Ident, Lit};
 
 mod stack;
 
-pub fn comp_main<'hir, 'byt, 'gcx>(krate: &'hir dust_hir::Krate<'hir>) -> Result<Chunk> {
+pub fn comp_main<'hir, 'byt, 'gcx>(krate: &'hir dust_hir::Krate<'hir>) -> Result<CompChunk> {
     Ok(comp_func(krate.main))
 }
 
-fn comp_func<'hir>(func: &'hir Func<'hir>) -> Chunk {
+fn comp_func<'hir>(func: &'hir Func<'hir>) -> CompChunk {
     let mut comp_func = CompChunk::default();
 
     comp_func.comp_block(func.block);
 
-    dbg!(&comp_func);
-    Chunk::from(&comp_func)
+    comp_func
 }
 
 /// Output & in-flight state for when compiling a chunk
@@ -24,13 +23,13 @@ fn comp_func<'hir>(func: &'hir Func<'hir>) -> Chunk {
 #[derive(Default, Debug)]
 pub struct CompChunk {
     // Output into the final chunk
-    instrs: Vec<Instruction>,
-    consts: Vec<Lit>,
+    pub instrs: Vec<Instruction>,
+    pub consts: Vec<Lit>,
 
     // Intermediaries which are not output into the final chunk
     /// Where on the stack is the value of this local?
-    locals: HashMap<Ident, u8>,
-    next_stack: u8,
+    pub locals: HashMap<Ident, u8>,
+    pub next_stack: u8,
 }
 
 impl CompChunk {
