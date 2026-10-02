@@ -373,6 +373,7 @@ dependencies = [
  "colored",
  "dust-byt",
  "dust-byt-comp",
+ "dust-byt-interpret",
  "dust-ctxt",
  "dust-utils",
 ]

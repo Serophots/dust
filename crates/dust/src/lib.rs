@@ -120,7 +120,7 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
             let mut vm = VirtualMachine::new(&chunk);
             vm.exec_chunk(&chunk);
 
-            dbg!(&vm.stack);
+            dust_byt_print::print_stack(&vm);
         }
         Command::Run { input } => {
             Compiler.run(&input, ctx)?;

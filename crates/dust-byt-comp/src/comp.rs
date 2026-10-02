@@ -4,8 +4,6 @@ use dust_hir::{Binary, Block, Expr, Func, Let, Literal, Stmt};
 use miette::Result;
 use utils::{Ident, Lit};
 
-mod stack;
-
 pub fn comp_main<'hir, 'byt, 'gcx>(krate: &'hir dust_hir::Krate<'hir>) -> Result<CompChunk> {
     Ok(comp_func(krate.main))
 }

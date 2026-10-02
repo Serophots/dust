@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 dust-byt.workspace = true
 dust-byt-comp.workspace = true
+dust-byt-interpret.workspace = true
 dust-ctxt.workspace = true
 utils.workspace = true
 
