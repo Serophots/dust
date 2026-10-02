@@ -38,9 +38,62 @@ impl<'a> VirtualMachine<'a> {
                     self.stack[a as usize] =
                         Lit::add(self.stack[b as usize], self.stack[c as usize]).unwrap();
                 }
-                OpAbc::Sub => {}
-                OpAbc::Mul => {}
-                OpAbc::Div => {}
+                OpAbc::Sub => {
+                    self.stack[a as usize] =
+                        Lit::sub(self.stack[b as usize], self.stack[c as usize]).unwrap();
+                }
+                OpAbc::Mul => {
+                    self.stack[a as usize] =
+                        Lit::mul(self.stack[b as usize], self.stack[c as usize]).unwrap();
+                }
+                OpAbc::Div => {
+                    self.stack[a as usize] =
+                        Lit::div(self.stack[b as usize], self.stack[c as usize]).unwrap();
+                }
+                OpAbc::Eq => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialEq::eq(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::NEq => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialEq::ne(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::Greater => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialOrd::gt(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::GreaterEqual => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialOrd::ge(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::Lesser => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialOrd::lt(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::LesserEqual => {
+                    self.stack[a as usize] = Lit::Bool(std::cmp::PartialOrd::le(
+                        &self.stack[b as usize],
+                        &self.stack[c as usize],
+                    ));
+                }
+                OpAbc::And => {
+                    self.stack[a as usize] =
+                        Lit::logical_and(self.stack[b as usize], self.stack[c as usize]).unwrap();
+                }
+                OpAbc::Or => {
+                    self.stack[a as usize] =
+                        Lit::logical_or(self.stack[b as usize], self.stack[c as usize]).unwrap();
+                }
             },
             Instruction::ABx { operation, a, bx } => match operation {
                 OpABx::LoadK => {

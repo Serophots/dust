@@ -23,6 +23,22 @@ pub enum OpAbc {
     Mul,
     /// R(A) := RK(B) / RK(C)
     Div,
+    /// R(A) := RK(B) == RK(B)
+    Eq,
+    /// R(A) := RK(B) !== RK(B)
+    NEq,
+    /// R(A) := RK(B) > RK(B)
+    Greater,
+    /// R(A) := RK(B) >= RK(B)
+    GreaterEqual,
+    /// R(A) := RK(B) < RK(B)
+    Lesser,
+    /// R(A) := RK(B) <= RK(B)
+    LesserEqual,
+    /// R(A) := RK(B) && RK(B)
+    And,
+    /// R(A) := RK(B) || RK(B)
+    Or,
 }
 
 impl Op for OpAbc {
@@ -103,6 +119,14 @@ impl Instruction {
                 OpAbc::Sub => "SUB",
                 OpAbc::Mul => "MUL",
                 OpAbc::Div => "DIV",
+                OpAbc::Eq => "EQUAL",
+                OpAbc::NEq => "NOTEQUAL",
+                OpAbc::Greater => "GREATER",
+                OpAbc::GreaterEqual => "GREATEREQUAL",
+                OpAbc::Lesser => "LESSER",
+                OpAbc::LesserEqual => "LESSEREQUAL",
+                OpAbc::And => "AND",
+                OpAbc::Or => "OR",
             },
             Instruction::ABx { operation, .. } => match operation {
                 OpABx::LoadK => "LOADK",

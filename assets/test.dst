@@ -10,5 +10,8 @@
 
 fn main() {
     let x = 2;
+    let y = 4 * x;
+    let z = x * 4;
+    let t = y == z;
     4 * x;
 }

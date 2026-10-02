@@ -10,7 +10,7 @@ pub fn print_stack(vm: &VirtualMachine) {
     );
 
     for (i, lit) in vm.stack.iter().enumerate() {
-        let i = format!("{:<4}", i + 1);
+        let i = format!("{:<4}", i);
 
         let literal = match lit {
             Lit::Number(f) => format!("; {}", f),

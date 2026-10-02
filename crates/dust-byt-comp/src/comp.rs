@@ -102,7 +102,20 @@ impl CompChunk {
         let a = self.next_stack();
 
         let instr = Instruction::Abc {
-            operation: OpAbc::Add,
+            operation: match bin.op {
+                utils::BinaryOp::Add => OpAbc::Add,
+                utils::BinaryOp::Sub => OpAbc::Sub,
+                utils::BinaryOp::Mul => OpAbc::Mul,
+                utils::BinaryOp::Div => OpAbc::Div,
+                utils::BinaryOp::Equal => OpAbc::Eq,
+                utils::BinaryOp::NotEqual => OpAbc::NEq,
+                utils::BinaryOp::Greater => OpAbc::Greater,
+                utils::BinaryOp::GreaterEqual => OpAbc::GreaterEqual,
+                utils::BinaryOp::Lesser => OpAbc::Lesser,
+                utils::BinaryOp::LesserEqual => OpAbc::LesserEqual,
+                utils::BinaryOp::And => OpAbc::And,
+                utils::BinaryOp::Or => OpAbc::Or,
+            },
             a,
             b: lhs as u16,
             c: rhs as u16,
