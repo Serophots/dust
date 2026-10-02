@@ -102,6 +102,7 @@ impl<'a> VirtualMachine<'a> {
                 OpABx::LoadNil => {
                     self.stack[a as usize..=a as usize + bx as usize].fill(Lit::Nil);
                 }
+                OpABx::Call => todo!(),
             },
             Instruction::AsBx { operation, a, sbx } => todo!(),
         }

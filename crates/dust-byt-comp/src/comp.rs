@@ -1,6 +1,6 @@
 use ahash::HashMap;
 use dust_byt::{Chunk, Instr, Instruction, OpABx, OpAbc};
-use dust_hir::{Binary, Block, Expr, Func, Let, Literal, Stmt};
+use dust_hir::{Binary, Block, Call, Expr, Func, Let, Literal, Stmt};
 use miette::Result;
 use utils::{Ident, Lit};
 
@@ -94,22 +94,31 @@ impl CompChunk {
     /// pertaining to a stack index, which is returned
     fn comp_expr<'hir>(&mut self, expr: &'hir Expr) -> u8 {
         match *expr {
-            Expr::Call(call) => {
-                dbg!(call);
-                todo!()
-            }
+            Expr::Call(call) => self.comp_call(call),
             Expr::Binary(binary) => self.comp_bin(binary),
             Expr::Unary(unary) => todo!(),
             Expr::Literal(literal) => self.comp_lit(literal),
             Expr::Assign => todo!(),
-            Expr::Res(res) => match *res {
-                dust_resolve::Res::Local(local) => self.comp_local(&local),
-                dust_resolve::Res::Function() => todo!(),
-            },
+            Expr::Local(local) => self.comp_local(&local),
+            Expr::Func(func) => todo!(),
             Expr::Block(block) => self.comp_block(block),
             Expr::If => todo!(),
             Expr::Loop => todo!(),
         }
+    }
+
+    fn comp_call(&mut self, call: &Call) -> u8 {
+        let callee = self.comp_expr(call.expr);
+
+        let instr = Instruction::ABx {
+            operation: OpABx::Call,
+            a: callee,
+            bx: 0,
+        };
+
+        self.instrs.push(instr);
+
+        callee
     }
 
     fn comp_local(&mut self, local: &Ident) -> u8 {

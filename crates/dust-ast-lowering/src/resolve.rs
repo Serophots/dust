@@ -36,33 +36,6 @@ impl<T> core::ops::IndexMut<Namespace> for ForNamespaces<T> {
     }
 }
 
-/// A namespace resolution
-#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum Res {
-    /// Local variable or function parameter.
-    /// The ident span must point to the defining site
-    /// for this local variable for proper equality.
-    ///
-    /// **Value namespace**
-    Local(Ident),
-
-    /// A function
-    ///
-    /// **Value namespace**
-    Function(
-        //&'hir Func<'hir>
-    ),
-}
-
-impl core::fmt::Debug for Res {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Res::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),
-            Res::Function() => f.debug_tuple("Function").finish(),
-        }
-    }
-}
-
 /// Each namespace has a stack of ribs. Each rib
 /// represents a region of the code for which these
 /// bindings apply. To resolve a binding, the stack
@@ -73,8 +46,8 @@ impl core::fmt::Debug for Res {
 /// A new rib is introduced every time the accessible
 /// bindings change. I.e. a let statement, any sort
 /// of block.
-pub struct Rib<'hir> {
-    pub bindings: HashMap<Symbol, &'hir Res>,
+pub struct Rib<'ast, 'gcx> {
+    pub bindings: HashMap<Symbol, Res<'ast, 'gcx>>,
     pub kind: RibKind,
 }
 
@@ -89,14 +62,14 @@ pub enum RibKind {
 }
 
 #[derive(Default)]
-pub struct ResolverCtx<'hir> {
-    pub ribs: ForNamespaces<Vec<Rib<'hir>>>,
+pub struct ResolverCtx<'ast, 'gcx> {
+    pub ribs: ForNamespaces<Vec<Rib<'ast, 'gcx>>>,
 }
 
-impl<'ast, 'hir, 'gcx> ResolverCtx<'hir> {
+impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
     pub fn push_rib<F>(&mut self, namespace: Namespace, kind: RibKind, f: F)
     where
-        F: FnOnce(&mut Rib<'hir>),
+        F: FnOnce(&mut Rib<'ast, 'gcx>),
     {
         let mut rib = Rib {
             bindings: Default::default(),
@@ -108,7 +81,7 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'hir> {
         self.ribs[namespace].push(rib);
     }
 
-    pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<&'hir Res> {
+    pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<Res<'ast, 'gcx>> {
         let ribs = self.ribs[namespace].iter();
 
         for rib in ribs.rev() {
@@ -133,10 +106,35 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'hir> {
             bindings.extend(
                 rib.bindings
                     .iter()
-                    .map(|(&symbol, &res)| (ctx.symbols.resolve(symbol).unwrap(), res)),
+                    .map(|(&symbol, res)| (ctx.symbols.resolve(symbol).unwrap(), res)),
             );
         }
 
         bindings
+    }
+}
+
+/// A namespace resolution
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub enum Res<'ast, 'gcx> {
+    /// Local variable or function parameter.
+    /// The ident span must point to the defining site
+    /// for this local variable for proper equality.
+    ///
+    /// **Value namespace**
+    Local(Ident),
+
+    /// A function
+    ///
+    /// **Value namespace**
+    Func(&'ast dust_ast::Func<'gcx, 'ast>),
+}
+
+impl<'ast, 'gcx> core::fmt::Debug for Res<'ast, 'gcx> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Res::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),
+            Res::Func(arg0) => f.debug_tuple("Func").field(arg0).finish(),
+        }
     }
 }

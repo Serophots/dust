@@ -1,13 +1,15 @@
 use dust_ctxt::AstLowCtx;
 use dust_hir::{Binary, Block, Call, Expr, Func, Krate, Let, Literal, Stmt, Unary};
-use dust_resolve::{
-    Namespace::{self, ValueNS},
-    Res, ResolverCtx, Rib, RibKind,
-};
 use miette::{LabeledSpan, Result};
 
+mod resolve;
+
+pub use resolve::*;
+
+use crate::resolve::Namespace::ValueNS;
+
 pub struct Lowering<'ast, 'hir, 'gcx> {
-    pub resolver: ResolverCtx<'hir>,
+    pub resolver: ResolverCtx<'ast, 'gcx>,
     pub module: &'ast dust_ast::Module<'gcx, 'ast>,
     pub ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 }
@@ -29,7 +31,7 @@ impl<'ast, 'hir, 'gcx> Lowering<'ast, 'hir, 'gcx> {
         ret
     }
 
-    pub fn last_rib_mut<'a>(&'a mut self, namespace: Namespace) -> Option<&'a mut Rib<'hir>> {
+    pub fn last_rib_mut<'a>(&'a mut self, namespace: Namespace) -> Option<&'a mut Rib<'ast, 'gcx>> {
         self.resolver.ribs[namespace].last_mut()
     }
 }
@@ -64,21 +66,26 @@ fn in_module_namespace<'ast, 'hir, 'gcx, F, T>(
     module: &'ast dust_ast::Module<'gcx, 'ast>,
     low: &mut Lowering<'ast, 'hir, 'gcx>,
     f: F,
-) -> T
+) -> Result<T>
 where
-    F: FnOnce(&mut Lowering<'ast, 'hir, 'gcx>) -> T,
+    F: FnOnce(&mut Lowering<'ast, 'hir, 'gcx>) -> Result<T>,
 {
     low.with_rib(ValueNS, RibKind::Module, |low| {
-        let rib = low.last_rib_mut(ValueNS).unwrap();
-
         for &item in module.items.iter() {
-            match item.r#type {
+            let (symbol, res) = match item.r#type {
                 dust_ast::ItemType::Module(module) => todo!(),
                 dust_ast::ItemType::Func(func) => {
-                    rib.bindings.insert(func.ident.symbol, &Res::Function());
+                    // We explicitly don't lower this function here, yet
+                    // until after we've registered all items in the namespace
+                    (func.ident.symbol, Res::Func(func))
                 }
                 dust_ast::ItemType::Use(_) => todo!(),
-            }
+            };
+
+            low.last_rib_mut(ValueNS)
+                .unwrap()
+                .bindings
+                .insert(symbol, res);
         }
 
         f(low)
@@ -167,8 +174,7 @@ fn lower_let<'ast, 'hir, 'gcx>(
         .transpose()?;
 
     low.resolver.push_rib(ValueNS, RibKind::Normal, |rib| {
-        rib.bindings
-            .insert(ident.symbol, low.ctx.hir_arena.alloc(Res::Local(ident)));
+        rib.bindings.insert(ident.symbol, Res::Local(ident));
     });
 
     Ok(low.ctx.hir_arena.alloc(Let {
@@ -193,8 +199,8 @@ fn lower_expr<'ast, 'hir, 'gcx>(
     low: &mut Lowering<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Expr<'hir>> {
     Ok(low.ctx.hir_arena.alloc(match *expr {
-        dust_ast::Expr::Path(path) => Expr::Res(lower_path(path, low)?),
         dust_ast::Expr::Binary(binary) => Expr::Binary(lower_binary(binary, low)?),
+        dust_ast::Expr::Path(path) => lower_path(path, low)?,
         dust_ast::Expr::Unary(unary) => Expr::Unary(lower_unary(unary, low)?),
         dust_ast::Expr::Literal(literal) => Expr::Literal(lower_literal(literal, low)?),
         dust_ast::Expr::Block(block) => Expr::Block(lower_block(block, low)?),
@@ -241,23 +247,30 @@ fn lower_unary<'ast, 'hir, 'gcx>(
 fn lower_path<'ast, 'hir, 'gcx>(
     path: &'ast dust_ast::Path<'ast>,
     low: &mut Lowering<'ast, 'hir, 'gcx>,
-) -> Result<&'hir dust_resolve::Res> {
-    match path.try_into_ident() {
+) -> Result<Expr<'hir>> {
+    Ok(match path.try_into_ident() {
         // The path is length 1
-        Some(ident) => low.resolver.resolve_ident(ident, ValueNS).ok_or_else(|| {
-            miette::miette!(
-                labels = vec![LabeledSpan::at(ident.span, "identifier")],
-                "{}\n\n{}",
-                "failed to resolve identifier in the value namespace",
-                format!(
-                    "value namespace: {:?}",
-                    low.resolver.inspect_namespace(ValueNS, low.ctx.gcx)
+        Some(ident) => {
+            let res = low.resolver.resolve_ident(ident, ValueNS).ok_or_else(|| {
+                miette::miette!(
+                    labels = vec![LabeledSpan::at(ident.span, "identifier")],
+                    "{}\n\n{}",
+                    "failed to resolve identifier in the value namespace",
+                    format!(
+                        "value namespace: {:?}",
+                        low.resolver.inspect_namespace(ValueNS, low.ctx.gcx)
+                    )
                 )
-            )
-            .with_source_code(low.module.source.to_owned())
-        }),
+                .with_source_code(low.module.source.to_owned())
+            })?;
+
+            match res {
+                Res::Local(ident) => Expr::Local(ident),
+                Res::Func(func) => Expr::Func(lower_func(func, low)?),
+            }
+        }
         None => {
             todo!()
         }
-    }
+    })
 }

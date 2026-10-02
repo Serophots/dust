@@ -327,13 +327,15 @@ dependencies = [
 name = "dust-ast-lowering"
 version = "0.1.0"
 dependencies = [
+ "ahash",
  "bumpalo",
+ "derive_generic_visitor",
  "dust-ast",
  "dust-ctxt",
  "dust-hir",
- "dust-resolve",
  "dust-utils",
  "miette",
+ "serde",
 ]
 
 [[package]]
@@ -353,7 +355,6 @@ dependencies = [
  "ahash",
  "dust-byt",
  "dust-hir",
- "dust-resolve",
  "dust-utils",
  "miette",
 ]
@@ -396,7 +397,6 @@ version = "0.1.0"
 dependencies = [
  "camino",
  "derive_generic_visitor",
- "dust-resolve",
  "dust-utils",
  "miette",
  "serde",
@@ -424,18 +424,6 @@ dependencies = [
  "dust-utils",
  "insta",
  "miette",
-]
-
-[[package]]
-name = "dust-resolve"
-version = "0.1.0"
-dependencies = [
- "ahash",
- "bumpalo",
- "derive_generic_visitor",
- "dust-ctxt",
- "dust-utils",
- "serde",
 ]
 
 [[package]]
