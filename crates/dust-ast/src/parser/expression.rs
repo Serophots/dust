@@ -155,7 +155,7 @@ pub struct Call<'gcx, 'ast> {
 
 impl<'gcx, 'ast> core::fmt::Debug for Call<'gcx, 'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("CallExpr").field(&self.expr).finish()
+        f.debug_tuple("Call").field(&self.expr).finish()
     }
 }
 

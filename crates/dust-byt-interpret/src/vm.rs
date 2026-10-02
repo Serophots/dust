@@ -99,6 +99,9 @@ impl<'a> VirtualMachine<'a> {
                 OpABx::LoadK => {
                     self.stack[a as usize] = self.chunk.consts[bx as usize];
                 }
+                OpABx::LoadNil => {
+                    self.stack[a as usize..=a as usize + bx as usize].fill(Lit::Nil);
+                }
             },
             Instruction::AsBx { operation, a, sbx } => todo!(),
         }

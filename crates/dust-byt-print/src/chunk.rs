@@ -51,6 +51,7 @@ pub fn print_chunk(chunk: &CompChunk, ctx: GblCtxt) {
                         Lit::Nil => format!("; NIL"),
                     })
                 }
+                dust_byt::OpABx::LoadNil => Some(format!("; NIL")),
             },
             dust_byt::Instruction::AsBx { operation, .. } => match operation {
                 dust_byt::OpAsBx::LoadF64 => None,

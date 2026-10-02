@@ -24,14 +24,12 @@ impl Stack {
     }
 }
 
-impl core::ops::Index<usize> for Stack {
-    type Output = Lit;
+impl<I: std::slice::SliceIndex<[Lit]>> std::ops::Index<I> for Stack {
+    type Output = I::Output;
 
-    fn index(&self, i: usize) -> &Self::Output {
-        match self.s.get(i as usize) {
-            Some(l) => l,
-            None => &Lit::Nil,
-        }
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        std::ops::Index::index(&self.s, index)
     }
 }
 
@@ -42,10 +40,16 @@ impl core::ops::IndexMut<usize> for Stack {
     }
 }
 
-impl core::fmt::Debug for Stack {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list()
-            .entries(self.s.iter().enumerate().map(|(i, lit)| format!("")))
-            .finish()
+impl core::ops::IndexMut<std::ops::Range<usize>> for Stack {
+    fn index_mut(&mut self, i: std::ops::Range<usize>) -> &mut Self::Output {
+        self.s.resize(i.end, Lit::Nil);
+        &mut self.s[i]
+    }
+}
+
+impl core::ops::IndexMut<std::ops::RangeInclusive<usize>> for Stack {
+    fn index_mut(&mut self, i: std::ops::RangeInclusive<usize>) -> &mut Self::Output {
+        self.s.resize(i.end() + 1, Lit::Nil);
+        &mut self.s[i]
     }
 }

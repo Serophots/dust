@@ -95,7 +95,7 @@ impl<'hir> core::fmt::Debug for Expr<'hir> {
             Expr::Unary(arg0) => arg0.fmt(f),
             Expr::Literal(arg0) => arg0.fmt(f),
             Expr::Assign => todo!(),
-            Expr::Res(arg0) => arg0.fmt(f),
+            Expr::Res(arg0) => f.debug_tuple("Res").field(arg0).finish(),
             Expr::Block(arg0) => arg0.fmt(f),
             Expr::If => todo!(),
             Expr::Loop => todo!(),
@@ -111,7 +111,7 @@ pub struct Call<'hir> {
 
 impl<'ast> core::fmt::Debug for Call<'ast> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("CallExpr").field(&self.expr).finish()
+        f.debug_tuple("Call").field(&self.expr).finish()
     }
 }
 

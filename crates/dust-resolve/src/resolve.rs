@@ -1,4 +1,5 @@
-use ahash::HashMap;
+use ahash::{HashMap, HashMapExt};
+use dust_ctxt::GblCtxt;
 use utils::{Ident, Symbol};
 
 #[derive(Copy, Clone)]
@@ -44,12 +45,20 @@ pub enum Res {
     ///
     /// **Value namespace**
     Local(Ident),
+
+    /// A function
+    ///
+    /// **Value namespace**
+    Function(
+        //&'hir Func<'hir>
+    ),
 }
 
 impl core::fmt::Debug for Res {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),
+            Res::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),
+            Res::Function() => f.debug_tuple("Function").finish(),
         }
     }
 }
@@ -100,14 +109,34 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'hir> {
     }
 
     pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<&'hir Res> {
-        let ribs = self.ribs[namespace].iter().rev();
+        let ribs = self.ribs[namespace].iter();
 
-        for rib in ribs {
+        for rib in ribs.rev() {
             if let Some(res) = rib.bindings.get(&ident.symbol) {
                 return Some(*res);
             }
         }
 
         None
+    }
+
+    pub fn inspect_namespace(
+        &self,
+        namespace: Namespace,
+        ctx: GblCtxt,
+    ) -> HashMap<String, &'hir Res> {
+        let ribs = self.ribs[namespace].iter();
+
+        let mut bindings: HashMap<String, &'hir Res> = HashMap::new();
+
+        for rib in ribs {
+            bindings.extend(
+                rib.bindings
+                    .iter()
+                    .map(|(&symbol, &res)| (ctx.symbols.resolve(symbol).unwrap(), res)),
+            );
+        }
+
+        bindings
     }
 }

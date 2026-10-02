@@ -52,8 +52,10 @@ impl Op for OpAbc {
 )]
 #[repr(u8)]
 pub enum OpABx {
-    /// R[A] := K[Bx]
+    /// R\[A\] := K\[Bx\]
     LoadK = OP_ABX.start,
+    /// R\[A\], R\[A+1\], .., R\[A+B\] := nil
+    LoadNil,
 }
 
 impl Op for OpABx {
@@ -130,6 +132,7 @@ impl Instruction {
             },
             Instruction::ABx { operation, .. } => match operation {
                 OpABx::LoadK => "LOADK",
+                OpABx::LoadNil => "LOADNIL",
             },
             Instruction::AsBx { operation, .. } => match operation {
                 OpAsBx::LoadF64 => "LOADF64",

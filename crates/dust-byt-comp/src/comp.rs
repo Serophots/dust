@@ -47,9 +47,26 @@ impl CompChunk {
         idx as u32
     }
 
-    fn comp_block<'hir>(&mut self, block: &'hir Block<'hir>) {
+    fn comp_block<'hir>(&mut self, block: &'hir Block<'hir>) -> u8 {
         for &stmt in block.stmts.iter() {
             self.comp_stmt(stmt);
+        }
+
+        match block.expr {
+            Some(expr) => self.comp_expr(expr),
+            None => {
+                let a = self.next_stack();
+
+                let instr = Instruction::ABx {
+                    operation: OpABx::LoadNil,
+                    a,
+                    bx: 0,
+                };
+
+                self.instrs.push(instr);
+
+                a
+            }
         }
     }
 
@@ -77,15 +94,19 @@ impl CompChunk {
     /// pertaining to a stack index, which is returned
     fn comp_expr<'hir>(&mut self, expr: &'hir Expr) -> u8 {
         match *expr {
-            Expr::Call(call) => todo!(),
+            Expr::Call(call) => {
+                dbg!(call);
+                todo!()
+            }
             Expr::Binary(binary) => self.comp_bin(binary),
             Expr::Unary(unary) => todo!(),
             Expr::Literal(literal) => self.comp_lit(literal),
             Expr::Assign => todo!(),
             Expr::Res(res) => match *res {
                 dust_resolve::Res::Local(local) => self.comp_local(&local),
+                dust_resolve::Res::Function() => todo!(),
             },
-            Expr::Block(block) => todo!(),
+            Expr::Block(block) => self.comp_block(block),
             Expr::If => todo!(),
             Expr::Loop => todo!(),
         }
