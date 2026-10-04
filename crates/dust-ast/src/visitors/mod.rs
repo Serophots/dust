@@ -7,10 +7,6 @@ use crate::{
     Visibility, VisibilityType,
 };
 
-mod path;
-
-pub use path::*;
-
 #[derive(derive_generic_visitor::Visitor, derive_generic_visitor::Visit)]
 #[visit(drive(for<'gcx, 'ast> &'ast Module<'gcx, 'ast>))]
 #[visit(enter(for<'gcx, 'ast> Module<'gcx, 'ast>))]

@@ -1,14 +1,13 @@
 use std::{marker::PhantomData, ops::ControlFlow};
 
 use camino::Utf8Path;
-use dust_byt_comp::CompileFunc;
 use dust_ctxt::{AstCtx, AstLowCtx, GblCtxt, HirCtx, WithContexts};
 use miette::Result;
 
 /// Any trait which implements this `Compiler`
 /// trait can drive the compilation process.
 pub trait Compiler<'gcx>: Sized {
-    fn run(self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<Option<CompileFunc>> {
+    fn run<'byt>(self, root: &Utf8Path, gcx: GblCtxt<'gcx>) -> Result<Option<()>> {
         CompilerWrapper(self, PhantomData).run(root, gcx)
     }
 
@@ -63,7 +62,7 @@ where
     where
         'gcx: 'hir;
 
-    fn run_ast_lowering<'ast, 'hir>(
+    fn run_ast_lw<'ast, 'hir>(
         &self,
         krate: &'ast dust_ast::Krate<'gcx, 'ast>,
         ctx: AstLowCtx<'ast, 'hir, 'gcx>,
@@ -82,15 +81,29 @@ where
         self.0.hook_ast_lw(ast, ctx)
     }
 
-    type RetHir = dust_byt_comp::CompileFunc;
+    type RetHir<'hir> = &'hir dust_hir::Krate<'hir>;
 
     fn run_hir<'hir>(
         &self,
-        main: &'hir dust_hir::Krate<'hir>,
+        hir: Self::RetAstLw<'hir>,
         _ctx: HirCtx<'hir, 'gcx>,
-    ) -> Result<dust_byt_comp::CompileFunc> {
-        let chunk = dust_byt_comp::comp_krate(main)?;
+    ) -> Result<Self::RetHir<'hir>> {
+        Ok(hir)
+    }
+
+    type RetHirLw<'byt> = dust_byt::Krate<'byt>;
+
+    fn run_hir_lw<'hir, 'byt>(
+        &self,
+        hir: Self::RetHir<'hir>,
+        ctx: dust_ctxt::HirLowCtx<'hir, 'byt, 'gcx>,
+    ) -> Result<Self::RetHirLw<'byt>> {
+        let chunk = dust_byt_comp::comp_krate(hir, ctx)?;
 
         Ok(chunk)
+    }
+
+    fn run_byt<'byt>(&self, byt: Self::RetHirLw<'byt>, _ctx: dust_ctxt::BytCtx<'byt, 'gcx>) {
+        dbg!(byt);
     }
 }

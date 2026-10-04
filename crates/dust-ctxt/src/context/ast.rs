@@ -1,6 +1,6 @@
 use bumpalo::Bump;
 use camino::Utf8Path;
-use utils::{Symbol, Vec};
+use utils::Symbol;
 
 use crate::GblCtxt;
 

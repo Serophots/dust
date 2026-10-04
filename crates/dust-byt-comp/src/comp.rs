@@ -1,28 +1,63 @@
-use ahash::HashMap;
-use dust_byt::{Instr, Instruction, OpABx, OpAbc};
+use ahash::{HashMap, HashMapExt};
+use dust_byt::{Instr, Instruction, Krate, OpABx, OpAbc};
+use dust_ctxt::HirLowCtx;
 use dust_hir::{Binary, Block, Call, Expr, Func, Let, Literal, Stmt};
 use miette::{LabeledSpan, Result};
-use utils::{Ident, Lit};
+use utils::{Ident, Lit, Vec};
 
-pub fn comp_krate<'hir, 'byt, 'gcx>(krate: &'hir dust_hir::Krate<'hir>) -> Result<CompileFunc> {
-    Ok(comp_func(krate.main)?)
+pub fn comp_krate<'hir, 'byt, 'gcx>(
+    krate: &'hir dust_hir::Krate<'hir>,
+    ctx: HirLowCtx<'hir, 'byt, '_>,
+) -> Result<Krate<'byt>> {
+    let mut funcs = Vec::with_capacity_in(krate.funcs.len(), ctx.byt_arena);
+
+    for &func in krate.funcs.iter() {
+        funcs.push(comp_func(func, krate, ctx)?);
+    }
+
+    // todo!()
+
+    let main_symbol = ctx.gcx.symbols.get_or_intern("main");
+
+    Ok(Krate {
+        main: funcs
+            .iter()
+            .find(|f| f.ident.symbol == main_symbol)
+            .unwrap(),
+        funcs: funcs.into(),
+    })
+
+    // Ok(comp_func(krate.main)?)
+    //
 }
 
-fn comp_func<'hir>(func: &'hir Func<'hir>) -> Result<CompileFunc> {
-    let mut comp_func = CompileFunc::default();
-
+fn comp_func<'hir, 'byt>(
+    func: &'hir Func<'hir>,
+    krate: &'hir dust_hir::Krate<'hir>,
+    ctx: HirLowCtx<'hir, 'byt, '_>,
+) -> Result<&'byt dust_byt::Func<'byt>> {
+    let mut comp_func = CompileFunc::<'byt>::default(ctx);
     comp_func.comp_block(func.block)?;
 
-    Ok(comp_func)
+    let CompileFunc { instrs, consts, .. } = comp_func;
+
+    let mut instrs_s = Vec::new_in(ctx.byt_arena);
+    instrs_s.extend(instrs.into_iter().map(Instr::from));
+
+    Ok(ctx.byt_arena.alloc(dust_byt::Func::<'byt> {
+        ident: func.ident,
+        instrs: instrs_s.into(),
+        consts: consts.into(),
+    }))
 }
 
 /// State responsible for compiling a function into a bytecode Func.
-#[derive(Default, Debug)]
-pub struct CompileFunc {
+#[derive(Debug)]
+pub struct CompileFunc<'byt> {
     // Output into the final chunk
-    pub instrs: Vec<Instruction>,
+    pub instrs: Vec<'byt, Instruction>,
     // TODO: Can constants exist globally to the krate, and not duplicated into each chunk which uses them
-    pub consts: Vec<Lit>,
+    pub consts: Vec<'byt, Lit>,
 
     // Intermediaries which are not output into the final chunk
     /// Where on the stack is the value of this local?
@@ -30,7 +65,16 @@ pub struct CompileFunc {
     pub next_stack: u8,
 }
 
-impl CompileFunc {
+impl<'byt> CompileFunc<'byt> {
+    fn default(ctx: HirLowCtx<'_, 'byt, '_>) -> Self {
+        CompileFunc {
+            instrs: Vec::new_in(ctx.byt_arena),
+            consts: Vec::new_in(ctx.byt_arena),
+            locals: HashMap::new(),
+            next_stack: 0,
+        }
+    }
+
     fn next_stack(&mut self) -> u8 {
         let ret = self.next_stack;
         self.next_stack += 1;
@@ -124,6 +168,7 @@ impl CompileFunc {
 
         let callee = match *call.expr {
             Expr::Func(func) => {
+                dbg!(func);
                 // we need to point to another compiled function dust_byt::Func
                 todo!()
             }
@@ -196,14 +241,5 @@ impl CompileFunc {
         self.instrs.push(instr);
 
         a
-    }
-}
-
-impl From<&CompileFunc> for dust_byt::Func {
-    fn from(comp: &CompileFunc) -> Self {
-        dust_byt::Func {
-            instrs: comp.instrs.iter().copied().map(Instr::from).collect(),
-            consts: comp.consts.iter().copied().collect(),
-        }
     }
 }

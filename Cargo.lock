@@ -375,6 +375,7 @@ version = "0.1.0"
 dependencies = [
  "ahash",
  "dust-byt",
+ "dust-ctxt",
  "dust-hir",
  "dust-utils",
  "miette",

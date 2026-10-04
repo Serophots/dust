@@ -202,7 +202,7 @@ impl From<Instr> for Instruction {
 }
 
 /// A compact bytecode instruction, encoded in 32 bits
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Instr(u32);
 
 impl Instr {

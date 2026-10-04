@@ -1,5 +1,5 @@
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Lit, NodeId, UnaryOp, Vec};
+use utils::{BinaryOp, Box, Ident, Lit, NodeId, UnaryOp};
 
 // A module exists in the AST only for namespace scoping
 // so we don't need to include it in the HIR.
@@ -7,8 +7,8 @@ use utils::{BinaryOp, Box, Ident, Lit, NodeId, UnaryOp, Vec};
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive, Debug)]
 pub struct Krate<'hir> {
     pub main: &'hir Func<'hir>,
-    #[serde(with = "utils::vec_serialize_with")]
-    pub funcs: Vec<'hir, &'hir Func<'hir>>,
+    #[serde(with = "utils::boxed_slice_serialize_with")]
+    pub funcs: Box<'hir, [&'hir Func<'hir>]>,
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
@@ -16,6 +16,7 @@ pub struct Func<'hir> {
     pub ident: Ident,
     pub block: &'hir Block<'hir>,
     pub span: SourceSpan,
+    pub id: NodeId,
 }
 
 impl<'hir> core::fmt::Debug for Func<'hir> {

@@ -1,7 +1,4 @@
-use std::marker::PhantomData;
-
 use ahash::HashMap;
-use bumpalo::collections::CollectIn;
 use dust_ctxt::AstLowCtx;
 use dust_hir::{Binary, Block, Call, Expr, Func, FuncExpr, Krate, Let, Literal, Stmt, Unary};
 use miette::{LabeledSpan, Result};
@@ -74,7 +71,7 @@ pub fn lower_krate<'ast, 'hir, 'gcx>(
 
     Ok(ctx.hir_arena.alloc(Krate {
         main,
-        funcs: funcs_vec,
+        funcs: funcs_vec.into(), // TODO: This re-alloc into Box<[]> from Vec sucks
     }))
 }
 
@@ -141,6 +138,7 @@ fn lower_func<'ast, 'hir, 'gcx>(
         ident: func.ident,
         block: lower_block(func.block, low)?,
         span: func.span,
+        id: func.id,
     }))
 }
 

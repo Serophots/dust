@@ -1,4 +1,4 @@
-use dust_byt::{Func, Instruction, Op, OpABx, OpAbc};
+use dust_byt::{Func, Instruction, OpABx, OpAbc};
 use utils::Lit;
 
 mod stack;
@@ -6,9 +6,9 @@ mod stack;
 pub use stack::*;
 
 /// State which can be used to execute chunks
-pub struct VirtualMachine<'a> {
+pub struct VirtualMachine<'byt> {
     pub stack: Stack,
-    chunk: &'a Func,
+    chunk: &'byt Func<'byt>,
 }
 
 impl<'a> VirtualMachine<'a> {

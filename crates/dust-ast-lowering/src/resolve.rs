@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use ahash::{HashMap, HashMapExt};
 use dust_ctxt::GblCtxt;
 use utils::{Ident, NodeId, Symbol};

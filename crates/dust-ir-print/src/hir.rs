@@ -11,9 +11,12 @@ impl<'hir> SourceLabeller for &Func<'hir> {
 }
 
 pub fn print_hir(krate: &Krate, ctx: GblCtxt) {
-    for func in krate.funcs.iter() {
+    for &func in krate.funcs.iter() {
         let ident = ctx.symbols.resolve(func.ident.symbol).unwrap();
-        println!("{} {}{}", "fn".magenta(), ident.blue(), "(...)".white());
+        let func_sig = format!("{} {}{}", "fn".magenta(), ident.blue(), "(...)".white());
+        let details = format!("({:?})", func.id).white();
+
+        println!("{:<20} {}", func_sig, details);
 
         println!("{:#?}", func.block);
 
