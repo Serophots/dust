@@ -36,7 +36,7 @@ fn comp_func<'hir, 'byt>(
     krate: &'hir dust_hir::Krate<'hir>,
     ctx: HirLowCtx<'hir, 'byt, '_>,
 ) -> Result<&'byt dust_byt::Func<'byt>> {
-    let mut comp_func = CompileFunc::<'byt>::default(ctx);
+    let mut comp_func = CompileFunc::<'hir, 'byt>::new(krate, ctx);
     comp_func.comp_block(func.block)?;
 
     let CompileFunc { instrs, consts, .. } = comp_func;
@@ -53,7 +53,9 @@ fn comp_func<'hir, 'byt>(
 
 /// State responsible for compiling a function into a bytecode Func.
 #[derive(Debug)]
-pub struct CompileFunc<'byt> {
+pub struct CompileFunc<'hir, 'byt> {
+    krate: &'hir dust_hir::Krate<'hir>,
+
     // Output into the final chunk
     pub instrs: Vec<'byt, Instruction>,
     // TODO: Can constants exist globally to the krate, and not duplicated into each chunk which uses them
@@ -65,9 +67,10 @@ pub struct CompileFunc<'byt> {
     pub next_stack: u8,
 }
 
-impl<'byt> CompileFunc<'byt> {
-    fn default(ctx: HirLowCtx<'_, 'byt, '_>) -> Self {
+impl<'hir, 'byt> CompileFunc<'hir, 'byt> {
+    fn new(krate: &'hir dust_hir::Krate<'hir>, ctx: HirLowCtx<'_, 'byt, '_>) -> Self {
         CompileFunc {
+            krate,
             instrs: Vec::new_in(ctx.byt_arena),
             consts: Vec::new_in(ctx.byt_arena),
             locals: HashMap::new(),
@@ -91,7 +94,7 @@ impl<'byt> CompileFunc<'byt> {
         idx as u32
     }
 
-    fn comp_block<'hir>(&mut self, block: &'hir Block<'hir>) -> Result<u8> {
+    fn comp_block(&mut self, block: &'hir Block<'hir>) -> Result<u8> {
         for &stmt in block.stmts.iter() {
             self.comp_stmt(stmt)?;
         }
@@ -114,7 +117,7 @@ impl<'byt> CompileFunc<'byt> {
         }
     }
 
-    fn comp_stmt<'hir>(&mut self, stmt: &'hir Stmt<'hir>) -> Result<()> {
+    fn comp_stmt(&mut self, stmt: &'hir Stmt<'hir>) -> Result<()> {
         match *stmt {
             Stmt::Let(r#let) => self.comp_let(r#let)?,
             Stmt::Expr(expr) => {
@@ -125,8 +128,8 @@ impl<'byt> CompileFunc<'byt> {
         Ok(())
     }
 
-    fn comp_let<'hir>(&mut self, r#let: &'hir Let) -> Result<()> {
-        let Some(expr) = r#let.expr.copied() else {
+    fn comp_let(&mut self, r#let: &'hir Let) -> Result<()> {
+        let Some(expr) = r#let.expr else {
             // No bytecode necessary
             return Ok(());
         };
@@ -140,7 +143,7 @@ impl<'byt> CompileFunc<'byt> {
 
     /// An expression compiles to some instructions
     /// pertaining to a stack index, which is returned
-    fn comp_expr<'hir>(&mut self, expr: &'hir Expr) -> Result<u8> {
+    fn comp_expr(&mut self, expr: &'hir Expr) -> Result<u8> {
         Ok(match *expr {
             Expr::Call(call) => self.comp_call(call)?,
             Expr::Binary(binary) => self.comp_bin(binary)?,
@@ -166,11 +169,16 @@ impl<'byt> CompileFunc<'byt> {
 
         let a = self.next_stack();
 
-        let callee = match *call.expr {
+        let func_idx = match *call.expr {
             Expr::Func(func) => {
-                dbg!(func);
-                // we need to point to another compiled function dust_byt::Func
-                todo!()
+                let func_idx = self
+                    .krate
+                    .funcs
+                    .iter()
+                    .position(|f| f.id == func.node_id)
+                    .unwrap();
+
+                func_idx
             }
             _ => {
                 return Err(
@@ -185,20 +193,20 @@ impl<'byt> CompileFunc<'byt> {
         let instr = Instruction::Abc {
             operation: OpAbc::Call,
             a,
-            b: todo!(),
+            b: func_idx as u16,
             c: 0, // we don't support calling with arguments yet
         };
 
         self.instrs.push(instr);
 
-        Ok(callee)
+        Ok(a)
     }
 
     fn comp_local(&mut self, local: &Ident) -> u8 {
         *self.locals.get(local).unwrap()
     }
 
-    fn comp_bin<'hir>(&mut self, bin: &'hir Binary) -> Result<u8> {
+    fn comp_bin(&mut self, bin: &'hir Binary) -> Result<u8> {
         let lhs = self.comp_expr(bin.lhs)?;
         let rhs = self.comp_expr(bin.rhs)?;
 
@@ -229,7 +237,7 @@ impl<'byt> CompileFunc<'byt> {
         Ok(a)
     }
 
-    fn comp_lit<'hir>(&mut self, lit: &'hir Literal) -> u8 {
+    fn comp_lit(&mut self, lit: &'hir Literal) -> u8 {
         let a = self.next_stack();
 
         let instr = Instruction::ABx {

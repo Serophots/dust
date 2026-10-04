@@ -5,5 +5,11 @@ fn main() {
         x * y
     };
 
+    foo();
+
     x * y * z
+}
+
+fn foo() {
+    3.0
 }
