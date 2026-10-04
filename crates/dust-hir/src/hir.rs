@@ -81,7 +81,7 @@ pub enum Expr<'hir> {
     Literal(&'hir Literal<'hir>),
     Assign,
     Local(Ident),
-    Func(&'hir Func<'hir>),
+    Func(&'hir FuncExpr<'hir>),
     Block(&'hir Block<'hir>),
     If,
     Loop,
@@ -101,6 +101,20 @@ impl<'hir> core::fmt::Debug for Expr<'hir> {
             Expr::If => todo!(),
             Expr::Loop => todo!(),
         }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
+pub struct FuncExpr<'hir> {
+    /// The span which resolved (during namespace
+    /// resolution) to this function.
+    pub span: SourceSpan,
+    pub func: &'hir Func<'hir>,
+}
+
+impl<'hir> core::fmt::Debug for FuncExpr<'hir> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.func.fmt(f)
     }
 }
 

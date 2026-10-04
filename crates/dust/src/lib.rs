@@ -1,4 +1,4 @@
-use dust_byt::Chunk;
+use dust_byt::Func;
 use dust_byt_interpret::VirtualMachine;
 use dust_ctxt::{GblCtxt, create_and_enter_ast_ctxt};
 use dust_lexer::Lexer;
@@ -113,7 +113,7 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
         Command::Compile { input } => {
             let chunk = Compiler.run(&input, ctx)?.unwrap();
             dust_byt_print::print_chunk(&chunk, ctx);
-            let chunk = Chunk::from(&chunk);
+            let chunk = Func::from(&chunk);
 
             println!("---- interpretting!");
 

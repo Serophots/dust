@@ -39,6 +39,10 @@ pub enum OpAbc {
     And,
     /// R(A) := RK(B) || RK(B)
     Or,
+    // TODO: Allow calling arbritary functions on the stack,
+    // rather than one of the krates' compile time protos.
+    /// R(A) := P(B)\[ R(A+1), R(A+2), .., R(A+C) \]
+    Call,
 }
 
 impl Op for OpAbc {
@@ -56,8 +60,6 @@ pub enum OpABx {
     LoadK = OP_ABX.start,
     /// R(A), R(A+1), .., R(A+B) := nil
     LoadNil,
-    /// R(A) := R(A)[ R(A+1), R(A+2), .., R(A+B) ]
-    Call,
 }
 
 impl Op for OpABx {
@@ -131,11 +133,11 @@ impl Instruction {
                 OpAbc::LesserEqual => "LESSEREQUAL",
                 OpAbc::And => "AND",
                 OpAbc::Or => "OR",
+                OpAbc::Call => "CALL",
             },
             Instruction::ABx { operation, .. } => match operation {
                 OpABx::LoadK => "LOADK",
                 OpABx::LoadNil => "LOADNIL",
-                OpABx::Call => "CALL",
             },
             Instruction::AsBx { operation, .. } => match operation {
                 OpAsBx::LoadF64 => "LOADF64",

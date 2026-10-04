@@ -97,16 +97,16 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
         &self,
         namespace: Namespace,
         ctx: GblCtxt,
-    ) -> HashMap<String, &'hir Res> {
+    ) -> HashMap<String, Res<'ast, 'gcx>> {
         let ribs = self.ribs[namespace].iter();
 
-        let mut bindings: HashMap<String, &'hir Res> = HashMap::new();
+        let mut bindings: HashMap<String, Res<'ast, 'gcx>> = HashMap::new();
 
         for rib in ribs {
             bindings.extend(
                 rib.bindings
                     .iter()
-                    .map(|(&symbol, res)| (ctx.symbols.resolve(symbol).unwrap(), res)),
+                    .map(|(&symbol, res)| (ctx.symbols.resolve(symbol).unwrap(), *res)),
             );
         }
 

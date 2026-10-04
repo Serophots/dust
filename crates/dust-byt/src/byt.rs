@@ -10,8 +10,9 @@ mod instr;
 pub use instr::*;
 use utils::Lit;
 
-/// A chunk of bytecode which can be interpretted
-pub struct Chunk {
+/// A compiled, interprettable function
+pub struct Func {
     pub instrs: Box<[Instr]>,
+    // TODO: Can constants exist globally to the krate, and not duplicated into each chunk which uses them
     pub consts: Box<[Lit]>,
 }

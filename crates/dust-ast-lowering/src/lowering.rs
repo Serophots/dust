@@ -1,5 +1,5 @@
 use dust_ctxt::AstLowCtx;
-use dust_hir::{Binary, Block, Call, Expr, Func, Krate, Let, Literal, Stmt, Unary};
+use dust_hir::{Binary, Block, Call, Expr, Func, FuncExpr, Krate, Let, Literal, Stmt, Unary};
 use miette::{LabeledSpan, Result};
 
 mod resolve;
@@ -266,7 +266,10 @@ fn lower_path<'ast, 'hir, 'gcx>(
 
             match res {
                 Res::Local(ident) => Expr::Local(ident),
-                Res::Func(func) => Expr::Func(lower_func(func, low)?),
+                Res::Func(func) => Expr::Func(low.ctx.hir_arena.alloc(FuncExpr {
+                    span: path.span,
+                    func: lower_func(func, low)?,
+                })),
             }
         }
         None => {

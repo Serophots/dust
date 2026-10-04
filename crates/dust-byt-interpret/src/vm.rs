@@ -1,4 +1,4 @@
-use dust_byt::{Chunk, Instruction, OpABx, OpAbc};
+use dust_byt::{Func, Instruction, Op, OpABx, OpAbc};
 use utils::Lit;
 
 mod stack;
@@ -8,18 +8,18 @@ pub use stack::*;
 /// State which can be used to execute chunks
 pub struct VirtualMachine<'a> {
     pub stack: Stack,
-    chunk: &'a Chunk,
+    chunk: &'a Func,
 }
 
 impl<'a> VirtualMachine<'a> {
-    pub fn new(chunk: &'a Chunk) -> Self {
+    pub fn new(chunk: &'a Func) -> Self {
         VirtualMachine {
             stack: Stack::new(),
             chunk,
         }
     }
 
-    pub fn exec_chunk(&mut self, chunk: &'a Chunk) {
+    pub fn exec_chunk(&mut self, chunk: &'a Func) {
         self.chunk = chunk;
 
         for instr in chunk.instrs.iter().copied() {
@@ -94,6 +94,7 @@ impl<'a> VirtualMachine<'a> {
                     self.stack[a as usize] =
                         Lit::logical_or(self.stack[b as usize], self.stack[c as usize]).unwrap();
                 }
+                OpAbc::Call => todo!(),
             },
             Instruction::ABx { operation, a, bx } => match operation {
                 OpABx::LoadK => {
@@ -102,7 +103,6 @@ impl<'a> VirtualMachine<'a> {
                 OpABx::LoadNil => {
                     self.stack[a as usize..=a as usize + bx as usize].fill(Lit::Nil);
                 }
-                OpABx::Call => todo!(),
             },
             Instruction::AsBx { operation, a, sbx } => todo!(),
         }

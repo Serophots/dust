@@ -1,9 +1,9 @@
 use colored::Colorize;
-use dust_byt_comp::CompChunk;
+use dust_byt_comp::CompileFunc;
 use dust_ctxt::GblCtxt;
 use utils::Lit;
 
-pub fn print_chunk(chunk: &CompChunk, ctx: GblCtxt) {
+pub fn print_chunk(chunk: &CompileFunc, ctx: GblCtxt) {
     println!("{}{}", "chunk".magenta(), "(...)".white());
 
     for (i, instr) in chunk.instrs.iter().enumerate() {
@@ -30,6 +30,7 @@ pub fn print_chunk(chunk: &CompChunk, ctx: GblCtxt) {
                 dust_byt::OpAbc::LesserEqual => None,
                 dust_byt::OpAbc::And => None,
                 dust_byt::OpAbc::Or => None,
+                dust_byt::OpAbc::Call => None,
             },
             dust_byt::Instruction::ABx {
                 operation,
@@ -52,7 +53,6 @@ pub fn print_chunk(chunk: &CompChunk, ctx: GblCtxt) {
                     })
                 }
                 dust_byt::OpABx::LoadNil => Some(format!("; NIL")),
-                dust_byt::OpABx::Call => None,
             },
             dust_byt::Instruction::AsBx { operation, .. } => match operation {
                 dust_byt::OpAsBx::LoadF64 => None,
