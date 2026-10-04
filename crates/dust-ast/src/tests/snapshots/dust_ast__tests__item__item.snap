@@ -38,7 +38,8 @@ expression: module
           "span": {
             "offset": 0,
             "length": 28
-          }
+          },
+          "id": 0
         }
       },
       "span": {
@@ -133,7 +134,8 @@ expression: module
           "span": {
             "offset": 34,
             "length": 61
-          }
+          },
+          "id": 1
         }
       },
       "span": {
@@ -187,7 +189,8 @@ expression: module
                       "span": {
                         "offset": 114,
                         "length": 37
-                      }
+                      },
+                      "id": 2
                     }
                   },
                   "span": {
@@ -216,7 +219,8 @@ expression: module
           "span": {
             "offset": 97,
             "length": 64
-          }
+          },
+          "id": 3
         }
       },
       "span": {
@@ -290,7 +294,8 @@ expression: module
                                       "span": {
                                         "offset": 221,
                                         "length": 60
-                                      }
+                                      },
+                                      "id": 4
                                     }
                                   },
                                   "span": {
@@ -360,7 +365,8 @@ expression: module
                   "span": {
                     "offset": 178,
                     "length": 142
-                  }
+                  },
+                  "id": 5
                 }
               },
               "span": {

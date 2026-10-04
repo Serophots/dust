@@ -46,7 +46,8 @@ expression: ast
                     "span": {
                       "offset": 0,
                       "length": 16
-                    }
+                    },
+                    "id": 0
                   }
                 },
                 "span": {
@@ -105,7 +106,8 @@ expression: ast
                     "span": {
                       "offset": 0,
                       "length": 16
-                    }
+                    },
+                    "id": 1
                   }
                 },
                 "span": {
@@ -157,7 +159,8 @@ expression: ast
             "span": {
               "offset": 19,
               "length": 17
-            }
+            },
+            "id": 2
           }
         },
         "span": {
