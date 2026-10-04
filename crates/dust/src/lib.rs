@@ -21,11 +21,15 @@ impl<'gcx> crate::compiler::Compiler<'gcx> for Printer {
     fn hook_ast<'ast, 'a>(
         &'a self,
         ast: &'ast dust_ast::Krate<'gcx, 'ast>,
+        _ctx: dust_ctxt::AstCtx<'ast, 'gcx>,
     ) -> std::ops::ControlFlow<()> {
         use dust_ir_print::SourceLabeller;
 
         match self {
             Self::AstTree => {
+                println!("{:#?}", ast.root.items);
+            }
+            Self::AstLabel => {
                 let mut labels = Vec::new();
                 ast.root.label(&mut labels);
 
@@ -35,9 +39,6 @@ impl<'gcx> crate::compiler::Compiler<'gcx> for Printer {
                         .with_source_code(ast.root.source.to_owned())
                 );
             }
-            Self::AstLabel => {
-                println!("{:#?}", ast.root.items);
-            }
             _ => {
                 return std::ops::ControlFlow::Continue(());
             }
@@ -46,13 +47,14 @@ impl<'gcx> crate::compiler::Compiler<'gcx> for Printer {
         std::ops::ControlFlow::Break(())
     }
 
-    fn hook_ast_lw<'hir, 'a>(
+    fn hook_ast_lw<'ast, 'hir, 'a>(
         &'a self,
         hir: &'hir dust_hir::Krate<'hir>,
+        ctx: dust_ctxt::AstLowCtx<'ast, 'hir, 'gcx>,
     ) -> std::ops::ControlFlow<()> {
         match self {
             Self::HirTree => {
-                println!("{:#?}", hir.main);
+                dust_ir_print::print_hir(hir, ctx.gcx);
             }
             _ => {
                 return std::ops::ControlFlow::Continue(());

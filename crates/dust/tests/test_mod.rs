@@ -23,6 +23,7 @@ impl<'gcx> dust::compiler::Compiler<'gcx> for Compiler {
     fn hook_ast<'ast, 'a>(
         &'a self,
         ast: &'ast dust_ast::Krate<'gcx, 'ast>,
+        _ctx: dust_ctxt::AstCtx<'ast, 'gcx>,
     ) -> std::ops::ControlFlow<()> {
         insta::assert_json_snapshot!(ast);
 

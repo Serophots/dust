@@ -63,7 +63,7 @@ pub trait WithContexts<'gcx> {
 
         // Run ast
         let ast = self.run_ast(ast_ctx)?;
-        if self.hook_ast(&ast).is_break() {
+        if self.hook_ast(&ast, ast_ctx).is_break() {
             return Ok(None);
         };
 
@@ -76,10 +76,10 @@ pub trait WithContexts<'gcx> {
 
         // Run ast lowering
         let ast_lw = self.run_ast_lowering(ast, ast_lw_ctx)?;
-        drop(ast_arena);
-        if self.hook_ast_lw(&ast_lw).is_break() {
+        if self.hook_ast_lw(&ast_lw, ast_lw_ctx).is_break() {
             return Ok(None);
         }
+        drop(ast_arena);
 
         let hir_ctx = HirCtx::<'_, 'gcx> {
             gcx: gcx,
@@ -94,7 +94,11 @@ pub trait WithContexts<'gcx> {
 
     fn run_ast<'ast>(&self, ctx: AstCtx<'ast, 'gcx>) -> Result<Self::RetAst<'ast>>;
 
-    fn hook_ast<'ast, 'a>(&'a self, _ast: &'a Self::RetAst<'ast>) -> ControlFlow<()>
+    fn hook_ast<'ast, 'a>(
+        &'a self,
+        _ast: &'a Self::RetAst<'ast>,
+        ctx: AstCtx<'ast, 'gcx>,
+    ) -> ControlFlow<()>
     where
         'gcx: 'ast;
 
@@ -104,7 +108,11 @@ pub trait WithContexts<'gcx> {
         ctx: AstLowCtx<'ast, 'hir, 'gcx>,
     ) -> Result<Self::RetAstLw<'hir>>;
 
-    fn hook_ast_lw<'hir, 'a>(&'a self, _ast: &'a Self::RetAstLw<'hir>) -> ControlFlow<()>
+    fn hook_ast_lw<'ast, 'hir, 'a>(
+        &'a self,
+        _ast: &'a Self::RetAstLw<'hir>,
+        ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+    ) -> ControlFlow<()>
     where
         'gcx: 'hir;
 

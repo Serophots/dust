@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
 use ahash::HashMap;
+use bumpalo::collections::CollectIn;
 use dust_ctxt::AstLowCtx;
 use dust_hir::{Binary, Block, Call, Expr, Func, FuncExpr, Krate, Let, Literal, Stmt, Unary};
 use miette::{LabeledSpan, Result};
@@ -65,7 +66,16 @@ pub fn lower_krate<'ast, 'hir, 'gcx>(
         .find(|f| f.ident.symbol == main_symbol)
         .ok_or_else(|| miette::miette!("Root module did not have a main function"))?;
 
-    Ok(low.ctx.hir_arena.alloc(Krate { main }))
+    let LowerKrate { funcs, ctx, .. } = low;
+
+    // TODO: Construct this in one allocation?
+    let mut funcs_vec = Vec::new_in(ctx.hir_arena);
+    funcs_vec.extend(funcs.values().copied());
+
+    Ok(ctx.hir_arena.alloc(Krate {
+        main,
+        funcs: funcs_vec,
+    }))
 }
 
 /// Add a rib to namespace resolution which
@@ -106,15 +116,17 @@ fn lower_module<'ast, 'hir, 'gcx>(
     low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<()> {
     in_module_namespace(module, low, |low| {
-        // Lower each function in turn
-        let funcs = module.items.iter().filter_map(|&item| match item.r#type {
-            dust_ast::ItemType::Func(func) => Some(func),
-            _ => None,
-        });
-
-        for ast_func in funcs {
-            let hir_func = lower_func(ast_func, low)?;
-            low.funcs.insert(ast_func.id, hir_func);
+        for &item in module.items.iter() {
+            match item.r#type {
+                dust_ast::ItemType::Module(module) => {
+                    lower_module(module, low)?;
+                }
+                dust_ast::ItemType::Func(ast_func) => {
+                    let hir_func = lower_func(ast_func, low)?;
+                    low.funcs.insert(ast_func.id, hir_func);
+                }
+                dust_ast::ItemType::Use(_) => todo!(),
+            }
         }
 
         Ok(())

@@ -48,6 +48,7 @@ where
     f(ctx)
 }
 
+#[derive(Copy, Clone)]
 pub struct AstLowCtx<'ast, 'hir, 'gcx>
 where
     'gcx: 'ast,

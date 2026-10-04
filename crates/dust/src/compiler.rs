@@ -12,11 +12,19 @@ pub trait Compiler<'gcx>: Sized {
         CompilerWrapper(self, PhantomData).run(root, gcx)
     }
 
-    fn hook_ast<'ast, 'a>(&'a self, _ast: &'ast dust_ast::Krate<'gcx, 'ast>) -> ControlFlow<()> {
+    fn hook_ast<'ast, 'a>(
+        &'a self,
+        _ast: &'ast dust_ast::Krate<'gcx, 'ast>,
+        _ctx: AstCtx<'ast, 'gcx>,
+    ) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 
-    fn hook_ast_lw<'hir, 'a>(&'a self, _ast: &'hir dust_hir::Krate<'hir>) -> ControlFlow<()> {
+    fn hook_ast_lw<'ast, 'hir, 'a>(
+        &'a self,
+        _hir: &'hir dust_hir::Krate<'hir>,
+        _ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+    ) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
 }
@@ -39,11 +47,15 @@ where
         Ok(dust_ast::parse_root(ctx)?)
     }
 
-    fn hook_ast<'ast, 'a>(&'a self, ast: &'a Self::RetAst<'ast>) -> ControlFlow<()>
+    fn hook_ast<'ast, 'a>(
+        &'a self,
+        ast: &'a Self::RetAst<'ast>,
+        ctx: AstCtx<'ast, 'gcx>,
+    ) -> ControlFlow<()>
     where
         'gcx: 'ast,
     {
-        self.0.hook_ast(ast)
+        self.0.hook_ast(ast, ctx)
     }
 
     type RetAstLw<'hir>
@@ -59,11 +71,15 @@ where
         Ok(dust_ast_lowering::lower_krate(krate, ctx)?)
     }
 
-    fn hook_ast_lw<'hir, 'a>(&'a self, ast: &'a Self::RetAstLw<'hir>) -> ControlFlow<()>
+    fn hook_ast_lw<'ast, 'hir, 'a>(
+        &'a self,
+        ast: &'a Self::RetAstLw<'hir>,
+        ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+    ) -> ControlFlow<()>
     where
         'gcx: 'hir,
     {
-        self.0.hook_ast_lw(ast)
+        self.0.hook_ast_lw(ast, ctx)
     }
 
     type RetHir = dust_byt_comp::CompileFunc;

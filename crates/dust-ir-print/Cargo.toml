@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 dust-ast.workspace = true
 dust-hir.workspace = true
+dust-ctxt.workspace = true
 utils.workspace = true
 
 miette.workspace = true
+colored.workspace = true

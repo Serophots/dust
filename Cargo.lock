@@ -431,7 +431,9 @@ version = "0.1.0"
 name = "dust-ir-print"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "dust-ast",
+ "dust-ctxt",
  "dust-hir",
  "dust-utils",
  "miette",
