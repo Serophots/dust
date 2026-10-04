@@ -12,6 +12,25 @@ pub use source::*;
 pub use symbol::*;
 pub use token::*;
 
+#[derive(
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash,
+    Default,
+    Debug,
+    serde::Serialize,
+    derive_generic_visitor::Drive,
+    derive_more::Add,
+    derive_more::AddAssign,
+)]
+pub struct NodeId(usize);
+
+impl NodeId {
+    pub const ONE: NodeId = NodeId(1);
+}
+
 pub fn combine_src(src1: SourceSpan, src2: SourceSpan) -> SourceSpan {
     let lower = std::cmp::min(src1.offset(), src2.offset());
     let upper = std::cmp::max(src1.offset() + src1.len(), src2.offset() + src2.len());

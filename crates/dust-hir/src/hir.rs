@@ -1,5 +1,5 @@
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
+use utils::{BinaryOp, Box, Ident, Lit, NodeId, UnaryOp};
 
 // A module exists in the AST only for namespace scoping
 // so we don't need to include it in the HIR.
@@ -7,6 +7,8 @@ use utils::{BinaryOp, Box, Ident, Lit, UnaryOp};
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive, Debug)]
 pub struct Krate<'hir> {
     pub main: &'hir Func<'hir>,
+    // #[serde(with = "utils::vec_serialize_with")]
+    // pub funcs: Vec<'hir, &'hir Func<'hir>>,
 }
 
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
@@ -81,7 +83,7 @@ pub enum Expr<'hir> {
     Literal(&'hir Literal<'hir>),
     Assign,
     Local(Ident),
-    Func(&'hir FuncExpr<'hir>),
+    Func(&'hir FuncExpr),
     Block(&'hir Block<'hir>),
     If,
     Loop,
@@ -105,16 +107,17 @@ impl<'hir> core::fmt::Debug for Expr<'hir> {
 }
 
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub struct FuncExpr<'hir> {
+pub struct FuncExpr {
     /// The span which resolved (during namespace
     /// resolution) to this function.
     pub span: SourceSpan,
-    pub func: &'hir Func<'hir>,
+    /// Node id of the function resolved to
+    pub node_id: NodeId,
 }
 
-impl<'hir> core::fmt::Debug for FuncExpr<'hir> {
+impl core::fmt::Debug for FuncExpr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.func.fmt(f)
+        f.debug_tuple("FuncExrp").field(&self.node_id).finish()
     }
 }
 

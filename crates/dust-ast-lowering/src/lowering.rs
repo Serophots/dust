@@ -1,3 +1,6 @@
+use std::marker::PhantomData;
+
+use ahash::HashMap;
 use dust_ctxt::AstLowCtx;
 use dust_hir::{Binary, Block, Call, Expr, Func, FuncExpr, Krate, Let, Literal, Stmt, Unary};
 use miette::{LabeledSpan, Result};
@@ -5,16 +8,21 @@ use miette::{LabeledSpan, Result};
 mod resolve;
 
 pub use resolve::*;
+use utils::{NodeId, Vec};
 
 use crate::resolve::Namespace::ValueNS;
 
-pub struct Lowering<'ast, 'hir, 'gcx> {
-    pub resolver: ResolverCtx<'ast, 'gcx>,
+pub struct LowerKrate<'ast, 'hir, 'gcx> {
+    pub resolver: ResolverCtx,
     pub module: &'ast dust_ast::Module<'gcx, 'ast>,
     pub ctx: AstLowCtx<'ast, 'hir, 'gcx>,
+
+    /// Maps the node of the function in the AST tree
+    /// to the lowered function in the HIR.
+    pub funcs: HashMap<NodeId, &'hir Func<'hir>>,
 }
 
-impl<'ast, 'hir, 'gcx> Lowering<'ast, 'hir, 'gcx> {
+impl<'ast, 'hir, 'gcx> LowerKrate<'ast, 'hir, 'gcx> {
     pub fn with_rib<F, T>(&mut self, namespace: Namespace, kind: RibKind, f: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
@@ -31,7 +39,7 @@ impl<'ast, 'hir, 'gcx> Lowering<'ast, 'hir, 'gcx> {
         ret
     }
 
-    pub fn last_rib_mut<'a>(&'a mut self, namespace: Namespace) -> Option<&'a mut Rib<'ast, 'gcx>> {
+    pub fn last_rib_mut<'a>(&'a mut self, namespace: Namespace) -> Option<&'a mut Rib> {
         self.resolver.ribs[namespace].last_mut()
     }
 }
@@ -40,22 +48,22 @@ pub fn lower_krate<'ast, 'hir, 'gcx>(
     krate: &'ast dust_ast::Krate<'gcx, 'ast>,
     ctx: AstLowCtx<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Krate<'hir>> {
-    let mut low = Lowering {
+    let main_symbol = ctx.gcx.symbols.get_or_intern("main");
+
+    let mut low = LowerKrate {
         resolver: ResolverCtx::default(),
         module: krate.root,
+        funcs: std::collections::HashMap::default(),
         ctx,
     };
 
-    let main = in_module_namespace(krate.root, &mut low, |low| {
-        let main = krate
-            .root
-            .func_by_name("main", low.ctx.gcx)
-            .ok_or_else(|| miette::miette!("Root module did not have a main function"))?;
+    lower_module(krate.root, &mut low)?;
 
-        let main = lower_func(main, low)?;
-
-        Ok::<_, miette::Error>(main)
-    })?;
+    let main = *low
+        .funcs
+        .values()
+        .find(|f| f.ident.symbol == main_symbol)
+        .ok_or_else(|| miette::miette!("Root module did not have a main function"))?;
 
     Ok(low.ctx.hir_arena.alloc(Krate { main }))
 }
@@ -64,28 +72,29 @@ pub fn lower_krate<'ast, 'hir, 'gcx>(
 /// identifies all of the items in this module
 fn in_module_namespace<'ast, 'hir, 'gcx, F, T>(
     module: &'ast dust_ast::Module<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
     f: F,
 ) -> Result<T>
 where
-    F: FnOnce(&mut Lowering<'ast, 'hir, 'gcx>) -> Result<T>,
+    F: FnOnce(&mut LowerKrate<'ast, 'hir, 'gcx>) -> Result<T>,
 {
     low.with_rib(ValueNS, RibKind::Module, |low| {
         for &item in module.items.iter() {
-            let (symbol, res) = match item.r#type {
-                dust_ast::ItemType::Module(module) => todo!(),
-                dust_ast::ItemType::Func(func) => {
-                    // We explicitly don't lower this function here, yet
-                    // until after we've registered all items in the namespace
-                    (func.ident.symbol, Res::Func(func))
-                }
+            let binding = match item.r#type {
+                dust_ast::ItemType::Module(_) => None,
                 dust_ast::ItemType::Use(_) => todo!(),
+                dust_ast::ItemType::Func(func) => Some((func.ident.symbol, Res::Func(func.id))),
             };
 
-            low.last_rib_mut(ValueNS)
-                .unwrap()
-                .bindings
-                .insert(symbol, res);
+            match binding {
+                Some((symbol, res)) => {
+                    low.last_rib_mut(ValueNS)
+                        .unwrap()
+                        .bindings
+                        .insert(symbol, res);
+                }
+                None => {}
+            }
         }
 
         f(low)
@@ -94,21 +103,27 @@ where
 
 fn lower_module<'ast, 'hir, 'gcx>(
     module: &'ast dust_ast::Module<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<()> {
-    // Add all module items into the namespace
-    //
-    // Lower the function we care about, which may
-    // in turn lower and reference other functions
-    // (in this module or another in the namespace)
-    //
+    in_module_namespace(module, low, |low| {
+        // Lower each function in turn
+        let funcs = module.items.iter().filter_map(|&item| match item.r#type {
+            dust_ast::ItemType::Func(func) => Some(func),
+            _ => None,
+        });
 
-    todo!()
+        for ast_func in funcs {
+            let hir_func = lower_func(ast_func, low)?;
+            low.funcs.insert(ast_func.id, hir_func);
+        }
+
+        Ok(())
+    })
 }
 
 fn lower_func<'ast, 'hir, 'gcx>(
     func: &'ast dust_ast::Func<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Func<'hir>> {
     Ok(low.ctx.hir_arena.alloc(Func {
         ident: func.ident,
@@ -119,7 +134,7 @@ fn lower_func<'ast, 'hir, 'gcx>(
 
 fn lower_block<'ast, 'hir, 'gcx>(
     block: &'ast dust_ast::Block<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Block<'hir>> {
     let block = low.with_rib(ValueNS, RibKind::Block, |low| {
         let stmts = {
@@ -150,7 +165,7 @@ fn lower_block<'ast, 'hir, 'gcx>(
 
 fn lower_stmt<'ast, 'hir, 'gcx>(
     stmt: &'ast dust_ast::Stmt<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Stmt<'hir>> {
     Ok(low.ctx.hir_arena.alloc(match *stmt {
         dust_ast::Stmt::Item(item) => {
@@ -164,7 +179,7 @@ fn lower_stmt<'ast, 'hir, 'gcx>(
 
 fn lower_let<'ast, 'hir, 'gcx>(
     r#let: &'ast dust_ast::Let<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Let<'hir>> {
     let ident = r#let.ident;
 
@@ -186,7 +201,7 @@ fn lower_let<'ast, 'hir, 'gcx>(
 
 fn lower_call<'ast, 'hir, 'gcx>(
     call: &'ast dust_ast::Call<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Call<'hir>> {
     Ok(low.ctx.hir_arena.alloc(Call {
         expr: lower_expr(call.expr, low)?,
@@ -196,7 +211,7 @@ fn lower_call<'ast, 'hir, 'gcx>(
 
 fn lower_expr<'ast, 'hir, 'gcx>(
     expr: &'ast dust_ast::Expr<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Expr<'hir>> {
     Ok(low.ctx.hir_arena.alloc(match *expr {
         dust_ast::Expr::Binary(binary) => Expr::Binary(lower_binary(binary, low)?),
@@ -213,7 +228,7 @@ fn lower_expr<'ast, 'hir, 'gcx>(
 
 fn lower_literal<'ast, 'hir, 'gcx>(
     literal: &'ast dust_ast::Literal<'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Literal<'hir>> {
     Ok(low.ctx.hir_arena.alloc(Literal {
         lit: low.ctx.hir_arena.alloc(*literal.lit),
@@ -223,7 +238,7 @@ fn lower_literal<'ast, 'hir, 'gcx>(
 
 fn lower_binary<'ast, 'hir, 'gcx>(
     binary: &'ast dust_ast::Binary<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Binary<'hir>> {
     Ok(low.ctx.hir_arena.alloc(Binary {
         lhs: lower_expr(binary.lhs, low)?,
@@ -235,7 +250,7 @@ fn lower_binary<'ast, 'hir, 'gcx>(
 
 fn lower_unary<'ast, 'hir, 'gcx>(
     unary: &'ast dust_ast::Unary<'gcx, 'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Unary<'hir>> {
     Ok(low.ctx.hir_arena.alloc(Unary {
         expr: lower_expr(unary.expr, low)?,
@@ -246,7 +261,7 @@ fn lower_unary<'ast, 'hir, 'gcx>(
 
 fn lower_path<'ast, 'hir, 'gcx>(
     path: &'ast dust_ast::Path<'ast>,
-    low: &mut Lowering<'ast, 'hir, 'gcx>,
+    low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<Expr<'hir>> {
     Ok(match path.try_into_ident() {
         // The path is length 1
@@ -266,9 +281,9 @@ fn lower_path<'ast, 'hir, 'gcx>(
 
             match res {
                 Res::Local(ident) => Expr::Local(ident),
-                Res::Func(func) => Expr::Func(low.ctx.hir_arena.alloc(FuncExpr {
+                Res::Func(node_id) => Expr::Func(low.ctx.hir_arena.alloc(FuncExpr {
                     span: path.span,
-                    func: lower_func(func, low)?,
+                    node_id,
                 })),
             }
         }

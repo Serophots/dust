@@ -1,6 +1,6 @@
 use bumpalo::Bump;
 use camino::Utf8Path;
-use utils::Symbol;
+use utils::{Symbol, Vec};
 
 use crate::GblCtxt;
 
@@ -48,7 +48,6 @@ where
     f(ctx)
 }
 
-#[derive(Copy, Clone)]
 pub struct AstLowCtx<'ast, 'hir, 'gcx>
 where
     'gcx: 'ast,

@@ -1,6 +1,6 @@
 use derive_generic_visitor::Visit;
 use miette::SourceSpan;
-use utils::{BinaryOp, Box, Ident, Lit, Symbol, UnaryOp};
+use utils::{BinaryOp, Box, Ident, Lit, NodeId, Symbol, UnaryOp};
 
 use crate::{
     Binary, Block, Call, Expr, Func, Item, ItemType, Let, Literal, Module, Path, Stmt, Unary, Use,
@@ -61,6 +61,7 @@ pub use path::*;
 #[visit(skip(f64))]
 #[visit(skip(bool))]
 #[visit(skip(for<'a> &'a str))]
+#[visit(skip(NodeId))]
 #[allow(dead_code)] // TODO
 struct AstVisitor<V: Visitor>(pub V);
 

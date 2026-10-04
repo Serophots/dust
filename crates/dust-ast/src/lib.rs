@@ -6,7 +6,6 @@ use dust_ctxt::AstCtx;
 use miette::Result;
 use utils::{Box, Symbol};
 
-mod module;
 mod parser;
 mod simplify;
 

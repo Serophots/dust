@@ -10,7 +10,7 @@ use std::hash::{Hash as _, Hasher};
 
 use dust_ctxt::AstCtx;
 use miette::{LabeledSpan, Result, SourceOffset, SourceSpan};
-use utils::{Box, Ident, Symbol, TokenKind, combine_src};
+use utils::{Box, Ident, NodeId, Symbol, TokenKind, combine_src};
 
 use crate::{Block, Parser, Path};
 
@@ -113,6 +113,7 @@ pub struct Func<'gcx, 'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'gcx, 'ast>,
     pub span: SourceSpan,
+    pub id: NodeId,
 }
 
 impl<'gcx, 'ast> core::fmt::Debug for Func<'gcx, 'ast> {
@@ -278,6 +279,7 @@ where
 
         Ok(ctx.arena.alloc(Func {
             span: combine_src(r#fn.span, block.span),
+            id: ctx.gcx.node_id.next(),
             ident,
             block,
         }))

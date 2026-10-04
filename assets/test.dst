@@ -4,7 +4,12 @@ fn main() {
     let x = 2;
     2 * x;
 
-    piss();
+    // foo();
+    // bar::piss();
 }
 
-fn piss() {}
+fn foo() {}
+
+mod bar {
+    fn piss() {}
+}

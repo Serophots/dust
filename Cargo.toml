@@ -42,6 +42,7 @@ tracing-subscriber = "0.3"
 tracing-appender = "0.2"
 
 derive_generic_visitor = { git="https://github.com/Serophots/derive-generic-visitor", rev = "37f8c43c9a4f58cf03d01f34208b878450a18413", package = "derive_generic_visitor", version = "1.1"}
+derive_more = {version = "2.1", features = ["add", "add_assign"]}
 
 insta = {version = "1.48", features = ["json"]}
 serde = {version = "1.0", features = ["derive"]}

@@ -3,8 +3,8 @@ use dust_byt_comp::CompileFunc;
 use dust_ctxt::GblCtxt;
 use utils::Lit;
 
-pub fn print_chunk(chunk: &CompileFunc, ctx: GblCtxt) {
-    println!("{}{}", "chunk".magenta(), "(...)".white());
+pub fn print_func(chunk: &CompileFunc, ctx: GblCtxt) {
+    println!("{}{}", "function".magenta(), "(...)".white());
 
     for (i, instr) in chunk.instrs.iter().enumerate() {
         let i = format!("{:<4}", i + 1);

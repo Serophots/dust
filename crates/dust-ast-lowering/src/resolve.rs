@@ -1,6 +1,8 @@
+use std::marker::PhantomData;
+
 use ahash::{HashMap, HashMapExt};
 use dust_ctxt::GblCtxt;
-use utils::{Ident, Symbol};
+use utils::{Ident, NodeId, Symbol};
 
 #[derive(Copy, Clone)]
 pub enum Namespace {
@@ -46,8 +48,8 @@ impl<T> core::ops::IndexMut<Namespace> for ForNamespaces<T> {
 /// A new rib is introduced every time the accessible
 /// bindings change. I.e. a let statement, any sort
 /// of block.
-pub struct Rib<'ast, 'gcx> {
-    pub bindings: HashMap<Symbol, Res<'ast, 'gcx>>,
+pub struct Rib {
+    pub bindings: HashMap<Symbol, Res>,
     pub kind: RibKind,
 }
 
@@ -62,14 +64,14 @@ pub enum RibKind {
 }
 
 #[derive(Default)]
-pub struct ResolverCtx<'ast, 'gcx> {
-    pub ribs: ForNamespaces<Vec<Rib<'ast, 'gcx>>>,
+pub struct ResolverCtx {
+    pub ribs: ForNamespaces<Vec<Rib>>,
 }
 
-impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
+impl<'ast, 'hir, 'gcx> ResolverCtx {
     pub fn push_rib<F>(&mut self, namespace: Namespace, kind: RibKind, f: F)
     where
-        F: FnOnce(&mut Rib<'ast, 'gcx>),
+        F: FnOnce(&mut Rib),
     {
         let mut rib = Rib {
             bindings: Default::default(),
@@ -81,7 +83,7 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
         self.ribs[namespace].push(rib);
     }
 
-    pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<Res<'ast, 'gcx>> {
+    pub fn resolve_ident(&mut self, ident: Ident, namespace: Namespace) -> Option<Res> {
         let ribs = self.ribs[namespace].iter();
 
         for rib in ribs.rev() {
@@ -93,14 +95,10 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
         None
     }
 
-    pub fn inspect_namespace(
-        &self,
-        namespace: Namespace,
-        ctx: GblCtxt,
-    ) -> HashMap<String, Res<'ast, 'gcx>> {
+    pub fn inspect_namespace(&self, namespace: Namespace, ctx: GblCtxt) -> HashMap<String, Res> {
         let ribs = self.ribs[namespace].iter();
 
-        let mut bindings: HashMap<String, Res<'ast, 'gcx>> = HashMap::new();
+        let mut bindings: HashMap<String, Res> = HashMap::new();
 
         for rib in ribs {
             bindings.extend(
@@ -116,7 +114,7 @@ impl<'ast, 'hir, 'gcx> ResolverCtx<'ast, 'gcx> {
 
 /// A namespace resolution
 #[derive(Copy, Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
-pub enum Res<'ast, 'gcx> {
+pub enum Res {
     /// Local variable or function parameter.
     /// The ident span must point to the defining site
     /// for this local variable for proper equality.
@@ -127,10 +125,12 @@ pub enum Res<'ast, 'gcx> {
     /// A function
     ///
     /// **Value namespace**
-    Func(&'ast dust_ast::Func<'gcx, 'ast>),
+    Func(NodeId),
 }
 
-impl<'ast, 'gcx> core::fmt::Debug for Res<'ast, 'gcx> {
+pub type FuncIdx = usize;
+
+impl core::fmt::Debug for Res {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Res::Local(arg0) => f.debug_tuple("Local").field(arg0).finish(),

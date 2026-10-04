@@ -3,13 +3,15 @@ use std::{ops::ControlFlow, sync::OnceLock};
 use bumpalo::Bump;
 use camino::Utf8Path;
 use miette::Result;
+use utils::NodeId;
 
-use crate::{AstCtx, AstLowCtx, HirCtx, SymbolInterner};
+use crate::{AstCtx, AstLowCtx, HirCtx, NodeIdAllocator, SymbolInterner};
 
 #[derive(Default)]
 pub struct GblCtxtInner {
     pub arena: Bump,
     pub symbols: SymbolInterner,
+    pub node_id: NodeIdAllocator,
 }
 
 #[derive(Copy, Clone)]
