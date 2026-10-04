@@ -6,10 +6,11 @@ I'd like to do so without bringing in too many dependencies.
 
 ## Progress:
 - A basic arithmetic calculator / logic machine, handling equality, inequality, add/sub, mul/div, not, numbers, strings, bools, nil, obeying order of operations, parenthesis. Try `cargo run --bin dust -- calculate "1 - 2 * 3 >= -5 == true"`.
-- Label your `.dst` input with lexer-level labelling `cargo run --bin dust -- lex ./assets/test.dst`.
-- Label your `.dst` input with ast-level labelling `cargo run --bin dust -- print-ast ./assets/test.dst`.
-- Output the AST tree `cargo run --bin dust -- print-ast --tree ./assets/test.dst`.
-- Output the HIR tree `cargo run --bin dust -- print-hir ./assets/test.dst`
+- Label your `.dst` input with lexer-level labelling `cargo run --bin dust -- lex ./assets/simple.dst`.
+- Label your `.dst` input with ast-level labelling `cargo run --bin dust -- print-ast ./assets/simple.dst`.
+- Output the AST tree `cargo run --bin dust -- print-ast --tree ./assets/simple.dst`.
+- Output the HIR tree `cargo run --bin dust -- print-hir ./assets/simple.dst`
+- Interpret a simple script `cargo run --bin dust -- run ./assets/simple.dst`
 
 ## Architecture
 

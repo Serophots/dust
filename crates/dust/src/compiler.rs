@@ -1,6 +1,7 @@
 use std::{marker::PhantomData, ops::ControlFlow};
 
 use camino::Utf8Path;
+use dust_byt_interpret::VirtualMachine;
 use dust_ctxt::{AstCtx, AstLowCtx, GblCtxt, HirCtx, WithContexts};
 use miette::Result;
 
@@ -103,7 +104,15 @@ where
         Ok(chunk)
     }
 
-    fn run_byt<'byt>(&self, byt: Self::RetHirLw<'byt>, _ctx: dust_ctxt::BytCtx<'byt, 'gcx>) {
-        dbg!(byt);
+    fn run_byt<'byt>(&self, krate: Self::RetHirLw<'byt>, ctx: dust_ctxt::BytCtx<'byt, 'gcx>) {
+        dust_byt_print::print_krate(&krate, ctx.gcx);
+        // let chunk = Func::from(&chunk);
+
+        println!("---- interpretting!");
+
+        let mut vm = VirtualMachine::new(&krate.main);
+        vm.exec_chunk(&krate.main);
+
+        dust_byt_print::print_stack(&vm);
     }
 }

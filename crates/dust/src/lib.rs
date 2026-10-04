@@ -111,16 +111,7 @@ pub fn main_in_gbl_ctx<'gcx>(args: Args, ctx: GblCtxt<'gcx>) -> miette::Result<(
         }
 
         Command::Compile { input } => {
-            let chunk = Compiler.run(&input, ctx)?.unwrap();
-            // dust_byt_print::print_func(&chunk, ctx);
-            // let chunk = Func::from(&chunk);
-
-            println!("---- interpretting!");
-
-            // let mut vm = VirtualMachine::new(&chunk);
-            // vm.exec_chunk(&chunk);
-
-            // dust_byt_print::print_stack(&vm);
+            Compiler.run(&input, ctx)?.unwrap();
         }
         Command::Run { input } => {
             Compiler.run(&input, ctx)?;

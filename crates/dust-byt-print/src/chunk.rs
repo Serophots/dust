@@ -1,12 +1,26 @@
 use colored::Colorize;
-use dust_byt_comp::CompileFunc;
+use dust_byt::Instruction;
 use dust_ctxt::GblCtxt;
 use utils::Lit;
 
-pub fn print_func(chunk: &CompileFunc, ctx: GblCtxt) {
-    println!("{}{}", "function".magenta(), "(...)".white());
+pub fn print_krate(krate: &dust_byt::Krate, ctx: GblCtxt) {
+    for func in krate.funcs.iter() {
+        print_func(func, ctx);
+        print!("\n\n")
+    }
+}
 
-    for (i, instr) in chunk.instrs.iter().enumerate() {
+pub fn print_func(func: &dust_byt::Func, ctx: GblCtxt) {
+    let name = ctx.symbols.resolve(func.ident.symbol).unwrap();
+    println!(
+        "{} {}{}",
+        "function".magenta(),
+        name.blue(),
+        "(...)".white()
+    );
+
+    for (i, &instr) in func.instrs.iter().enumerate() {
+        let instr = Instruction::from(instr);
         let i = format!("{:<4}", i + 1);
 
         let operands = match instr {
@@ -38,7 +52,7 @@ pub fn print_func(chunk: &CompileFunc, ctx: GblCtxt) {
                 bx,
             } => match operation {
                 dust_byt::OpABx::LoadK => {
-                    let r#const = chunk.consts[*bx as usize];
+                    let r#const = func.consts[bx as usize];
 
                     Some(match r#const {
                         Lit::Number(f) => format!("; {}", f),
