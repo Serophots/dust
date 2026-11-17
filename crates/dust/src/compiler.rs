@@ -110,8 +110,8 @@ where
 
         println!("---- interpretting!");
 
-        let mut vm = VirtualMachine::new(&krate.main);
-        vm.exec_chunk(&krate.main);
+        let mut vm = VirtualMachine::new(&krate);
+        vm.exec_func(&krate.main);
 
         dust_byt_print::print_stack(&vm);
     }

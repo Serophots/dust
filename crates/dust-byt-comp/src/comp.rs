@@ -46,6 +46,7 @@ fn comp_func<'hir, 'byt>(
 
     Ok(ctx.byt_arena.alloc(dust_byt::Func::<'byt> {
         ident: func.ident,
+        id: func.id,
         instrs: instrs_s.into(),
         consts: consts.into(),
     }))

@@ -5,7 +5,7 @@
 //! RK(X)       if _ { R(X) } else { K(X_) }
 #![feature(const_trait_impl, const_convert)]
 
-use utils::{Box, Ident, Lit};
+use utils::{Box, Ident, Lit, NodeId};
 
 mod instr;
 
@@ -15,6 +15,7 @@ pub use instr::*;
 #[derive(Clone, PartialEq, serde::Serialize, Debug)]
 pub struct Func<'byt> {
     pub ident: Ident,
+    pub id: NodeId,
 
     #[serde(with = "utils::boxed_slice_serialize_with")]
     pub instrs: Box<'byt, [Instr]>, // TODO: Make these boxed slices when allocator api is a bit more ergonomic

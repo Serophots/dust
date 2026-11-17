@@ -1,4 +1,4 @@
-use dust_byt::{Func, Instruction, OpABx, OpAbc};
+use dust_byt::{Func, Instruction, Krate, OpABx, OpAbc};
 use utils::Lit;
 
 mod stack;
@@ -8,26 +8,24 @@ pub use stack::*;
 /// State which can be used to execute chunks
 pub struct VirtualMachine<'byt> {
     pub stack: Stack,
-    chunk: &'byt Func<'byt>,
+    krate: &'byt Krate<'byt>,
 }
 
-impl<'a> VirtualMachine<'a> {
-    pub fn new(chunk: &'a Func) -> Self {
+impl<'byt> VirtualMachine<'byt> {
+    pub fn new(krate: &'byt Krate<'byt>) -> Self {
         VirtualMachine {
             stack: Stack::new(),
-            chunk,
+            krate,
         }
     }
 
-    pub fn exec_chunk(&mut self, chunk: &'a Func) {
-        self.chunk = chunk;
-
-        for instr in chunk.instrs.iter().copied() {
-            self.exec_instr(Instruction::from(instr));
+    pub fn exec_func(&mut self, func: &'byt Func<'byt>) {
+        for instr in func.instrs.iter().copied() {
+            self.exec_instr(Instruction::from(instr), func);
         }
     }
 
-    fn exec_instr(&mut self, instr: Instruction) {
+    fn exec_instr(&mut self, instr: Instruction, func: &'byt Func<'byt>) {
         match instr {
             Instruction::Abc { operation, a, b, c } => match operation {
                 OpAbc::Move => {
@@ -94,11 +92,17 @@ impl<'a> VirtualMachine<'a> {
                     self.stack[a as usize] =
                         Lit::logical_or(self.stack[b as usize], self.stack[c as usize]).unwrap();
                 }
-                OpAbc::Call => todo!(),
+                OpAbc::Call => {
+                    let func = self.krate.funcs[b as usize];
+
+                    assert_eq!(c, 0);
+
+                    self.exec_func(func);
+                }
             },
             Instruction::ABx { operation, a, bx } => match operation {
                 OpABx::LoadK => {
-                    self.stack[a as usize] = self.chunk.consts[bx as usize];
+                    self.stack[a as usize] = func.consts[bx as usize];
                 }
                 OpABx::LoadNil => {
                     self.stack[a as usize..=a as usize + bx as usize].fill(Lit::Nil);
