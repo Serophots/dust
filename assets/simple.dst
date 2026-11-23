@@ -1,15 +1,11 @@
 fn main() {
-    let x = 2;
-    let y = 4;
-    let z = {
-        x * y
-    };
-
-    foo();
-
-    x * y * z
+    2 * foo()
 }
 
 fn foo() {
-    3.0
+    let x = 2;
+    let y = 4;
+    let z = { x * y };
+
+    x * y * z
 }

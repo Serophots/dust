@@ -37,7 +37,20 @@ fn comp_func<'hir, 'byt>(
     ctx: HirLowCtx<'hir, 'byt, '_>,
 ) -> Result<&'byt dust_byt::Func<'byt>> {
     let mut comp_func = CompileFunc::<'hir, 'byt>::new(krate, ctx);
-    comp_func.comp_block(func.block)?;
+
+    // Compile the function
+    {
+        let ret = comp_func.comp_block(func.block)?;
+
+        let instr = Instruction::Abc {
+            operation: OpAbc::Move,
+            a: 0,
+            b: ret as u16,
+            c: 0,
+        };
+
+        comp_func.instrs.push(instr);
+    }
 
     let CompileFunc { instrs, consts, .. } = comp_func;
 

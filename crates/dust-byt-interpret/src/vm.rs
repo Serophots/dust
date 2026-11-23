@@ -27,7 +27,7 @@ impl<'byt> VirtualMachine<'byt> {
         for (i, instr) in func.instrs.iter().copied().enumerate() {
             let instr = Instruction::from(instr);
 
-            // println!("{}", instr.print(i, func, ctx.gcx));
+            // instr.print(i, func, ctx.gcx);
 
             self.exec_instr(instr, func, ctx);
 
