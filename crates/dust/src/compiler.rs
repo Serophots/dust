@@ -111,8 +111,10 @@ where
         println!("---- interpretting!");
 
         let mut vm = VirtualMachine::new(&krate);
-        vm.exec_func(&krate.main);
+        vm.exec_func(&krate.main, ctx);
 
-        dust_byt_print::print_stack(&vm);
+        println!("---- finished!");
+
+        vm.stack.print(&vm);
     }
 }

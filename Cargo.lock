@@ -363,7 +363,9 @@ dependencies = [
 name = "dust-byt"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "derive_generic_visitor",
+ "dust-ctxt",
  "dust-utils",
  "num_enum",
  "serde",
@@ -385,7 +387,9 @@ dependencies = [
 name = "dust-byt-interpret"
 version = "0.1.0"
 dependencies = [
+ "colored",
  "dust-byt",
+ "dust-ctxt",
  "dust-utils",
 ]
 

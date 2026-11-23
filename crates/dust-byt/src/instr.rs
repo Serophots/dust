@@ -1,5 +1,11 @@
 use std::range::RangeInclusive;
 
+use colored::Colorize;
+use dust_ctxt::GblCtxt;
+use utils::Lit;
+
+use crate::Func;
+
 pub trait Op {
     fn op(&self) -> u8;
 }
@@ -143,6 +149,70 @@ impl Instruction {
                 OpAsBx::LoadF64 => "LOADF64",
             },
         }
+    }
+
+    pub fn print(&self, i: usize, func: &Func, ctx: GblCtxt) {
+        let i = format!("{:<4}", i + 1);
+
+        let operands = match self {
+            Instruction::Abc { a, b, c, .. } => format!("{} {} {}", a, b, c),
+            Instruction::ABx { a, bx, .. } => format!("{} {}", a, bx),
+            Instruction::AsBx { a, sbx, .. } => format!("{} {}", a, sbx),
+        };
+
+        let comment = match self {
+            Instruction::Abc { operation, .. } => match operation {
+                OpAbc::Move => None,
+                OpAbc::Add => None,
+                OpAbc::Sub => None,
+                OpAbc::Mul => None,
+                OpAbc::Div => None,
+                OpAbc::Eq => None,
+                OpAbc::NEq => None,
+                OpAbc::Greater => None,
+                OpAbc::GreaterEqual => None,
+                OpAbc::Lesser => None,
+                OpAbc::LesserEqual => None,
+                OpAbc::And => None,
+                OpAbc::Or => None,
+                OpAbc::Call => None,
+            },
+            Instruction::ABx {
+                operation,
+                a: _,
+                bx,
+            } => match operation {
+                OpABx::LoadK => {
+                    let r#const = func.consts[*bx as usize];
+
+                    Some(match r#const {
+                        Lit::Number(f) => format!("; {}", f),
+                        Lit::String(symbol) => {
+                            format!("; \"{}\"", ctx.symbols.resolve(symbol).unwrap())
+                        }
+                        Lit::Bool(b) => match b {
+                            true => format!("; TRUE"),
+                            false => format!("; FALSE"),
+                        },
+                        Lit::Nil => format!("; NIL"),
+                    })
+                }
+                OpABx::LoadNil => Some(format!("; NIL")),
+            },
+            Instruction::AsBx { operation, .. } => match operation {
+                OpAsBx::LoadF64 => None,
+            },
+        };
+
+        let comment = comment.unwrap_or_default();
+
+        println!(
+            "{:<4} {:<12} {:<10} {}",
+            i.blue(),
+            self.name().yellow(),
+            operands.blue(),
+            comment.bright_green()
+        );
     }
 
     pub fn op(&self) -> u8 {

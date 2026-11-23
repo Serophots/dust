@@ -1,4 +1,5 @@
 use dust_byt::{Func, Instruction, Krate, OpABx, OpAbc};
+use dust_ctxt::BytCtx;
 use utils::Lit;
 
 mod stack;
@@ -19,13 +20,22 @@ impl<'byt> VirtualMachine<'byt> {
         }
     }
 
-    pub fn exec_func(&mut self, func: &'byt Func<'byt>) {
-        for instr in func.instrs.iter().copied() {
-            self.exec_instr(Instruction::from(instr), func);
+    pub fn exec_func(&mut self, func: &'byt Func<'byt>, ctx: BytCtx<'byt, '_>) {
+        // println!("==== new function ====");
+        // self.stack.print(&self);
+
+        for (i, instr) in func.instrs.iter().copied().enumerate() {
+            let instr = Instruction::from(instr);
+
+            // println!("{}", instr.print(i, func, ctx.gcx));
+
+            self.exec_instr(instr, func, ctx);
+
+            // self.stack.print(&self);
         }
     }
 
-    fn exec_instr(&mut self, instr: Instruction, func: &'byt Func<'byt>) {
+    fn exec_instr(&mut self, instr: Instruction, func: &'byt Func<'byt>, ctx: BytCtx<'byt, '_>) {
         match instr {
             Instruction::Abc { operation, a, b, c } => match operation {
                 OpAbc::Move => {
@@ -97,7 +107,10 @@ impl<'byt> VirtualMachine<'byt> {
 
                     assert_eq!(c, 0);
 
-                    self.exec_func(func);
+                    let old_top = self.stack.top();
+                    self.stack.set_top(a as usize);
+                    self.exec_func(func, ctx);
+                    self.stack.set_top(old_top);
                 }
             },
             Instruction::ABx { operation, a, bx } => match operation {

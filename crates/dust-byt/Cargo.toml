@@ -7,8 +7,10 @@ edition = "2024"
 path = "src/byt.rs"
 
 [dependencies]
+dust-ctxt.workspace = true
 utils.workspace = true
 
 serde.workspace = true
 derive_generic_visitor.workspace = true
 num_enum.workspace = true
+colored.workspace = true
