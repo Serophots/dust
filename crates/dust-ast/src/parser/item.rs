@@ -112,6 +112,10 @@ impl<'ast> core::fmt::Debug for Use<'ast> {
 pub struct Func<'gcx, 'ast> {
     pub ident: Ident,
     pub block: &'ast Block<'gcx, 'ast>,
+
+    #[serde(with = "utils::boxed_slice_serialize_with")]
+    pub args: Box<'ast, [Ident]>,
+
     pub span: SourceSpan,
     pub id: NodeId,
 }
@@ -273,13 +277,30 @@ where
     fn function(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Func<'gcx, 'ast>> {
         let r#fn = self.expect_token(TokenKind::Function)?;
         let ident = self.expect_token_ident()?;
-        self.expect_token(TokenKind::LeftParen)?;
-        self.expect_token(TokenKind::RightParen)?;
+
+        // Parse arguments
+        let mut args = Vec::new_in(ctx.arena);
+        {
+            let _left = self.expect_token(TokenKind::LeftParen)?;
+
+            loop {
+                if !matches!(self.first_token_kind(), Some(TokenKind::Ident(_))) {
+                    break;
+                }
+
+                let ident = self.expect_token_ident()?;
+                args.push(ident);
+            }
+
+            let _right = self.expect_token(TokenKind::RightParen)?;
+        }
+
         let block = self.block(ctx)?;
 
         Ok(ctx.arena.alloc(Func {
             span: combine_src(r#fn.span, block.span),
             id: ctx.gcx.node_id.next(),
+            args: args.into_boxed_slice(),
             ident,
             block,
         }))

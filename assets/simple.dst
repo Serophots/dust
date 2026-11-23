@@ -1,4 +1,4 @@
-fn main() {
+fn main(n) {
     2 * foo()
 }
 
