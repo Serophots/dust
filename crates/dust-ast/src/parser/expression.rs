@@ -164,7 +164,7 @@ where
     'gcx: 'ast,
 {
     pub fn expr(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
-        self.expr_call(ctx)
+        self.expr_or(ctx)
     }
 
     /// Parse atleast one ident, followed by zero or more further (`::` ident)
@@ -199,25 +199,6 @@ where
 
     fn assign_expr(&mut self, _ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         todo!()
-    }
-
-    /// logic_or "()"
-    fn expr_call(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
-        let expr = self.expr_or(ctx)?;
-
-        match self.first_token_kind() {
-            Some(TokenKind::LeftParen) => {
-                // Call this expression
-                self.expect_token(TokenKind::LeftParen)?;
-                let right_paren = self.expect_token(TokenKind::RightParen)?;
-
-                Ok(ctx.arena.alloc(Expr::Call(ctx.arena.alloc(Call {
-                    span: combine_src(expr.span(), right_paren.span),
-                    expr,
-                }))))
-            }
-            _ => Ok(expr),
-        }
     }
 
     ///  logic_or       → logic_and ( "||" logic_and )* ;
@@ -460,12 +441,12 @@ where
         Ok(lhs)
     }
 
-    ///  unary          → ( "!" | "-" ) unary | parenth
+    ///  unary          → ( "!" | "-" ) unary | call
     fn expr_unary(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
         let op = match self.first_token_kind() {
             Some(TokenKind::Bang) => UnaryOp::Not,
             Some(TokenKind::Minus) => UnaryOp::Negate,
-            _ => return Ok(self.expr_parenth(ctx)?),
+            _ => return Ok(self.expr_call(ctx)?),
         };
         let op_span = self.next_token()?.unwrap().span;
 
@@ -479,6 +460,25 @@ where
             }))
             .simplify(&self.source, ctx)?,
         ))
+    }
+
+    /// parenth "()"
+    fn expr_call(&mut self, ctx: AstCtx<'ast, 'gcx>) -> Result<&'ast Expr<'gcx, 'ast>> {
+        let expr = self.expr_parenth(ctx)?;
+
+        match self.first_token_kind() {
+            Some(TokenKind::LeftParen) => {
+                // Call this expression
+                self.expect_token(TokenKind::LeftParen)?;
+                let right_paren = self.expect_token(TokenKind::RightParen)?;
+
+                Ok(ctx.arena.alloc(Expr::Call(ctx.arena.alloc(Call {
+                    span: combine_src(expr.span(), right_paren.span),
+                    expr,
+                }))))
+            }
+            _ => Ok(expr),
+        }
     }
 
     /// "(" expression ")" | primary

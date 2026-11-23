@@ -27,8 +27,6 @@ An expression is parsed in a heirarchy of layers:
 ```
 
 expression     →  
-                      ------------------ Expression Call -------------------
-                |   logic_or "()"
                       ------------------ Expression Or -------------------
                 |   logic_and ( "||" logic_and )*
                       ------------------ Expression And -------------------
@@ -42,7 +40,9 @@ expression     →
                       ------------------ Expression Factor -------------------
                 |   unary ( ( "/" | "*" ) unary )*
                       ------------------ Expression Unarys -------------------
-                |   ( "!" | "-" ) unary | parenth
+                |   ( "!" | "-" ) unary | call
+                      ------------------ Expression Call -------------------
+                |   parenth "()"
                       ------------------ Expression Parenth -------------------
                 | "(" expression ")" | primary
                       ------------------ Expression Primarys -------------------
