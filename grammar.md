@@ -42,7 +42,7 @@ expression     →
                       ------------------ Expression Unarys -------------------
                 |   ( "!" | "-" ) unary | call
                       ------------------ Expression Call -------------------
-                |   parenth "()"
+                |   parenth "(" (logic_or ,)* ")"
                       ------------------ Expression Parenth -------------------
                 | "(" expression ")" | primary
                       ------------------ Expression Primarys -------------------

@@ -150,6 +150,8 @@ impl<'ast> core::fmt::Debug for Path<'ast> {
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Call<'gcx, 'ast> {
     pub expr: &'ast Expr<'gcx, 'ast>,
+    #[serde(with = "utils::boxed_slice_serialize_with")]
+    pub args: Box<'ast, [Expr<'gcx, 'ast>]>,
     pub span: SourceSpan,
 }
 
@@ -469,11 +471,33 @@ where
         match self.first_token_kind() {
             Some(TokenKind::LeftParen) => {
                 // Call this expression
-                self.expect_token(TokenKind::LeftParen)?;
-                let right_paren = self.expect_token(TokenKind::RightParen)?;
+                let mut args = Vec::new_in(ctx.arena);
+
+                let right_paren = {
+                    self.expect_token(TokenKind::LeftParen)?;
+
+                    loop {
+                        if self.first_token_kind() == Some(TokenKind::RightParen) {
+                            break;
+                        }
+
+                        let expr = self.expr(ctx)?;
+                        args.push(*expr);
+
+                        if self.first_token_kind() != Some(TokenKind::Comma) {
+                            break;
+                        } else {
+                            let _comma = self.expect_token(TokenKind::Comma)?;
+                        }
+                    }
+
+                    let right_paren = self.expect_token(TokenKind::RightParen)?;
+                    right_paren
+                };
 
                 Ok(ctx.arena.alloc(Expr::Call(ctx.arena.alloc(Call {
                     span: combine_src(expr.span(), right_paren.span),
+                    args: args.into_boxed_slice(),
                     expr,
                 }))))
             }

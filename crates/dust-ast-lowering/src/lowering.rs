@@ -134,9 +134,29 @@ fn lower_func<'ast, 'hir, 'gcx>(
     func: &'ast dust_ast::Func<'gcx, 'ast>,
     low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Func<'hir>> {
+    // Cloning the args.. eughh
+    let args = {
+        let mut args = Vec::with_capacity_in(func.params.len(), low.ctx.hir_arena);
+        args.extend_from_slice(&func.params);
+
+        args.into_boxed_slice()
+    };
+
+    let block = low.with_rib(ValueNS, RibKind::Fn, |low| {
+        for arg in args.iter().copied() {
+            low.last_rib_mut(ValueNS)
+                .unwrap()
+                .bindings
+                .insert(arg.symbol, Res::Local(arg));
+        }
+
+        lower_block(func.block, low)
+    })?;
+
     Ok(low.ctx.hir_arena.alloc(Func {
         ident: func.ident,
-        block: lower_block(func.block, low)?,
+        block,
+        params: args,
         span: func.span,
         id: func.id,
     }))
@@ -213,8 +233,15 @@ fn lower_call<'ast, 'hir, 'gcx>(
     call: &'ast dust_ast::Call<'gcx, 'ast>,
     low: &mut LowerKrate<'ast, 'hir, 'gcx>,
 ) -> Result<&'hir Call<'hir>> {
+    let mut args = Vec::with_capacity_in(call.args.len(), low.ctx.hir_arena);
+
+    for arg in call.args.iter() {
+        args.push(lower_expr(arg, low)?);
+    }
+
     Ok(low.ctx.hir_arena.alloc(Call {
         expr: lower_expr(call.expr, low)?,
+        args: args.into_boxed_slice(),
         span: call.span,
     }))
 }

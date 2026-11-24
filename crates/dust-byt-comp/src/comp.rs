@@ -38,10 +38,17 @@ fn comp_func<'hir, 'byt>(
 ) -> Result<&'byt dust_byt::Func<'byt>> {
     let mut comp_func = CompileFunc::<'hir, 'byt>::new(krate, ctx);
 
-    // Compile the function
     {
+        // Anticipate arguments from the top of the stack
+        for &arg in func.params.iter() {
+            let stack = comp_func.next_stack();
+            comp_func.locals.insert(arg, stack);
+        }
+
+        // Compile the function
         let ret = comp_func.comp_block(func.block)?;
 
+        // Move the returned value to the top of the stack so the caller may find it
         let instr = Instruction::Abc {
             operation: OpAbc::Move,
             a: 0,
@@ -108,7 +115,7 @@ impl<'hir, 'byt> CompileFunc<'hir, 'byt> {
         idx as u32
     }
 
-    fn comp_block(&mut self, block: &'hir Block<'hir>) -> Result<u8> {
+    fn comp_block(&mut self, block: &Block<'hir>) -> Result<u8> {
         for &stmt in block.stmts.iter() {
             self.comp_stmt(stmt)?;
         }
@@ -157,7 +164,7 @@ impl<'hir, 'byt> CompileFunc<'hir, 'byt> {
 
     /// An expression compiles to some instructions
     /// pertaining to a stack index, which is returned
-    fn comp_expr(&mut self, expr: &'hir Expr) -> Result<u8> {
+    fn comp_expr(&mut self, expr: &Expr<'hir>) -> Result<u8> {
         Ok(match *expr {
             Expr::Call(call) => self.comp_call(call)?,
             Expr::Binary(binary) => self.comp_bin(binary)?,
@@ -177,22 +184,23 @@ impl<'hir, 'byt> CompileFunc<'hir, 'byt> {
         })
     }
 
-    fn comp_call(&mut self, call: &Call) -> Result<u8> {
+    fn comp_call(&mut self, call: &Call<'hir>) -> Result<u8> {
         // TODO: Allow calling arbritrary expressions
         // which may evaluate to a Function type.
 
         let a = self.next_stack();
 
-        let func_idx = match *call.expr {
+        let (func_idx, &func) = match *call.expr {
             Expr::Func(func) => {
-                let func_idx = self
+                let func = self
                     .krate
                     .funcs
                     .iter()
-                    .position(|f| f.id == func.node_id)
+                    .enumerate()
+                    .find(|(_, f)| f.id == func.node_id)
                     .unwrap();
 
-                func_idx
+                func
             }
             _ => {
                 return Err(
@@ -204,11 +212,28 @@ impl<'hir, 'byt> CompileFunc<'hir, 'byt> {
             }
         };
 
+        // Prepare the arguments
+        assert_eq!(call.args.len(), func.params.len());
+        for (i, (arg, _param)) in
+            Iterator::zip(call.args.iter().copied(), func.params.iter()).enumerate()
+        {
+            let expr = self.comp_expr(arg)?;
+
+            let instr = Instruction::Abc {
+                operation: OpAbc::Move,
+                a: a + i as u8,
+                b: expr as u16,
+                c: 0,
+            };
+
+            self.instrs.push(instr);
+        }
+
         let instr = Instruction::Abc {
             operation: OpAbc::Call,
             a,
             b: func_idx as u16,
-            c: 0, // we don't support calling with arguments yet
+            c: 0,
         };
 
         self.instrs.push(instr);

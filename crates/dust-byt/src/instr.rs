@@ -47,7 +47,7 @@ pub enum OpAbc {
     Or,
     // TODO: Allow calling arbritary functions on the stack,
     // rather than one of the krates' compile time protos.
-    /// R(A) := P(B)\[ R(A+1), R(A+2), .., R(A+C) \]
+    /// R(A) := P(B)\[ R(A+1), R(A+2), .. \]
     Call,
 }
 
@@ -161,8 +161,8 @@ impl Instruction {
         };
 
         let comment = match self {
-            Instruction::Abc { operation, .. } => match operation {
-                OpAbc::Move => None,
+            Instruction::Abc { operation, a, b, c } => match operation {
+                OpAbc::Move => Some(format!("R({a}) := R({b})")),
                 OpAbc::Add => None,
                 OpAbc::Sub => None,
                 OpAbc::Mul => None,

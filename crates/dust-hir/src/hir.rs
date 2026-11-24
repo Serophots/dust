@@ -15,6 +15,10 @@ pub struct Krate<'hir> {
 pub struct Func<'hir> {
     pub ident: Ident,
     pub block: &'hir Block<'hir>,
+
+    #[serde(with = "utils::boxed_slice_serialize_with")]
+    pub params: Box<'hir, [Ident]>,
+
     pub span: SourceSpan,
     pub id: NodeId,
 }
@@ -125,6 +129,8 @@ impl core::fmt::Debug for FuncExpr {
 #[derive(Clone, PartialEq, serde::Serialize, derive_generic_visitor::Drive)]
 pub struct Call<'hir> {
     pub expr: &'hir Expr<'hir>,
+    #[serde(with = "utils::boxed_slice_serialize_with")]
+    pub args: Box<'hir, [&'hir Expr<'hir>]>,
     pub span: SourceSpan,
 }
 

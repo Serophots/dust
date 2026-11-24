@@ -114,7 +114,7 @@ pub struct Func<'gcx, 'ast> {
     pub block: &'ast Block<'gcx, 'ast>,
 
     #[serde(with = "utils::boxed_slice_serialize_with")]
-    pub args: Box<'ast, [Ident]>,
+    pub params: Box<'ast, [Ident]>,
 
     pub span: SourceSpan,
     pub id: NodeId,
@@ -278,8 +278,8 @@ where
         let r#fn = self.expect_token(TokenKind::Function)?;
         let ident = self.expect_token_ident()?;
 
-        // Parse arguments
-        let mut args = Vec::new_in(ctx.arena);
+        // Parse parameters
+        let mut params = Vec::new_in(ctx.arena);
         {
             let _left = self.expect_token(TokenKind::LeftParen)?;
 
@@ -289,7 +289,13 @@ where
                 }
 
                 let ident = self.expect_token_ident()?;
-                args.push(ident);
+                params.push(ident);
+
+                if self.first_token_kind() != Some(TokenKind::Comma) {
+                    break;
+                } else {
+                    self.expect_token(TokenKind::Comma)?;
+                }
             }
 
             let _right = self.expect_token(TokenKind::RightParen)?;
@@ -300,7 +306,7 @@ where
         Ok(ctx.arena.alloc(Func {
             span: combine_src(r#fn.span, block.span),
             id: ctx.gcx.node_id.next(),
-            args: args.into_boxed_slice(),
+            params: params.into_boxed_slice(),
             ident,
             block,
         }))

@@ -1,5 +1,5 @@
 fn main(n) {
-    2 * foo()
+    triple_sum(double(2 * foo()), double(1))
 }
 
 fn foo() {
@@ -8,4 +8,13 @@ fn foo() {
     let z = { x * y };
 
     x * y * z
+    // returns 64
+}
+
+fn double(n) {
+    2.0 * n
+}
+
+fn triple_sum(a, b) {
+    3.0 * a + 3.0 * b
 }

@@ -33,6 +33,8 @@ use crate::{
 #[visit(skip(for<'ast> &'ast Lit))]
 #[visit(drive(BinaryOp))]
 #[visit(drive(UnaryOp))]
+#[visit(drive(for<'gcx, 'ast> Box<'ast, [Expr<'gcx, 'ast>]>))]
+#[visit(drive(for<'gcx, 'ast> [Expr<'gcx, 'ast>]))]
 #[visit(drive(for<'gcx, 'ast> Box<'ast, [&'ast Stmt<'gcx, 'ast>]>))]
 #[visit(drive(for<'gcx, 'ast> [&'ast Stmt<'gcx, 'ast>]))]
 #[visit(drive(for<'gcx, 'ast> &'ast Stmt<'gcx, 'ast>))]
